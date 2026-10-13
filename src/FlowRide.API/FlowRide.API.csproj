@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
+    <PackageReference Include="Microsoft.OpenApi" Version="2.12.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FlowRide.Application\FlowRide.Application.csproj" />
+    <ProjectReference Include="..\FlowRide.Infrastructure\FlowRide.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
