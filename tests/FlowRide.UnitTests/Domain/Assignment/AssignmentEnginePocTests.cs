@@ -2,9 +2,9 @@ using FlowRide.Domain.Assignment.Results;
 using FlowRide.Domain.Assignment.Rules.Filtering;
 using FlowRide.Domain.Assignment.Rules.TieBreaking;
 using FlowRide.Domain.Enumeraciones;
-using static FlowRide.Tests.Domain.Assignment.Escenario;
+using static FlowRide.UnitTests.Domain.Assignment.Escenario;
 
-namespace FlowRide.Tests.Domain.Assignment;
+namespace FlowRide.UnitTests.Domain.Assignment;
 
 /// <summary>Escenarios de la PoC del ADR-0009.</summary>
 public class AssignmentEnginePocTests

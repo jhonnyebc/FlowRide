@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "flowride-api",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/FlowRide.API", "--launch-profile", "http"],
+      "port": 5237
+    }
+  ]
+}

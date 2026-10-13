@@ -1,3 +1,15 @@
+# Pruebas manuales de la Fase 0 (base ejecutable).
+# Requisitos: `docker compose up -d` y el secreto ConnectionStrings:Silo en user-secrets (ver CLAUDE.md).
 @FlowRide.API_HostAddress = http://localhost:5237
 
-###
+### RF-53 — Liveness: el proceso responde (no consulta la base)
+GET {{FlowRide.API_HostAddress}}/health/live
+
+### RF-53 — Readiness: la base del Silo del operador acepta conexiones
+GET {{FlowRide.API_HostAddress}}/health/ready
+
+### RF-51 — Ruta inexistente: ProblemDetails (application/problem+json) con traceId
+GET {{FlowRide.API_HostAddress}}/no-existe
+
+### Contrato OpenAPI (solo en Development)
+GET {{FlowRide.API_HostAddress}}/openapi/v1.json

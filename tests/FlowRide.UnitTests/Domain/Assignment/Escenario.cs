@@ -8,7 +8,7 @@ using FlowRide.Domain.Assignment.Rules.TieBreaking;
 using FlowRide.Domain.Entidades;
 using FlowRide.Domain.Enumeraciones;
 
-namespace FlowRide.Tests.Domain.Assignment;
+namespace FlowRide.UnitTests.Domain.Assignment;
 
 /// <summary>Datos de prueba deterministas (Ids fijos, fechas fijas) para el motor de asignación.</summary>
 internal static class Escenario
