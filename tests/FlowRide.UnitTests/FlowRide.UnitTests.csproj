@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- Gate de cobertura (ADR-0018): Domain + Application ≥ 80 % líneas y ≥ 70 % ramas.
+       Se activa con: dotnet test tests/FlowRide.UnitTests -p:CollectCoverage=true -->
+  <PropertyGroup Condition="'$(CollectCoverage)' == 'true'">
+    <Include>[FlowRide.Domain]*,[FlowRide.Application]*</Include>
+    <Threshold>80,70</Threshold>
+    <ThresholdType>line,branch</ThresholdType>
+    <ThresholdStat>total</ThresholdStat>
+    <CoverletOutputFormat>cobertura</CoverletOutputFormat>
+    <CoverletOutput>$(MSBuildThisFileDirectory)TestResults/coverage/</CoverletOutput>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="coverlet.msbuild" Version="10.1.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FlowRide.Domain\FlowRide.Domain.csproj" />
+    <ProjectReference Include="..\..\src\FlowRide.Application\FlowRide.Application.csproj" />
+  </ItemGroup>
+
+</Project>

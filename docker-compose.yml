@@ -1,19 +1,29 @@
+# Entorno local de FlowRide.
+# Un servidor PostgreSQL compartido con una base y un rol por Silo (ADR-0002, ADR-0010 §5):
+#   flowride_catalogo  → catálogo de plataforma (operadores y ruteo; sin datos operacionales)
+#   flowride_tenant_a  → Silo del operador A
+#   flowride_tenant_b  → Silo del operador B
+# Las contraseñas se leen de .env, que no se versiona (ADR-0014).
 services:
   postgres:
     image: postgres:17
     container_name: flowride-postgres
     restart: unless-stopped
-    env_file: .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?Define POSTGRES_USER en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: postgres
+      CATALOGO_DB_PASSWORD: ${CATALOGO_DB_PASSWORD:?Define CATALOGO_DB_PASSWORD en .env}
+      TENANT_A_DB_PASSWORD: ${TENANT_A_DB_PASSWORD:?Define TENANT_A_DB_PASSWORD en .env}
+      TENANT_B_DB_PASSWORD: ${TENANT_B_DB_PASSWORD:?Define TENANT_B_DB_PASSWORD en .env}
     ports:
-      - "5432:5432"
+      # 5433 en el host para no chocar con un PostgreSQL instalado localmente en 5432.
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - flowride-pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
       interval: 10s
       timeout: 5s
       retries: 5

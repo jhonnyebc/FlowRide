@@ -1,0 +1,11 @@
+# Normaliza finales de línea en el repositorio.
+* text=auto
+
+# Los scripts que se ejecutan dentro de contenedores Linux deben conservar LF.
+*.sh text eol=lf
+
+# Binarios
+*.png binary
+*.pdf binary
+*.docx binary
+*.xlsx binary

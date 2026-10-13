@@ -6,6 +6,8 @@
     <Project Path="src/FlowRide.Infrastructure/FlowRide.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/FlowRide.Tests/FlowRide.Tests.csproj" />
+    <Project Path="tests/FlowRide.ArchitectureTests/FlowRide.ArchitectureTests.csproj" />
+    <Project Path="tests/FlowRide.IntegrationTests/FlowRide.IntegrationTests.csproj" />
+    <Project Path="tests/FlowRide.UnitTests/FlowRide.UnitTests.csproj" />
   </Folder>
 </Solution>

@@ -14,7 +14,7 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 |---|---|---|---|---|
 | — | Motor de asignación (PoC del ADR-0009) | Asignacion | 0009 | ✅ (commit `d751b09`) |
 | — | Revisión de ADR y roadmap | — | todos | ✅ |
-| 0 | Base ejecutable | Plataforma | 0010, 0011, 0014, 0017, 0018 | ⬜ |
+| 0 | Base ejecutable | Plataforma | 0010, 0011, 0014, 0017, 0018 | ✅ rama `feature/RF-53-base-ejecutable` (pendiente de PR) |
 | 1 | Tenancy y persistencia Silo | Tenancy | 0002, 0004, 0010, 0014 | ⬜ |
 | 2 | Identidad, usuarios y auditoría | Identidad, Auditoria | 0003, 0011 | ⬜ |
 | 3 | Recursos operativos y parámetros | Operacion | 0006, 0013, 0014, 0016 | ⬜ |
@@ -31,11 +31,13 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 ## Detalle por fase
 
 ### Fase 0 — Base ejecutable
-- [ ] `docker-compose.yml`: PostgreSQL 17 con una BD de catálogo de plataforma y una BD por tenant (`tenant-a`, `tenant-b`).
-- [ ] Todos los proyectos compilan; separar los tests en unitarios, de arquitectura y de integración.
-- [ ] OpenAPI, ProblemDetails, health checks `/health/live` y `/health/ready`.
-- [ ] Logging estructurado (traceId, tenantId, timestamp, componente, resultado) sobre OpenTelemetry.
-- [ ] Gates: `dotnet format`, ArchUnitNET, umbral de cobertura, `.gitattributes`, workflow de CI.
+- [x] `docker-compose.yml`: PostgreSQL 17 (host 5433) con `flowride_catalogo`, `flowride_tenant_a` y `flowride_tenant_b`, cada una con su propio rol; aislamiento verificado con autenticación real.
+- [x] Tests separados: `UnitTests` (63), `ArchitectureTests` (9) e `IntegrationTests` (12, Testcontainers).
+- [x] OpenAPI, ProblemDetails con `traceId`, `/health/live` y `/health/ready` (comprueba la base del Silo sin exponer la conexión).
+- [x] Logging JSON con timestamp UTC, traceId, tenantId, componente y resultado; trazas y métricas con OpenTelemetry (OTLP si se define `OTEL_EXPORTER_OTLP_ENDPOINT`).
+- [x] El arranque falla si falta `ConnectionStrings:Silo` o si `FlowRide:TenantId` falta o es inválido (ADR-0014).
+- [x] Gates: `dotnet format`, ArchUnitNET (capas + ciclos entre módulos), cobertura (96 % líneas / 85 % ramas), `.gitattributes`, `.editorconfig`, CI en GitHub Actions con gitleaks.
+- [ ] **Pendiente:** SonarCloud (requiere crear el proyecto y el secreto `SONAR_TOKEN` en GitHub).
 - RF cubiertos parcialmente: RF-50, RF-51, RF-53.
 
 ### Fase 1 — Tenancy y persistencia Silo
@@ -147,10 +149,10 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-47 | Reporte de solicitudes atendidas y pendientes | 9 | ⬜ |
 | RF-48 | Reporte de conductores asignados | 9 | ⬜ |
 | RF-49 | Reporte histórico por cliente empresarial | 9 | ⬜ |
-| RF-50 | Registro de eventos del sistema | 0 | ⬜ |
-| RF-51 | Registro de errores y excepciones | 0 | ⬜ |
+| RF-50 | Registro de eventos del sistema | 0 | 🟡 log estructurado por solicitud |
+| RF-51 | Registro de errores y excepciones | 0 | 🟡 ProblemDetails + log con traceId |
 | RF-52 | Auditoría de acciones administrativas | 2 | ⬜ |
-| RF-53 | Monitoreo técnico de disponibilidad | 0 | ⬜ |
+| RF-53 | Monitoreo técnico de disponibilidad | 0 | 🟡 health checks + métricas OTel |
 | RF-54 | Calificación del servicio | 6 | ⬜ |
 | RF-55 | Ingesta de telemetría GPS | — | ⛔ |
 | RF-56 | Detección de desviación de ETA | — | ⛔ |
