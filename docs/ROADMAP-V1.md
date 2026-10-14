@@ -14,7 +14,8 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 |---|---|---|---|---|
 | — | Motor de asignación (PoC del ADR-0009) | Asignacion | 0009 | ✅ (commit `d751b09`) |
 | — | Revisión de ADR y roadmap | — | todos | ✅ |
-| 0 | Base ejecutable | Plataforma | 0010, 0011, 0014, 0017, 0018 | ✅ rama `feature/RF-53-base-ejecutable` (pendiente de PR) |
+| — | Modelo de dominio completo (diagrama de clases, sin telemetría) | Todos | — | ✅ rama `feature/dominio-entidades` |
+| 0 | Base ejecutable | Plataforma | 0010, 0011, 0014, 0017, 0018 | ✅ PR #2 fusionado |
 | 1 | Tenancy y persistencia Silo | Tenancy | 0002, 0004, 0010, 0014 | ⬜ |
 | 2 | Identidad, usuarios y auditoría | Identidad, Auditoria | 0003, 0011 | ⬜ |
 | 3 | Recursos operativos y parámetros | Operacion | 0006, 0013, 0014, 0016 | ⬜ |
