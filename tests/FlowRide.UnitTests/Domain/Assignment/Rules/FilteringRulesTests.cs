@@ -1,9 +1,9 @@
 using FlowRide.Domain.Assignment;
 using FlowRide.Domain.Assignment.Rules.Filtering;
 using FlowRide.Domain.Enumeraciones;
-using static FlowRide.Tests.Domain.Assignment.Escenario;
+using static FlowRide.UnitTests.Domain.Assignment.Escenario;
 
-namespace FlowRide.Tests.Domain.Assignment.Rules;
+namespace FlowRide.UnitTests.Domain.Assignment.Rules;
 
 public class AvailabilityRuleTests
 {

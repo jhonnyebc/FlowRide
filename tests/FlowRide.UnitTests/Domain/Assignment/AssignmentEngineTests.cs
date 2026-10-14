@@ -7,9 +7,9 @@ using FlowRide.Domain.Assignment.Rules.Priority;
 using FlowRide.Domain.Assignment.Rules.Scoring;
 using FlowRide.Domain.Assignment.Rules.TieBreaking;
 using FlowRide.Domain.Enumeraciones;
-using static FlowRide.Tests.Domain.Assignment.Escenario;
+using static FlowRide.UnitTests.Domain.Assignment.Escenario;
 
-namespace FlowRide.Tests.Domain.Assignment;
+namespace FlowRide.UnitTests.Domain.Assignment;
 
 public class AssignmentEngineTests
 {
