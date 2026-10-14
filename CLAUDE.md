@@ -2,6 +2,10 @@
 
 Proyecto académico (Ingeniería del Software 2). Objetivo: construir la **V1 completa** por fases (ver `docs/ROADMAP-V1.md`). RF-10 (motor de asignación) ya está implementado.
 
+## Memoria del proyecto (obligatorio)
+- **Al empezar cada sesión**, lee `docs/MEMORIA.md` (estado, decisiones, problemas del entorno y bitácora) y `docs/ROADMAP-V1.md`.
+- **Al terminar cada sesión o fase**, actualiza `docs/MEMORIA.md`: estado actual, decisiones nuevas, problemas encontrados, una fila en la bitácora y los próximos pasos.
+
 ## Producto
 - SaaS B2B2B de transporte corporativo programado por turnos; **no es ride-hailing**.
 - Multi-tenant, modelo **Silo**: una base de datos por operador (ADR-0002).
@@ -14,12 +18,12 @@ Los ADR están en `docs/adr` (copia de los originales del equipo, con las revisi
 - Backend: C# / .NET 10, ASP.NET Core, EF Core + Npgsql, PostgreSQL 17 (docker-compose). Tests: xUnit.
 - Identidad: Keycloak, un realm por operador (ADR-0003).
 - WhatsApp: número de prueba de Meta Cloud API detrás de `IWhatsAppGateway` (ADR-0008).
-- Panel Web: React + TypeScript en `web/` (ADR-0019, Proposed).
+- Panel Web: React + TypeScript en `web/` (ADR-0019).
 - IDE: JetBrains Rider.
 
 ## Arquitectura
 Monolito modular por capas; las dependencias apuntan hacia Domain:
-- `FlowRide.Domain`: entidades, reglas de dominio y motor de asignación (`Assignment/`, lógica pura). **No depende de nada externo** (ni EF Core, ni ASP.NET).
+- `FlowRide.Domain`: entidades (`Entidades/`), value objects (`ValoresObjeto/`), enumeraciones y motor de asignación (`Assignment/`, lógica pura). **No depende de nada externo** (ni EF Core, ni ASP.NET). Las entidades validan sus invariantes en el constructor, cambian de estado solo por métodos, se relacionan con otros agregados por Id y reciben el tiempo como parámetro (`ahora`).
 - `FlowRide.Application` → Domain. Casos de uso y puertos (interfaces).
 - `FlowRide.Infrastructure` → Application. EF Core, Npgsql, implementaciones de puertos.
 - `FlowRide.API` → Application, Infrastructure. Endpoints HTTP y composición (DI).
