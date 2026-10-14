@@ -1,14 +1,21 @@
-# FlowRide — Backend
+# FlowRide
 
-Proyecto académico (Ingeniería del Software 2). Objetivo actual: implementar y demostrar **RF-10: Asignación automática de conductores**.
+Proyecto académico (Ingeniería del Software 2). Objetivo: construir la **V1 completa** por fases (ver `docs/ROADMAP-V1.md`). RF-10 (motor de asignación) ya está implementado.
 
 ## Producto
-- SaaS de transporte corporativo interno (B2B2B).
-- Multi-tenant, modelo **Silo**: una base de datos por operador.
+- SaaS B2B2B de transporte corporativo programado por turnos; **no es ride-hailing**.
+- Multi-tenant, modelo **Silo**: una base de datos por operador (ADR-0002).
+- Pasajeros y conductores usan **solo WhatsApp**. El Administrador del operador y el Operador logístico usan el **Panel Web**.
+
+## Decisiones de arquitectura
+Los ADR están en `docs/adr` (copia de los originales del equipo, con las revisiones del 2026-10-13 marcadas dentro de cada uno). Léelos antes de cada fase que los toque. Si una decisión no está en los ADR, pregunta antes de elegir.
 
 ## Stack
-- C# / .NET 10, ASP.NET Core, EF Core + Npgsql, PostgreSQL 17 (docker-compose).
-- IDE: JetBrains Rider. Tests: xUnit.
+- Backend: C# / .NET 10, ASP.NET Core, EF Core + Npgsql, PostgreSQL 17 (docker-compose). Tests: xUnit.
+- Identidad: Keycloak, un realm por operador (ADR-0003).
+- WhatsApp: número de prueba de Meta Cloud API detrás de `IWhatsAppGateway` (ADR-0008).
+- Panel Web: React + TypeScript en `web/` (ADR-0019, Proposed).
+- IDE: JetBrains Rider.
 
 ## Arquitectura
 Monolito modular por capas; las dependencias apuntan hacia Domain:
@@ -29,7 +36,7 @@ El sistema asigna automáticamente un conductor y un vehículo a cada solicitud 
 - Toda decisión debe poder reconstruirse: *decision log* con candidatos, resultado de cada regla, puntajes, desempate y versión de configuración.
 
 ## Consistencia (ADR-0007)
-Concurrencia optimista con token de versión + restricciones de unicidad en BD.
+Transacciones PostgreSQL, concurrencia optimista con token de versión, restricciones de unicidad en BD y Transactional Outbox para los efectos asíncronos.
 
 ## Lenguaje ubicuo
 - Entidades de dominio en español: `SolicitudViaje`, `Conductor`, `Vehiculo`, `Turno`, `Asignacion`.
@@ -45,5 +52,6 @@ Concurrencia optimista con token de versión + restricciones de unicidad en BD.
 - Tests: `dotnet test`
 - BD local: `cp .env.example .env` y luego `docker compose up -d`
 
-## Fuera de alcance (no implementar hasta que se pida)
-Keycloak, Outbox, WhatsApp, OpenTelemetry, YARP, Key Vault, frontend.
+## Alcance
+Todo lo definido en los ADR debe funcionar, **excepto**:
+- RF-55 (ingesta de telemetría GPS) y RF-56 (desviación de ETA), es decir, ADR-0005. No crear nada de ubicación ni de ETA.
