@@ -18,8 +18,12 @@ internal static class Escenario
 
     public static Guid Id(int n) => new($"00000000-0000-0000-0000-{n:D12}");
 
+    public static readonly Guid RolConductor = Id(800);
+    public static readonly Guid PasajeroId = Id(901);
+
     public static SolicitudViaje Solicitud(bool urgente = false, int pasajeros = 2, DateTimeOffset? hora = null) =>
-        new(Id(900), hora ?? HoraServicio, pasajeros, urgente);
+        new(Id(900), PasajeroId, "Aeropuerto JMC", "Hotel Centro", hora ?? HoraServicio, TimeSpan.FromMinutes(45),
+            pasajeros, CanalSolicitud.WhatsApp, HoraServicio.AddDays(-1), urgente);
 
     public static Candidato Candidato(
         int conductor,
@@ -36,8 +40,11 @@ internal static class Escenario
     {
         var conductorId = Id(conductor);
         return new Candidato(
-            new Conductor(conductorId, $"LIC-{conductor}", vencimientoLicencia ?? FechaVigente, estadoConductor, ultimaAsignacion),
-            new Vehiculo(Id(100 + conductor), $"ABC{conductor:D3}", capacidad, FechaVigente, vencimientoSoat ?? FechaVigente, vehiculoActivo),
+            new Conductor(conductorId, $"Conductor {conductor}", $"+57300000{conductor:D4}", RolConductor,
+                HoraServicio.AddYears(-1), $"LIC-{conductor}", "C1", vencimientoLicencia ?? FechaVigente,
+                estado: estadoConductor, fechaUltimaAsignacion: ultimaAsignacion),
+            new Vehiculo(Id(100 + conductor), $"ABC{conductor:D3}", "Toyota", "Hiace", capacidad, FechaVigente,
+                vencimientoSoat ?? FechaVigente, vehiculoActivo),
             new Turno(
                 Id(200 + conductor),
                 conductorId,
