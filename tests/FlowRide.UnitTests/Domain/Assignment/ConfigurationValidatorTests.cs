@@ -2,9 +2,9 @@ using FlowRide.Domain.Assignment.Configuration;
 using FlowRide.Domain.Assignment.Rules;
 using FlowRide.Domain.Assignment.Rules.Filtering;
 using FlowRide.Domain.Assignment.Rules.Scoring;
-using static FlowRide.Tests.Domain.Assignment.Escenario;
+using static FlowRide.UnitTests.Domain.Assignment.Escenario;
 
-namespace FlowRide.Tests.Domain.Assignment;
+namespace FlowRide.UnitTests.Domain.Assignment;
 
 public class ConfigurationValidatorTests
 {

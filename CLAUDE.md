@@ -23,7 +23,8 @@ Monolito modular por capas; las dependencias apuntan hacia Domain:
 - `FlowRide.Application` → Domain. Casos de uso y puertos (interfaces).
 - `FlowRide.Infrastructure` → Application. EF Core, Npgsql, implementaciones de puertos.
 - `FlowRide.API` → Application, Infrastructure. Endpoints HTTP y composición (DI).
-- `tests/FlowRide.Tests` → Domain, Application.
+- Módulos = primer namespace dentro de cada capa (p. ej. `FlowRide.API.Plataforma`); sin ciclos entre módulos.
+- Tests: `tests/FlowRide.UnitTests` (Domain + Application, con gate de cobertura), `tests/FlowRide.ArchitectureTests` (ArchUnitNET: capas y ciclos), `tests/FlowRide.IntegrationTests` (Testcontainers, `[Trait("Category","Integration")]`).
 
 ## RF-10
 El sistema asigna automáticamente un conductor y un vehículo a cada solicitud pendiente, aplicando las reglas configurables del tenant.
@@ -47,10 +48,21 @@ Transacciones PostgreSQL, concurrencia optimista con token de versión, restricc
 - async/await de punta a punta.
 - Sin secretos en `appsettings.json` ni en el código (usar user-secrets / variables de entorno; `.env` no se versiona).
 
+## Flujo de trabajo (ADR-0018)
+- Una rama `feature/RF-XX-…` por fase → PR hacia `develop`. Conventional Commits con el módulo como scope.
+- Al cerrar cada fase: actualizar `docs/ROADMAP-V1.md`, entregar RF funcionales, cómo probarlos, tests y commit, y **esperar el OK** antes de seguir.
+
 ## Comandos
-- Compilar: `dotnet build`
-- Tests: `dotnet test`
-- BD local: `cp .env.example .env` y luego `docker compose up -d`
+- Compilar: `dotnet build` (sin advertencias)
+- Formato: `dotnet format FlowRide.slnx --verify-no-changes`
+- Unit + cobertura: `dotnet test tests/FlowRide.UnitTests -p:CollectCoverage=true` (≥ 80 % líneas, ≥ 70 % ramas)
+- Arquitectura: `dotnet test tests/FlowRide.ArchitectureTests`
+- Integración (requiere Docker): `dotnet test tests/FlowRide.IntegrationTests`
+- BD local: `cp .env.example .env`, definir contraseñas y `docker compose up -d`. PostgreSQL queda en el **puerto 5433** del host (5432 lo ocupa un PostgreSQL local), con las bases `flowride_catalogo`, `flowride_tenant_a` y `flowride_tenant_b`, cada una con su propio rol.
+- API local: el `TenantId` está en `appsettings.Development.json`; la cadena de conexión es un secreto:
+  `dotnet user-secrets set "ConnectionStrings:Silo" "Host=localhost;Port=5433;Database=flowride_tenant_a;Username=flowride_tenant_a;Password=<de .env>" --project src/FlowRide.API`
+  y luego `dotnet run --project src/FlowRide.API` (http://localhost:5237; pruebas en `src/FlowRide.API/FlowRide.API.http`).
+- En PowerShell, si `docker` no se encuentra, recargar el PATH o abrir una terminal nueva.
 
 ## Alcance
 Todo lo definido en los ADR debe funcionar, **excepto**:
