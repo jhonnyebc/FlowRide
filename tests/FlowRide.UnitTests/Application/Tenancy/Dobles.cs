@@ -103,3 +103,17 @@ internal sealed class RelojFijo(DateTimeOffset ahora) : TimeProvider
 {
     public override DateTimeOffset GetUtcNow() => ahora;
 }
+
+internal sealed class IdentidadEnMemoria : IServidorIdentidad
+{
+    public Dictionary<string, (string TenantId, string Secreto)> Realms { get; } = new(StringComparer.Ordinal);
+    public bool Falla { get; set; }
+
+    public Task AsegurarRealmAsync(string nombreRealm, string tenantId, string secretoClienteServicio, CancellationToken ct)
+    {
+        if (Falla)
+            throw new InvalidOperationException("Keycloak no responde.");
+        Realms[nombreRealm] = (tenantId, secretoClienteServicio);
+        return Task.CompletedTask;
+    }
+}

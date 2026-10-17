@@ -27,6 +27,26 @@ public class ArranqueTests(PostgresFixture postgres)
         Assert.Contains("FlowRide:TenantId", ExcepcionMasInterna(error).Message);
     }
 
+    [Fact]
+    public async Task SinSecretoDelClienteDeIdentidad_ElArranqueFalla()
+    {
+        await using var api = new FlowRideApiFactory(postgres.CadenaConexion) { SecretoCliente = null };
+
+        var error = Assert.ThrowsAny<Exception>(() => api.CreateClient());
+
+        Assert.Contains("FlowRide:Identidad:SecretoCliente", ExcepcionMasInterna(error).Message);
+    }
+
+    [Fact]
+    public async Task SinUrlDeKeycloak_ElArranqueFalla()
+    {
+        await using var api = new FlowRideApiFactory(postgres.CadenaConexion) { UrlKeycloak = null };
+
+        var error = Assert.ThrowsAny<Exception>(() => api.CreateClient());
+
+        Assert.Contains("FlowRide:Identidad:UrlKeycloak", ExcepcionMasInterna(error).Message);
+    }
+
     [Theory]
     [InlineData("Tenant A")]
     [InlineData("TENANT-A")]

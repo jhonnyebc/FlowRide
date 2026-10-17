@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 // Secretos requeridos (user-secrets de este proyecto o variables de entorno, ADR-0014):
 //   ConnectionStrings:Catalogo                → rol del catálogo de plataforma
 //   ConnectionStrings:AdministracionServidor  → rol con permiso para crear roles y bases
+//   FlowRide:Keycloak:Administrador:Usuario / :Contrasena → administrador de Keycloak de la plataforma
 
 if (!Comando.TryParse(args, out var comando, out var errorUso))
 {
@@ -25,6 +26,8 @@ if (comando.Nombre == Comando.AyudaNombre)
 }
 
 var configuracion = new ConfigurationBuilder()
+    // Configuración no secreta (URL de Keycloak, SMTP de los realms). Los secretos, abajo.
+    .AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"), optional: true)
     .AddUserSecrets<Comando>(optional: true)
     .AddEnvironmentVariables()
     .Build();
@@ -38,7 +41,10 @@ Console.CancelKeyPress += (_, evento) =>
 
 try
 {
-    await using var servicios = new ServiceCollection().AddAprovisionamiento(configuracion).BuildServiceProvider();
+    await using var servicios = new ServiceCollection()
+        .AddAprovisionamiento(configuracion)
+        .AddSingleton(new FabricaStackOperador(configuracion))
+        .BuildServiceProvider();
     await using var alcance = servicios.CreateAsyncScope();
 
     // El catálogo es de la plataforma: se deja al día antes de cualquier comando (idempotente).
@@ -52,7 +58,8 @@ catch (OperationCanceledException)
     return 130;
 }
 catch (Exception ex) when (ex is FlowRide.Domain.Transversal.FlowRideExcepcion or InvalidOperationException
-                               or ArgumentException or DbUpdateException or Npgsql.NpgsqlException)
+                               or ArgumentException or DbUpdateException or Npgsql.NpgsqlException
+                               or HttpRequestException)
 {
     // Sin trazas ni cadenas de conexión en la salida: solo el motivo (ADR-0011).
     Console.Error.WriteLine($"Error: {ex.Message}");

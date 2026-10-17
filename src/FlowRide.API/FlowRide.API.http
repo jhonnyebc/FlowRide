@@ -1,5 +1,5 @@
-# Pruebas manuales de la Fase 0 (base ejecutable).
-# Requisitos: `docker compose up -d` y el secreto ConnectionStrings:Silo en user-secrets (ver CLAUDE.md).
+# Pruebas manuales de la API del stack de un operador.
+# Requisitos: `docker compose up -d` y el operador aprovisionado con la herramienta (ver CLAUDE.md).
 @FlowRide.API_HostAddress = http://localhost:5237
 
 ### RF-53 — Liveness: el proceso responde (no consulta la base)
@@ -13,3 +13,52 @@ GET {{FlowRide.API_HostAddress}}/no-existe
 
 ### Contrato OpenAPI (solo en Development)
 GET {{FlowRide.API_HostAddress}}/openapi/v1.json
+
+# ---------------------------------------------------------------------------------------------------------------
+# Fase 2 — Identidad, usuarios y auditoría (RF-01, RF-02, ADM-SEG-01).
+# Requisitos: `docker compose up -d` (Keycloak en :8080, Mailpit en :8025) y el operador aprovisionado con su
+# primer administrador (ver CLAUDE.md). El token lo emite el realm del operador (flowride-tenant-a) para el cliente
+# flowride-panel; pégalo aquí sin versionarlo.
+@token = pega-aqui-un-token-del-realm
+
+### RF-01 — Sin token: 401
+GET {{FlowRide.API_HostAddress}}/api/usuarios
+
+### Perfil del usuario autenticado (Administrador u Operador logístico)
+GET {{FlowRide.API_HostAddress}}/api/usuarios/yo
+Authorization: Bearer {{token}}
+
+### RF-02 — Listar usuarios (solo Administrador); filtro opcional por rol
+GET {{FlowRide.API_HostAddress}}/api/usuarios?rol=OperadorLogistico
+Authorization: Bearer {{token}}
+
+### RF-02 — Crear un Operador logístico: Keycloak le envía el correo para definir su contraseña (ver Mailpit)
+POST {{FlowRide.API_HostAddress}}/api/usuarios
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Laura Gómez",
+  "correo": "laura@tenant-a.local",
+  "telefonoWhatsApp": "+573000000010",
+  "rol": "OperadorLogistico"
+}
+
+### ADM-SEG-01 — Desactivar: el siguiente request de ese usuario responde 401 aunque su token siga vigente
+POST {{FlowRide.API_HostAddress}}/api/usuarios/00000000-0000-0000-0000-000000000000/desactivar
+Authorization: Bearer {{token}}
+
+### Reactivar
+POST {{FlowRide.API_HostAddress}}/api/usuarios/00000000-0000-0000-0000-000000000000/activar
+Authorization: Bearer {{token}}
+
+### Cambiar el rol (aplica en la siguiente petición)
+PUT {{FlowRide.API_HostAddress}}/api/usuarios/00000000-0000-0000-0000-000000000000/rol
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "rol": "Administrador" }
+
+### ADR-0011 — Verificar la cadena de hashes de la auditoría (solo Administrador)
+GET {{FlowRide.API_HostAddress}}/api/auditoria/verificacion
+Authorization: Bearer {{token}}
