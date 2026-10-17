@@ -11,6 +11,9 @@ internal static class Mapeo
 
     public const string NombreVersion = "Version";
 
+    /// <summary>Largo de las columnas cifradas: prefijo de versión + base64url de IV, contenido (≤ 60) y etiqueta.</summary>
+    public const int LargoCifrado = 200;
+
     /// <summary>
     /// Token de concurrencia optimista (ADR-0007): la columna de sistema <c>xmin</c> de PostgreSQL.
     /// No aparece en el dominio; vive como propiedad sombra.

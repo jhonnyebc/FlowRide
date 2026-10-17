@@ -750,8 +750,8 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
 
                     b.Property<string>("TelefonoWhatsApp")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("telefono_whats_app");
 
                     b.Property<uint>("Version")
@@ -889,6 +889,49 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                     b.ToTable("viaje", "ops");
                 });
 
+            modelBuilder.Entity("FlowRide.Domain.Parametros.Parametro", b =>
+                {
+                    b.Property<string>("Clave")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("clave");
+
+                    b.Property<DateTimeOffset>("ModificadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modificado_en");
+
+                    b.Property<Guid?>("ModificadoPorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modificado_por_id");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("tipo");
+
+                    b.Property<string>("Valor")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("valor");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Clave")
+                        .HasName("pk_parametro");
+
+                    b.HasIndex("ModificadoPorId")
+                        .HasDatabaseName("ix_parametro_modificado_por_id");
+
+                    b.ToTable("parametro", "ops", t =>
+                        {
+                            t.HasCheckConstraint("ck_parametro_version", "version > 0");
+                        });
+                });
+
             modelBuilder.Entity("FlowRide.Domain.Entidades.Conductor", b =>
                 {
                     b.HasBaseType("FlowRide.Domain.Entidades.Usuario");
@@ -911,8 +954,8 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
 
                     b.Property<string>("NumeroLicencia")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("numero_licencia");
 
                     b.Property<DateOnly>("VencimientoLicencia")
@@ -1133,6 +1176,15 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_viaje_asignacion_asignacion_id");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Parametros.Parametro", b =>
+                {
+                    b.HasOne("FlowRide.Domain.Entidades.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("ModificadoPorId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_parametro_usuario_modificado_por_id");
                 });
 
             modelBuilder.Entity("FlowRide.Domain.Entidades.Conductor", b =>

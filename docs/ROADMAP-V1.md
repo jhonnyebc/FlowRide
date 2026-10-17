@@ -17,8 +17,8 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | — | Modelo de dominio completo (diagrama de clases, sin telemetría) | Todos | — | ✅ PR #3 fusionado |
 | 0 | Base ejecutable | Plataforma | 0010, 0011, 0014, 0017, 0018 | ✅ PR #2 fusionado |
 | 1 | Tenancy y persistencia Silo | Tenancy, Persistencia | 0002, 0004, 0010, 0014 | ✅ PR #4 fusionada |
-| 2 | Identidad, usuarios y auditoría | Identidad, Auditoria | 0003, 0011 | ✅ rama `feature/RF-02-identidad-auditoria` (pendiente de PR) |
-| 3 | Recursos operativos y parámetros | Operacion | 0006, 0013, 0014, 0016 | ⬜ |
+| 2 | Identidad, usuarios y auditoría | Identidad, Auditoria | 0003, 0011 | ✅ PR #5 fusionada |
+| 3 | Recursos operativos y parámetros | Operacion, Parametros | 0006, 0013, 0014, 0016 | ✅ rama `feature/RF-04-recursos-parametros` (pendiente de PR) |
 | 4 | Solicitudes e itinerarios | Solicitudes | 0001, 0004, 0007 | ⬜ |
 | 5 | Asignación de punta a punta | Asignacion | 0007, 0009, 0016 | ⬜ |
 | 6 | Viajes y calificación | Viajes, Calificacion | 0007, 0011 | ⬜ |
@@ -66,9 +66,14 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 - RF cubiertos: RF-01, RF-02; RF-23 parcial (el realm permite recuperar la contraseña y envía correos; el flujo se prueba con la pantalla de inicio de sesión del Panel Web, Fase 11).
 
 ### Fase 3 — Recursos operativos y parámetros
-- [ ] Conductores, vehículos y turnos. Cifrado de campo para documento y teléfono (ADR-0014).
-- [ ] Documentos del conductor en almacenamiento de objetos (Azurite en local, ADR-0013).
-- [ ] `ops.parametros` versionado, con caché de TTL máximo de 60 s (ADR-0006, ADR-0016).
+- [x] Empresas cliente, pasajeros, conductores (estado operativo Activo/Suspendido/Inactivo), turnos sin solaparse y vehículos (con conductor habitual), con sus endpoints bajo `/api` y auditoría de cada alta o cambio. Consultan Administrador y Operador logístico; administra el Administrador (los turnos, también el Operador logístico).
+- [x] RF-07: conductores disponibles en una franja según lo programado (activo, licencia vigente, turno que la cubre y sin asignación vigente solapada; sin GPS).
+- [x] RF-38/RF-41: listados con búsqueda (nombre, o valor exacto de teléfono, licencia, NIT o código) y filtros (estado, activo, empresa), paginados (máx. 200).
+- [x] Cifrado de campo (ADR-0014) del teléfono de todos los usuarios y de la licencia del conductor (en Colombia, la cédula): AES-256-GCM determinista con la clave propia del operador, versionada; la CLI la crea al aprovisionar y cifra los datos anteriores (`RecifradorCamposSilo`).
+- [x] Documentos del conductor (ADR-0013) en el bucket privado del operador (Azurite en docker-compose), PDF/PNG/JPG ≤ 5 MB con verificación de la firma del archivo, descarga por URL firmada de 15 min y borrado al eliminarlos. La CLI crea el bucket al aprovisionar.
+- [x] Parámetros (ADR-0016) en `ops.parametro`: catálogo en código con tipo, rango y valor por defecto; cada cambio sube la versión (también token de concurrencia) y se audita; caché local con TTL ≤ 60 s invalidada tras confirmar (ADR-0006).
+- Pruebas: 293 unitarias (95,3 % líneas / 87,7 % ramas), 16 de arquitectura, 92 de integración (Azurite real: subida, URL firmada y borrado; cifrado verificado en la base; otra réplica ve el cambio de parámetro al vencer su caché).
+- RF cubiertos: RF-04, RF-05 (pasajeros y conductores), RF-07, RF-26, RF-27, RF-28, RF-41; RF-38 parcial (las asignaciones se consultan desde la Fase 5).
 
 ### Fase 4 — Solicitudes e itinerarios
 - [ ] `SolicitudViaje` completa con `EstadoSolicitudHistorial`; CQRS ligero para consultas.
@@ -115,10 +120,10 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-01 | Autenticación basada en token | 2 | ✅ |
 | RF-02 | Autorización basada en roles | 2 | ✅ |
 | RF-03 | Registro de operador como tenant | 1 | ✅ CLI `crear-operador` |
-| RF-04 | Configuración inicial del tenant | 3 | ⬜ |
-| RF-05 | Creación de usuarios por tenant | 2 | ⬜ |
-| RF-06 | Asignación de roles a usuarios | 2 | ⬜ |
-| RF-07 | Consulta de disponibilidad de conductores | 3 | ⬜ |
+| RF-04 | Configuración inicial del tenant | 3 | ✅ |
+| RF-05 | Creación de usuarios por tenant | 2-3 | ✅ panel (Fase 2), pasajeros y conductores (Fase 3) |
+| RF-06 | Asignación de roles a usuarios | 2 | ✅ roles del panel; pasajero y conductor reciben su rol al registrarse |
+| RF-07 | Consulta de disponibilidad de conductores | 3 | ✅ |
 | RF-08 | Registro de itinerarios | 4 | ⬜ |
 | RF-09 | Recepción de solicitudes de transporte | 4 | ⬜ |
 | RF-10 | Asignación automática de conductores | 5 | 🟡 motor listo, falta el caso de uso |
@@ -137,9 +142,9 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-23 | Recuperación de credenciales | 2 | 🟡 |
 | RF-24 | Actualización de información de usuarios | 2 | ⬜ |
 | RF-25 | Activación e inactivación de usuarios | 2 | ⬜ |
-| RF-26 | Registro de conductores | 3 | ⬜ |
-| RF-27 | Actualización de datos de conductores | 3 | ⬜ |
-| RF-28 | Activación e inactivación de conductores | 3 | ⬜ |
+| RF-26 | Registro de conductores | 3 | ✅ |
+| RF-27 | Actualización de datos de conductores | 3 | ✅ |
+| RF-28 | Activación e inactivación de conductores | 3 | ✅ |
 | RF-29 | Validación de datos mínimos de solicitud | 4 | ⬜ |
 | RF-30 | Consulta del estado de solicitudes | 4 | ⬜ |
 | RF-31 | Historial de solicitudes y viajes | 4 | ⬜ |
@@ -149,10 +154,10 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-35 | Recordatorios automáticos | 8 | ⬜ |
 | RF-36 | Vista centralizada de solicitudes y viajes | 9 | ⬜ |
 | RF-37 | Monitoreo de servicios en curso | 6 | ⬜ |
-| RF-38 | Consulta de usuarios, conductores y asignaciones | 3 | ⬜ |
+| RF-38 | Consulta de usuarios, conductores y asignaciones | 3 | 🟡 usuarios, conductores, pasajeros y vehículos; asignaciones en la Fase 5 |
 | RF-39 | Intervención manual en la operación | 5 | ⬜ |
 | RF-40 | Trazabilidad de cada viaje | 6 | ⬜ |
-| RF-41 | Búsqueda y filtrado | 3 | ⬜ |
+| RF-41 | Búsqueda y filtrado | 3 | ✅ |
 | RF-42 | Indicadores básicos | 9 | ⬜ |
 | RF-43 | Notificación de cambios de estado | 8 | ⬜ |
 | RF-44 | Notificación de reasignación o novedades | 8 | ⬜ |
@@ -183,3 +188,6 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 2026-10-17 | Fase 2 (decisiones del usuario): FlowRide crea las cuentas del Panel Web en Keycloak (Admin API); la CLI crea el realm y el primer Administrador al aprovisionar; la contraseña la define el usuario con el correo de Keycloak (Mailpit en local); la revocación se cumple consultando el estado interno en cada petición, sin caché. |
 | 2026-10-17 | La API gestiona las cuentas con un cliente de servicio por realm (`flowride-api`, secreto en el almacén del operador), nunca con el administrador de Keycloak de la plataforma, que solo usa la CLI. En local, Keycloak corre en modo desarrollo con su almacenamiento en un volumen; su base propia llega con el despliegue (Fase 12). |
 | 2026-10-17 | Los cuatro roles son fijos (`RolesSistema`, Id sembrados por migración). La auditoría guarda solo rol y estado como valores antes/después (sin datos personales, ADR-0013). |
+| 2026-10-17 | Fase 3 (decisiones del usuario): cifrado determinista del teléfono y la licencia (permite índice único y búsqueda exacta); empresas cliente y pasajeros entran en la Fase 3; parámetros por defecto: recordatorio 60 min, ventana de cancelación 30 min, franjas críticas vacías, solicitudes personales visibles para el pasajero y el Operador logístico; documentos subidos por la API (PDF/PNG/JPG ≤ 5 MB). |
+| 2026-10-17 | En Operación, un puerto de entrada por recurso (con varias operaciones) en lugar de uno por acción, para no multiplicar archivos; se mantiene la regla `XAdaptadorEntrada` → `IXPuertoEntrada`. |
+| 2026-10-17 | En local, todos los buckets comparten la cuenta de desarrollo de Azurite; en Azure la credencial de cada operador debe limitarse a su contenedor (Fase 12). |

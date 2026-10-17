@@ -50,6 +50,13 @@ Las pruebas de `EstiloHexagonalTests` hacen cumplir los puntos 1, 2, 3 y 5.
 - Políticas: `Administrador` (gestión de usuarios y auditoría) y `PanelWeb` (Administrador u Operador logístico).
 - Auditoría en `audit.evento_auditoria`: solo INSERT (trigger), cadena SHA-256, sin datos personales en los valores; `GET /api/auditoria/verificacion` la comprueba.
 
+## Recursos operativos, parámetros y cifrado (Fase 3)
+- Módulos `Operacion` (empresas cliente, pasajeros, conductores, turnos, documentos, vehículos, disponibilidad) y `Parametros`. En Operación hay un puerto de entrada por recurso (`I<Recurso>PuertoEntrada`) con varias operaciones; la API los registra con `AddOperacion` (requiere `AddIdentidad`).
+- Cifrado de campos (ADR-0014): `CifradorCampos` (AES-256-GCM determinista, IV por HMAC, claves derivadas con HKDF de la clave maestra del operador `FlowRide:Cifrado:Claves:v<N>` + `FlowRide:Cifrado:Vigente`). Lo aplica EF con conversiones sobre `Usuario.TelefonoWhatsApp` y `Conductor.NumeroLicencia`; las búsquedas por valor exacto siguen funcionando. Un modelo de EF por cifrador (`ModeloPorCifrador`). Si se agrega un campo cifrado: conversión en `FlowRideDbContext` + columna en `RecifradorCamposSilo.Campos`.
+- Documentos (ADR-0013): `IAlmacenObjetos` sobre Azure Blob (Azurite en local), bucket `flowride-<tenant>`, prefijo `documents/`, URL firmada ≤ 15 min; el adaptador de entrada valida tipo, tamaño (≤ 5 MB) y firma del archivo.
+- Parámetros (ADR-0016): catálogo en código (`CatalogoParametros`), `ops.parametro` solo guarda los cambiados (versión = token de concurrencia), caché `IMemoryCache` con TTL ≤ 60 s (`FlowRide:Cache:TtlParametrosSegundos`) invalidada tras confirmar.
+- Pruebas: cada prueba que reaprovisiona un operador usa un tenant propio (un entorno nuevo genera una clave de cifrado nueva).
+
 ## RF-10
 El sistema asigna automáticamente un conductor y un vehículo a cada solicitud pendiente, aplicando las reglas configurables del tenant.
 
@@ -83,12 +90,12 @@ Transacciones PostgreSQL, concurrencia optimista con token de versión, restricc
 - Arquitectura: `dotnet test tests/FlowRide.ArchitectureTests`
 - Integración (requiere Docker): `dotnet test tests/FlowRide.IntegrationTests`
 - Herramientas locales: `dotnet tool restore` (instala `dotnet-ef` desde `dotnet-tools.json`).
-- Entorno local: `cp .env.example .env`, definir contraseñas y `docker compose up -d`. PostgreSQL queda en el **puerto 5433** del host (5432 lo ocupa un PostgreSQL local), Keycloak en **8080** (consola: usuario `KEYCLOAK_ADMIN_USER`) y Mailpit en **8025** (ahí llegan los correos de Keycloak). Al iniciar el volumen solo se crea el catálogo (`flowride_catalogo`); los Silos y los realms los crea la herramienta.
+- Entorno local: `cp .env.example .env`, definir contraseñas y `docker compose up -d`. PostgreSQL queda en el **puerto 5433** del host (5432 lo ocupa un PostgreSQL local), Keycloak en **8080** (consola: usuario `KEYCLOAK_ADMIN_USER`), Mailpit en **8025** (ahí llegan los correos de Keycloak) y Azurite en **10000** (documentos; cuenta de desarrollo `UseDevelopmentStorage=true`). Al iniciar el volumen solo se crea el catálogo (`flowride_catalogo`); los Silos y los realms los crea la herramienta.
 - Herramienta de aprovisionamiento (secretos de plataforma una sola vez, con los valores de `.env`):
   `dotnet user-secrets set "ConnectionStrings:Catalogo" "Host=localhost;Port=5433;Database=flowride_catalogo;Username=flowride_catalogo;Password=<CATALOGO_DB_PASSWORD>" --project src/FlowRide.Aprovisionamiento`
   `dotnet user-secrets set "ConnectionStrings:AdministracionServidor" "Host=localhost;Port=5433;Database=postgres;Username=<POSTGRES_USER>;Password=<POSTGRES_PASSWORD>" --project src/FlowRide.Aprovisionamiento`
   `dotnet user-secrets set "FlowRide:Keycloak:Administrador:Usuario" "<KEYCLOAK_ADMIN_USER>" --project src/FlowRide.Aprovisionamiento` (y `...:Contrasena` con `<KEYCLOAK_ADMIN_PASSWORD>`)
-  y luego `dotnet run --project src/FlowRide.Aprovisionamiento -- crear-operador --id tenant-a --razon-social "..." --nit ... --correo ... --admin-nombre "..." --admin-correo ... --admin-telefono ...` (también `migrar --id`, `migrar-todos`, `listar`, `ayuda`). Es idempotente. La URL de Keycloak y el SMTP de los realms están en `src/FlowRide.Aprovisionamiento/appsettings.json`.
+  y luego `dotnet run --project src/FlowRide.Aprovisionamiento -- crear-operador --id tenant-a --razon-social "..." --nit ... --correo ... --admin-nombre "..." --admin-correo ... --admin-telefono ...` (también `migrar --id`, `migrar-todos`, `listar`, `ayuda`). Es idempotente: además crea la clave de cifrado y el bucket del operador y deja cifrados sus campos sensibles. La URL de Keycloak, el SMTP de los realms y la cuenta de Azurite están en `src/FlowRide.Aprovisionamiento/appsettings.json`.
 - API local: el `TenantId` y la URL de Keycloak están en `appsettings.Development.json`; en Development la API lee su cadena de conexión y el secreto de su cliente de servicio del almacén del operador que creó la herramienta (`%APPDATA%\Microsoft\UserSecrets\flowride-<tenant>\secrets.json`). `dotnet run --project src/FlowRide.API` (http://localhost:5237; pruebas en `src/FlowRide.API/FlowRide.API.http`). Las variables de entorno y la línea de comandos siguen pudiendo sobrescribirla.
 - Primer inicio de sesión: abrir el correo "Actualiza tu cuenta" en Mailpit (http://localhost:8025), seguir el enlace y definir la contraseña.
 - En PowerShell, si `docker` no se encuentra, recargar el PATH o abrir una terminal nueva.

@@ -6,6 +6,7 @@ public sealed record AprovisionarOperadorRespuesta(
     string NombreSilo,
     string AmbitoSecretos,
     string NombreRealm,
+    string NombreBucket,
     bool OperadorNuevo,
     bool ContrasenaNueva,
     IReadOnlyList<string> MigracionesAplicadas,

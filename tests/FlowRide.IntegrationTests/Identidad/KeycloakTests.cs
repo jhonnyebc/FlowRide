@@ -46,7 +46,7 @@ public class KeycloakTests(PostgresFixture postgres, KeycloakFixture keycloak) :
         new(await _entorno.CadenaDelSiloAsync(tenant), tenant)
         {
             UrlKeycloak = keycloak.UrlBase,
-            SecretoCliente = await _entorno.Secretos.ObtenerAsync($"flowride-{tenant}", ClavesSecretos.SecretoClienteIdentidad, CancellationToken.None)
+            Ajustes = await _entorno.AjustesDelStackAsync(tenant)
         };
 
     private static HttpClient Cliente(FlowRideApiFactory api, string token)

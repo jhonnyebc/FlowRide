@@ -62,3 +62,84 @@ Content-Type: application/json
 ### ADR-0011 — Verificar la cadena de hashes de la auditoría (solo Administrador)
 GET {{FlowRide.API_HostAddress}}/api/auditoria/verificacion
 Authorization: Bearer {{token}}
+
+# ---------------------------------------------------------------------------------------------------------------
+# Fase 3 — Recursos operativos y parámetros (RF-04, RF-05, RF-07, RF-26 a RF-28, RF-38, RF-41).
+# Consultas: Administrador u Operador logístico. Altas y cambios: Administrador (los turnos, también el Operador).
+
+### Empresa cliente
+POST {{FlowRide.API_HostAddress}}/api/empresas-cliente
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nombre": "Aerolínea del Oriente", "nit": "900555666-7", "correoContacto": "ops@aerolinea.local" }
+
+### Pasajero (usa el id de la empresa)
+POST {{FlowRide.API_HostAddress}}/api/pasajeros
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nombre": "Ana Gómez", "telefonoWhatsApp": "+573001112233", "empresaClienteId": "00000000-0000-0000-0000-000000000000", "codigoInterno": "E-100" }
+
+### RF-26 — Conductor (teléfono y licencia se guardan cifrados)
+POST {{FlowRide.API_HostAddress}}/api/conductores
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nombre": "Luis Pérez", "telefonoWhatsApp": "+573104445566", "numeroLicencia": "79111222", "categoriaLicencia": "C2", "vencimientoLicencia": "2028-12-31" }
+
+### RF-38 / RF-41 — Buscar conductores (por nombre, o licencia/teléfono exactos) y filtrar por estado
+GET {{FlowRide.API_HostAddress}}/api/conductores?texto=luis&estado=Activo&pagina=1&tamanoPagina=20
+Authorization: Bearer {{token}}
+
+### RF-28 — Estado operativo (Activo, Suspendido, Inactivo)
+PUT {{FlowRide.API_HostAddress}}/api/conductores/00000000-0000-0000-0000-000000000000/estado
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "estado": "Suspendido" }
+
+### Turno del conductor
+POST {{FlowRide.API_HostAddress}}/api/conductores/00000000-0000-0000-0000-000000000000/turnos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "inicio": "2026-10-20T06:00:00-05:00", "fin": "2026-10-20T14:00:00-05:00" }
+
+### RF-07 — Conductores disponibles en una franja
+GET {{FlowRide.API_HostAddress}}/api/conductores/disponibles?inicio=2026-10-20T08:00:00-05:00&fin=2026-10-20T09:00:00-05:00
+Authorization: Bearer {{token}}
+
+### Documento del conductor (PDF/PNG/JPG ≤ 5 MB) al bucket del operador
+POST {{FlowRide.API_HostAddress}}/api/conductores/00000000-0000-0000-0000-000000000000/documentos
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=limite
+
+--limite
+Content-Disposition: form-data; name="tipo"
+
+Licencia
+--limite
+Content-Disposition: form-data; name="archivo"; filename="licencia.pdf"
+Content-Type: application/pdf
+
+< ./licencia.pdf
+--limite--
+
+### Vehículo
+POST {{FlowRide.API_HostAddress}}/api/vehiculos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "placa": "ABC123", "marca": "Toyota", "modelo": "Hiace", "capacidad": 12, "vencimientoRtm": "2027-06-30", "vencimientoSoat": "2027-03-31" }
+
+### ADR-0016 — Parámetros del operador (valor por defecto = versión 0)
+GET {{FlowRide.API_HostAddress}}/api/parametros
+Authorization: Bearer {{token}}
+
+### Cambiar un parámetro (solo Administrador; sube la versión y se audita)
+PUT {{FlowRide.API_HostAddress}}/api/parametros/solicitud.ventana_cancelacion_minutos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "valor": 45 }

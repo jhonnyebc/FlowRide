@@ -5,17 +5,18 @@
 > Última actualización: 2026-10-17.
 
 ## Estado actual
-- **Rama de trabajo:** `feature/RF-02-identidad-auditoria` (Fase 2 completa, todos los gates en verde), **sin commit
+- **Rama de trabajo:** `feature/RF-04-recursos-parametros` (Fase 3 completa, todos los gates en verde), **sin commit
   todavía**, pendiente del OK del usuario para el commit y el PR hacia `develop`.
-- **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3) y
-  Fase 1 Tenancy/Silo con el estilo del profesor (PR #4).
-- **Fase actual:** Fase 2 (Identidad, usuarios y auditoría) terminada en la rama; la siguiente es la Fase 3 (Recursos
-  operativos y parámetros).
-- **Tests:** 235 unitarios (95,4 % líneas / 92,7 % ramas en Domain + Application), 16 de arquitectura, 78 de integración
-  (incluye Keycloak y Mailpit reales con Testcontainers).
-- **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080) y Mailpit (8025).
-  `tenant-a` y `tenant-b` tienen Silo, realm `flowride-<tenant>` y primer administrador (`admin@tenant-a.local`,
-  `admin@tenant-b.local`, datos de prueba) con su correo "Actualiza tu cuenta" en Mailpit, todavía sin contraseña. La
+- **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
+  Fase 1 Tenancy/Silo (PR #4) y Fase 2 Identidad y auditoría (PR #5).
+- **Fase actual:** Fase 3 (Recursos operativos y parámetros) terminada en la rama; la siguiente es la Fase 4
+  (Solicitudes e itinerarios).
+- **Tests:** 293 unitarios (95,3 % líneas / 87,7 % ramas en Domain + Application), 16 de arquitectura, 92 de integración
+  (Keycloak, Mailpit y Azurite reales con Testcontainers).
+- **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
+  Azurite (10000). `tenant-a` y `tenant-b` tienen Silo (migración `ParametrosYCamposCifrados` aplicada), realm, bucket
+  `flowride-<tenant>`, clave de cifrado y primer administrador (`admin@tenant-a.local`, `admin@tenant-b.local`, datos de
+  prueba, todavía sin contraseña: correo "Actualiza tu cuenta" en Mailpit). Sus teléfonos ya están cifrados (`v1.`). La
   API arranca como `tenant-a`: `/health/ready` 200 y `/api/*` 401 sin token.
 
 ## Contexto de trabajo
@@ -109,6 +110,14 @@
 - **Keycloak en pruebas:** contenedor genérico con su puerto de gestión 9000 (`/health/ready`) y Mailpit en la misma red
   de Testcontainers (alias `mailpit`); para obtener tokens sin navegador se habilita el flujo de contraseña directa en el
   cliente del panel solo dentro de la prueba.
+- **Reaprovisionar con un almacén de secretos nuevo genera una clave de cifrado nueva**: los datos cifrados con la clave
+  anterior quedan ilegibles (`AuthenticationTagMismatchException`). En pruebas, un tenant por prueba; en operación, el
+  almacén del operador nunca se pierde (Key Vault).
+- **EF Core y conversiones con estado:** el modelo se cachea por tipo de contexto; con un convertidor que captura una
+  clave hay que cachearlo por cifrador (`IModelCacheKeyFactory`), o dos operadores en el mismo proceso compartirían clave.
+- **`sed` con `xargs` sobre `grep -rl` incluye binarios** (`bin/`, `obj/`): limitar con `--include=*.cs` o hacer
+  `dotnet clean` después.
+- **Minimal APIs y `IFormFile`:** exigen antiforgery; con autenticación solo por bearer se desactiva por endpoint.
 
 ## Bitácora de sesiones
 | Fecha | Qué se hizo |
@@ -117,6 +126,7 @@
 | 2026-10-14 | Modelo de dominio completo según el diagrama de clases (17 entidades) con 51 pruebas nuevas. Creada esta memoria. PR #3 fusionado (se usó "Update branch" porque la protección exige la rama al día con `develop`). |
 | 2026-10-16 | Fase 1 completa en `feature/RF-03-tenancy-silo`: catálogo de plataforma, `FlowRideDbContext` con las 17 entidades y migración inicial, caso de uso `AprovisionarOperador` + `MigrarSilos`, CLI de aprovisionamiento, almacén local de secretos por operador, Spike 3 superado. 30 pruebas unitarias, 34 de integración y 1 regla de arquitectura nuevas. Probado de punta a punta en el entorno local del usuario. |
 | 2026-10-17 | Fase 2 completa en `feature/RF-02-identidad-auditoria`: Keycloak con un realm por operador desde una plantilla versionada, primer administrador desde la CLI con correo de contraseña (Mailpit), autenticación OIDC + `tenant_id` + usuario interno por petición, RBAC, revocación inmediata y auditoría con cadena de hashes. 235 + 16 + 78 pruebas en verde. |
+| 2026-10-17 | Fase 3 completa en `feature/RF-04-recursos-parametros`: empresas cliente, pasajeros, conductores, turnos, documentos (Azurite), vehículos, disponibilidad (RF-07), búsqueda paginada, parámetros versionados con caché ≤ 60 s y cifrado determinista de teléfono y licencia. 293 + 16 + 92 pruebas en verde. |
 
 ## Sesión 2026-10-16 (continuación): estilo del profesor
 - `Viaje.EtaProgramada` **eliminada** (decisión del usuario) + migración `QuitarEtaProgramada`, ya aplicada a tenant-a/b locales.
@@ -149,13 +159,30 @@
   imprimirla). tenant-a y tenant-b reaprovisionados con realm y primer administrador; el catálogo quedó con correos de
   contacto `contacto@tenant-x.local`.
 - Gates al cierre: build sin advertencias, formato OK, 235 unitarias (95,4 % / 92,7 %), 16 arquitectura, 78 integración.
+- Commit `dfe049a` → PR #5 fusionada en `develop` el 2026-10-17 con el CI en verde. **Fase 2 cerrada.**
+
+## Sesión 2026-10-17 (continuación): Fase 3 (Recursos operativos y parámetros)
+- Rama `feature/RF-04-recursos-parametros`. Decisiones del usuario en el roadmap (2026-10-17): cifrado determinista de
+  teléfono y licencia, empresas cliente y pasajeros incluidos, parámetros por defecto (60/30/sin franjas/pasajero y
+  Operador logístico), documentos por la API (PDF/PNG/JPG ≤ 5 MB).
+- Dominio: `Paginacion`, `Domain/Operacion` (repositorios, servicios `EmpresaClienteDominio`, `PasajeroDominio`,
+  `ConductorDominio` con `FiltrarDisponibles`, `VehiculoDominio`; datos por caso de uso), `Domain/Parametros`
+  (`CatalogoParametros`, `DefinicionParametro`, `Parametro`). `Conductor.QuitarDocumento`.
+- Aplicación: casos de uso de empresas, pasajeros, conductores (turnos, disponibilidad, documentos), vehículos,
+  parámetros y `AsegurarCifrado`; un puerto de entrada por recurso. Pipeline de aprovisionamiento con clave de cifrado y
+  bucket.
+- Infraestructura: `CifradorCampos` + `ModeloPorCifrador` + `RecifradorCamposSilo`, repositorios de Operación,
+  `ParametroRepositorioAdaptador` (cache-aside), `AlmacenObjetosAzureBlob`/`ServidorObjetosAzureBlob`, migración
+  `ParametrosYCamposCifrados`. Azurite en docker-compose; la CLI lee `ConnectionStrings:ServidorObjetos` de su
+  appsettings (`UseDevelopmentStorage=true`, no es secreto).
+- Gates al cierre: build sin advertencias, formato OK, 293 unitarias (95,3 % / 87,7 %), 16 arquitectura, 92 integración.
 - **Pendiente:** OK del usuario para commit + PR.
 
 ## Próximos pasos
-1. **Esperar el OK del usuario** sobre la Fase 2; luego commit (`feat(identidad): …`) y PR de
-   `feature/RF-02-identidad-auditoria` hacia `develop`, con el CI en verde (el CI descargará las imágenes de Keycloak y
-   Mailpit para las pruebas de integración).
-2. Fase 3 (Recursos operativos y parámetros): conductores, vehículos, turnos, empresas cliente, itinerarios y
-   `ops.parametro` (catálogos y parámetros, ADR-0016), con auditoría de los cambios usando `IUnidadTrabajo`.
+1. **Esperar el OK del usuario** sobre la Fase 3; luego commit (`feat(operacion): …`) y PR de
+   `feature/RF-04-recursos-parametros` hacia `develop` (el CI descargará también la imagen de Azurite).
+2. Fase 4 (Solicitudes e itinerarios): RF-08, RF-09, RF-29 a RF-32 (`SolicitudViaje` con historial, ventana de
+   cancelación desde `CatalogoParametros`, visibilidad de solicitudes personales).
 3. RF-23: probar "Olvidé mi contraseña" con la pantalla de login cuando exista el Panel Web (Fase 11).
-4. Opcional: SonarCloud (crear el proyecto y el secreto `SONAR_TOKEN`).
+4. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).
+5. Opcional: SonarCloud (crear el proyecto y el secreto `SONAR_TOKEN`).

@@ -1,9 +1,11 @@
+using System.Collections.Concurrent;
 using FlowRide.Application.Tenancy.Entrada.Dto;
 using FlowRide.Application.Tenancy.Entrada.Puertos;
 using FlowRide.Application.Tenancy.Salida.Puertos;
 using FlowRide.Aprovisionamiento;
 using FlowRide.Infrastructure;
 using FlowRide.Infrastructure.Persistencia;
+using FlowRide.Infrastructure.Seguridad;
 using FlowRide.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +23,7 @@ namespace FlowRide.IntegrationTests.Infraestructura;
 public sealed class EntornoAprovisionamiento : IAsyncDisposable
 {
     private readonly ServiceProvider _servicios;
+    private readonly ConcurrentDictionary<string, CifradorCampos> _cifradores = new(StringComparer.Ordinal);
 
     private EntornoAprovisionamiento(ServiceProvider servicios, string raizSecretos, string cadenaAdministracion)
     {
@@ -34,7 +37,9 @@ public sealed class EntornoAprovisionamiento : IAsyncDisposable
     public AlmacenSecretosLocal Secretos => new(RaizSecretos);
 
     /// <param name="keycloak">Keycloak real; sin él, los realms se registran en memoria.</param>
-    public static async Task<EntornoAprovisionamiento> CrearAsync(PostgresFixture postgres, KeycloakFixture? keycloak = null)
+    /// <param name="azurite">Almacenamiento de objetos real; sin él, los buckets se registran en memoria.</param>
+    public static async Task<EntornoAprovisionamiento> CrearAsync(
+        PostgresFixture postgres, KeycloakFixture? keycloak = null, AzuriteFixture? azurite = null)
     {
         // La conexión de Testcontainers es de superusuario: hace de rol administrativo del servidor.
         var administracion = postgres.CadenaConexion;
@@ -49,7 +54,8 @@ public sealed class EntornoAprovisionamiento : IAsyncDisposable
                 ["FlowRide:Identidad:UrlKeycloak"] = keycloak?.UrlBase ?? "http://keycloak.pruebas.invalid",
                 ["FlowRide:Keycloak:Administrador:Usuario"] = keycloak is null ? "admin" : KeycloakFixture.Usuario,
                 ["FlowRide:Keycloak:Administrador:Contrasena"] = keycloak is null ? "admin" : KeycloakFixture.Contrasena,
-                ["FlowRide:Keycloak:Smtp:Host"] = KeycloakFixture.HostMailpit
+                ["FlowRide:Keycloak:Smtp:Host"] = KeycloakFixture.HostMailpit,
+                ["ConnectionStrings:ServidorObjetos"] = azurite?.CadenaConexion ?? "UseDevelopmentStorage=true"
             })
             .Build();
 
@@ -59,6 +65,8 @@ public sealed class EntornoAprovisionamiento : IAsyncDisposable
             .AddSingleton(new FabricaStackOperador(configuracion, raiz));
         if (keycloak is null)
             coleccion.Replace(ServiceDescriptor.Singleton<IServidorIdentidad>(new ServidorIdentidadDePrueba()));
+        if (azurite is null)
+            coleccion.Replace(ServiceDescriptor.Singleton<IServidorObjetos>(new ServidorObjetosDePrueba()));
         var servicios = coleccion.BuildServiceProvider();
 
         await using (var alcance = servicios.CreateAsyncScope())
@@ -86,13 +94,41 @@ public sealed class EntornoAprovisionamiento : IAsyncDisposable
         await Secretos.ObtenerAsync($"flowride-{tenantId}", ClavesSecretos.CadenaConexionSilo, CancellationToken.None)
         ?? throw new InvalidOperationException($"El operador {tenantId} no tiene cadena de conexión guardada.");
 
-    /// <summary>Contexto del Silo abierto con las credenciales del propio operador, como lo abre su stack.</summary>
+    /// <summary>
+    /// Contexto del Silo abierto con las credenciales y la clave de cifrado del propio operador, como lo abre su stack.
+    /// </summary>
     public async Task<SiloAbierto> AbrirSiloAsync(string tenantId)
     {
         var fuente = NpgsqlDataSource.Create(await CadenaDelSiloAsync(tenantId));
         var opciones = new DbContextOptionsBuilder<FlowRideDbContext>();
         FlowRideDbContext.Configurar(opciones, fuente);
-        return new SiloAbierto(new FlowRideDbContext(opciones.Options), fuente);
+        return new SiloAbierto(new FlowRideDbContext(opciones.Options, await CifradorAsync(tenantId)), fuente);
+    }
+
+    /// <summary>Un cifrador por operador (así EF reutiliza su modelo), con la clave de su almacén de secretos.</summary>
+    public async Task<CifradorCampos> CifradorAsync(string tenantId)
+    {
+        if (_cifradores.TryGetValue(tenantId, out var cifrador))
+            return cifrador;
+        var ajustes = await AjustesDelStackAsync(tenantId);
+        return _cifradores.GetOrAdd(tenantId, _ => CifradorCampos.DesdeConfiguracion(
+            new ConfigurationBuilder().AddInMemoryCollection(ajustes).Build()));
+    }
+
+    /// <summary>Secretos que el stack del operador lee de su almacén: para levantar su API en las pruebas.</summary>
+    public async Task<IReadOnlyDictionary<string, string?>> AjustesDelStackAsync(string tenantId)
+    {
+        var ambito = $"flowride-{tenantId}";
+        var ajustes = new Dictionary<string, string?>(StringComparer.Ordinal);
+        foreach (var clave in new[]
+                 {
+                     ClavesSecretos.CadenaConexionSilo, ClavesSecretos.SecretoClienteIdentidad, ClavesSecretos.ClaveCifradoV1,
+                     ClavesSecretos.VersionCifradoVigente, ClavesSecretos.CadenaConexionObjetos
+                 })
+        {
+            ajustes[clave] = await Secretos.ObtenerAsync(ambito, clave, CancellationToken.None);
+        }
+        return ajustes;
     }
 
     public static async Task EjecutarComoAdministradorAsync(string cadenaAdministracion, string sql)
