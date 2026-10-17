@@ -117,3 +117,16 @@ internal sealed class IdentidadEnMemoria : IServidorIdentidad
         return Task.CompletedTask;
     }
 }
+
+internal sealed class ObjetosEnMemoria : IServidorObjetos
+{
+    public HashSet<string> Buckets { get; } = new(StringComparer.Ordinal);
+
+    public Task AsegurarBucketAsync(string nombreBucket, CancellationToken ct)
+    {
+        Buckets.Add(nombreBucket);
+        return Task.CompletedTask;
+    }
+
+    public string CadenaConexion(string nombreBucket) => $"Bucket={nombreBucket}";
+}

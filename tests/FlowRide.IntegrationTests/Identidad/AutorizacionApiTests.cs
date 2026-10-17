@@ -22,7 +22,8 @@ namespace FlowRide.IntegrationTests.Identidad;
 [Collection(ColeccionPostgres.Nombre)]
 public class AutorizacionApiTests(PostgresFixture postgres) : IAsyncLifetime
 {
-    private const string Tenant = "api-identidad";
+    // Un Silo por prueba: cada entorno genera secretos nuevos (también la clave de cifrado del operador).
+    private readonly string Tenant = $"api-{Guid.NewGuid():N}"[..14];
     private static readonly DateTimeOffset Ahora = new(2026, 10, 17, 8, 0, 0, TimeSpan.Zero);
 
     private EntornoAprovisionamiento _entorno = null!;
@@ -35,6 +36,7 @@ public class AutorizacionApiTests(PostgresFixture postgres) : IAsyncLifetime
         await _entorno.AprovisionarAsync(Tenant);
         _api = new FlowRideApiFactory(await _entorno.CadenaDelSiloAsync(Tenant), Tenant)
         {
+            Ajustes = await _entorno.AjustesDelStackAsync(Tenant),
             ConTokensDePrueba = true,
             Proveedor = _proveedor
         };

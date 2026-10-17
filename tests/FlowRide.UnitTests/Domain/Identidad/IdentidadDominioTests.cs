@@ -63,10 +63,10 @@ public class UsuarioDominioTests
     {
         _usuarios.Registrar("Ana", "ana@a.co", "+57300");
 
-        await Assert.ThrowsAsync<FlowRideExcepcion>(() => Dominio().ValidarCorreoDisponibleAsync(" ana@a.co ", CancellationToken.None));
-        await Assert.ThrowsAsync<FlowRideExcepcion>(() => Dominio().ValidarTelefonoDisponibleAsync("+57300", CancellationToken.None));
-        await Dominio().ValidarCorreoDisponibleAsync("beto@a.co", CancellationToken.None);
-        await Dominio().ValidarTelefonoDisponibleAsync("+57301", CancellationToken.None);
+        await Assert.ThrowsAsync<FlowRideExcepcion>(() => Dominio().ValidarCorreoDisponibleAsync(" ana@a.co ", null, CancellationToken.None));
+        await Assert.ThrowsAsync<FlowRideExcepcion>(() => Dominio().ValidarTelefonoDisponibleAsync("+57300", null, CancellationToken.None));
+        await Dominio().ValidarCorreoDisponibleAsync("beto@a.co", null, CancellationToken.None);
+        await Dominio().ValidarTelefonoDisponibleAsync("+57301", null, CancellationToken.None);
     }
 
     [Theory]

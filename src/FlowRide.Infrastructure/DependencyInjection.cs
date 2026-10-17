@@ -1,3 +1,4 @@
+using Azure.Storage.Blobs;
 using FlowRide.Application.Auditoria.CasosUso;
 using FlowRide.Application.Auditoria.Entrada.Adaptadores;
 using FlowRide.Application.Auditoria.Entrada.Puertos;
@@ -7,15 +8,33 @@ using FlowRide.Application.Identidad.CasosUso;
 using FlowRide.Application.Identidad.Entrada.Adaptadores;
 using FlowRide.Application.Identidad.Entrada.Puertos;
 using FlowRide.Application.Identidad.Salida.Puertos;
+using FlowRide.Application.Operacion.CasosUso;
+using FlowRide.Application.Operacion.Entrada.Adaptadores;
+using FlowRide.Application.Operacion.Entrada.Puertos;
+using FlowRide.Application.Operacion.Salida.Puertos;
+using FlowRide.Application.Parametros.CasosUso;
+using FlowRide.Application.Parametros.Entrada.Adaptadores;
+using FlowRide.Application.Parametros.Entrada.Puertos;
+using FlowRide.Application.Parametros.Salida.Puertos;
+using FlowRide.Application.Seguridad.CasosUso;
+using FlowRide.Application.Seguridad.Entrada.Adaptadores;
+using FlowRide.Application.Seguridad.Entrada.Puertos;
+using FlowRide.Application.Seguridad.Salida.Puertos;
 using FlowRide.Application.Tenancy.CasosUso;
 using FlowRide.Application.Tenancy.Entrada.Adaptadores;
 using FlowRide.Application.Tenancy.Entrada.Puertos;
 using FlowRide.Application.Tenancy.Salida.Puertos;
 using FlowRide.Domain.Auditoria.Repositorios;
+using FlowRide.Domain.Comun.Consultas;
 using FlowRide.Domain.Entidades;
 using FlowRide.Domain.Identidad;
 using FlowRide.Domain.Identidad.GestionUsuarios;
 using FlowRide.Domain.Identidad.Repositorios;
+using FlowRide.Domain.Operacion;
+using FlowRide.Domain.Operacion.GestionRecursos;
+using FlowRide.Domain.Operacion.Repositorios;
+using FlowRide.Domain.Parametros;
+using FlowRide.Domain.Parametros.Repositorios;
 using FlowRide.Domain.Plataforma;
 using FlowRide.Domain.Plataforma.AprovisionarOperador;
 using FlowRide.Domain.Plataforma.MigrarSilos;
@@ -23,8 +42,11 @@ using FlowRide.Domain.Plataforma.Repositorios;
 using FlowRide.Infrastructure.Auditoria;
 using FlowRide.Infrastructure.Identidad;
 using FlowRide.Infrastructure.Identidad.Keycloak;
+using FlowRide.Infrastructure.Operacion;
+using FlowRide.Infrastructure.Parametros;
 using FlowRide.Infrastructure.Persistencia;
 using FlowRide.Infrastructure.Plataforma;
+using FlowRide.Infrastructure.Seguridad;
 using FlowRide.Infrastructure.Tenancy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,6 +60,8 @@ public static class DependencyInjection
     public const string CadenaConexionSilo = "Silo";
     public const string CadenaConexionCatalogo = "Catalogo";
     public const string CadenaConexionAdministracion = "AdministracionServidor";
+    public const string CadenaConexionObjetos = "Objetos";
+    public const string CadenaConexionServidorObjetos = "ServidorObjetos";
     public const string EtiquetaReadiness = "ready";
     public const string ClaveUsuarioAdministradorKeycloak = "FlowRide:Keycloak:Administrador:Usuario";
     public const string ClaveContrasenaAdministradorKeycloak = "FlowRide:Keycloak:Administrador:Contrasena";
@@ -64,6 +88,10 @@ public static class DependencyInjection
             "Defínelo con user-secrets, con el almacén local del operador (herramienta de aprovisionamiento) " +
             "o con la variable de entorno ConnectionStrings__Silo.");
 
+        // Clave propia del operador para los campos sensibles (ADR-0014): sin ella el stack no arranca.
+        var cifrador = CifradorCampos.DesdeConfiguracion(configuration);
+        services.AddSingleton(cifrador);
+
         services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
         services.AddDbContext<FlowRideDbContext>((proveedor, opciones) =>
             FlowRideDbContext.Configurar(opciones, proveedor.GetRequiredService<NpgsqlDataSource>()));
@@ -74,6 +102,11 @@ public static class DependencyInjection
         services.AddScoped<IEventoAuditoriaRepositorio, EventoAuditoriaRepositorioAdaptador>();
         services.AddScoped<ICasoUsoConRetorno<VerificarAuditoriaDominio, ResultadoVerificacionAuditoria>, VerificarAuditoriaCasoUso>();
         services.AddScoped<IVerificarAuditoriaPuertoEntrada, VerificarAuditoriaAdaptadorEntrada>();
+
+        // Mantenimiento del cifrado (lo ejecuta la herramienta al aprovisionar).
+        services.AddScoped<IRecifradorCampos, RecifradorCamposSilo>();
+        services.AddScoped<ICasoUsoConRetorno<AsegurarCifradoDominio, int>, AsegurarCifradoCasoUso>();
+        services.AddScoped<IAsegurarCifradoPuertoEntrada, AsegurarCifradoAdaptadorEntrada>();
 
         services.AddHealthChecks()
             .AddCheck<PostgresSiloHealthCheck>(PostgresSiloHealthCheck.Nombre, tags: [EtiquetaReadiness]);
@@ -107,6 +140,8 @@ public static class DependencyInjection
         services.AddSingleton<IAlmacenSecretos>(_ => new AlmacenSecretosLocal(raizSecretos));
         services.AddSingleton<IGeneradorSecretos, GeneradorSecretosCriptografico>();
         services.TryAddSingleton(TimeProvider.System);
+        services.AddSingleton<IServidorObjetos>(new ServidorObjetosAzureBlob(SecretoRequerido(configuration,
+            CadenaConexionServidorObjetos, "Es la cuenta de almacenamiento de objetos de la plataforma (Azurite en local).")));
 
         // Keycloak con la cuenta de administración de la plataforma: solo para crear y actualizar realms.
         var identidad = OpcionesIdentidad(configuration);
@@ -175,6 +210,77 @@ public static class DependencyInjection
         services.AddScoped<ICambiarRolUsuarioPuertoEntrada, CambiarRolUsuarioAdaptadorEntrada>();
         services.AddScoped<IConsultarUsuariosPuertoEntrada, ConsultarUsuariosAdaptadorEntrada>();
         services.AddScoped<IResolverIdentidadPuertoEntrada, ResolverIdentidadAdaptadorEntrada>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registra los recursos operativos y los parámetros del stack del operador (RF-04 a RF-07, RF-26 a RF-28, RF-38,
+    /// RF-41; ADR-0006, ADR-0013, ADR-0016). Exige la cadena de su bucket de objetos.
+    /// </summary>
+    public static IServiceCollection AddOperacion(this IServiceCollection services, IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var tenantId = ConfiguracionRequerida(configuration, $"{SiloOptions.Seccion}:TenantId", "Es el operador al que sirve este stack.");
+        var objetos = SecretoRequerido(configuration, CadenaConexionObjetos,
+            "Lo genera la herramienta de aprovisionamiento en el almacén de secretos del operador.");
+        var bucket = new BlobContainerClient(objetos, Operador.NombreBucketDe(tenantId));
+
+        // Adaptadores de salida.
+        services.AddSingleton<IAlmacenObjetos>(new AlmacenObjetosAzureBlob(bucket));
+        services.AddMemoryCache();
+        services.AddSingleton(configuration.GetSection(CacheParametrosOptions.Seccion).Get<CacheParametrosOptions>()
+                              ?? new CacheParametrosOptions());
+        services.AddScoped<ParametroRepositorioAdaptador>();
+        services.AddScoped<IParametroRepositorio>(proveedor => proveedor.GetRequiredService<ParametroRepositorioAdaptador>());
+        services.AddScoped<ICacheParametros>(proveedor => proveedor.GetRequiredService<ParametroRepositorioAdaptador>());
+        services.AddScoped<IEmpresaClienteRepositorio, EmpresaClienteRepositorioAdaptador>();
+        services.AddScoped<IPasajeroRepositorio, PasajeroRepositorioAdaptador>();
+        services.AddScoped<IConductorRepositorio, ConductorRepositorioAdaptador>();
+        services.AddScoped<IVehiculoRepositorio, VehiculoRepositorioAdaptador>();
+        services.AddScoped<IAsignacionRepositorio, AsignacionRepositorioAdaptador>();
+
+        // Dominio.
+        services.TryAddScoped<UsuarioDominio>();
+        services.AddScoped<EmpresaClienteDominio>();
+        services.AddScoped<PasajeroDominio>();
+        services.AddScoped<ConductorDominio>();
+        services.AddScoped<VehiculoDominio>();
+
+        // Casos de uso.
+        services.AddScoped<ICasoUsoConRetorno<RegistrarEmpresaClienteDominio, EmpresaCliente>, RegistrarEmpresaClienteCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ActualizarEmpresaClienteDominio, EmpresaCliente>, ActualizarEmpresaClienteCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<CambiarEstadoEmpresaClienteDominio, EmpresaCliente>, CambiarEstadoEmpresaClienteCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<BuscarEmpresasClienteDominio, PaginaResultado<EmpresaCliente>>, BuscarEmpresasClienteCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<RegistrarPasajeroDominio, Pasajero>, RegistrarPasajeroCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ActualizarPasajeroDominio, Pasajero>, ActualizarPasajeroCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<BuscarPasajerosDominio, PaginaResultado<Pasajero>>, BuscarPasajerosCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<RegistrarConductorDominio, Conductor>, RegistrarConductorCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ActualizarConductorDominio, Conductor>, ActualizarConductorCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<CambiarEstadoConductorDominio, Conductor>, CambiarEstadoConductorCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<Guid, Conductor>, ConsultarConductorCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<BuscarConductoresDominio, PaginaResultado<Conductor>>, BuscarConductoresCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ProgramarTurnoDominio, Turno>, ProgramarTurnoCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarDisponibilidadDominio, IReadOnlyList<Conductor>>, ConsultarDisponibilidadCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<SubirDocumentoConductorDominio, DocumentoConductor>, SubirDocumentoConductorCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<DocumentoConductorRefDominio, UrlDocumento>, ObtenerUrlDocumentoConductorCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<DocumentoConductorRefDominio, DocumentoConductor>, EliminarDocumentoConductorCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<RegistrarVehiculoDominio, Vehiculo>, RegistrarVehiculoCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ActualizarVehiculoDominio, Vehiculo>, ActualizarVehiculoCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<CambiarEstadoVehiculoDominio, Vehiculo>, CambiarEstadoVehiculoCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<AsignarConductorHabitualDominio, Vehiculo>, AsignarConductorHabitualCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<BuscarVehiculosDominio, PaginaResultado<Vehiculo>>, BuscarVehiculosCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarParametrosDominio, IReadOnlyList<ParametroVigente>>, ConsultarParametrosCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<CambiarParametroDominio, ParametroVigente>, CambiarParametroCasoUso>();
+
+        // Adaptadores de entrada.
+        services.AddScoped<IEmpresasClientePuertoEntrada, EmpresasClienteAdaptadorEntrada>();
+        services.AddScoped<IPasajerosPuertoEntrada, PasajerosAdaptadorEntrada>();
+        services.AddScoped<IConductoresPuertoEntrada, ConductoresAdaptadorEntrada>();
+        services.AddScoped<IDocumentosConductorPuertoEntrada, DocumentosConductorAdaptadorEntrada>();
+        services.AddScoped<IVehiculosPuertoEntrada, VehiculosAdaptadorEntrada>();
+        services.AddScoped<IParametrosPuertoEntrada, ParametrosAdaptadorEntrada>();
 
         return services;
     }

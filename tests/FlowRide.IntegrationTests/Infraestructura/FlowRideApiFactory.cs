@@ -26,6 +26,12 @@ public sealed class FlowRideApiFactory(string? cadenaConexion, string? tenantId 
     /// <summary>Si se indica, reemplaza al adaptador de Keycloak.</summary>
     public IProveedorIdentidad? Proveedor { get; init; }
 
+    /// <summary>Secretos del operador (p. ej. <see cref="EntornoAprovisionamiento.AjustesDelStackAsync"/>); pisan los de prueba.</summary>
+    public IReadOnlyDictionary<string, string?> Ajustes { get; init; } = new Dictionary<string, string?>();
+
+    /// <summary>Clave de cifrado de campos para las pruebas que no usan un operador aprovisionado.</summary>
+    public const string ClaveCifradoDePrueba = "clave-de-cifrado-de-pruebas-de-flowride-0001";
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -34,6 +40,11 @@ public sealed class FlowRideApiFactory(string? cadenaConexion, string? tenantId 
         if (UrlKeycloak is not null) builder.UseSetting("FlowRide:Identidad:UrlKeycloak", UrlKeycloak);
         if (SecretoCliente is not null) builder.UseSetting("FlowRide:Identidad:SecretoCliente", SecretoCliente);
         builder.UseSetting("FlowRide:Identidad:RequiereHttps", "false");
+        builder.UseSetting("FlowRide:Cifrado:Claves:v1", ClaveCifradoDePrueba);
+        builder.UseSetting("FlowRide:Cifrado:Vigente", "v1");
+        builder.UseSetting("ConnectionStrings:Objetos", "UseDevelopmentStorage=true");
+        foreach (var (clave, valor) in Ajustes)
+            if (valor is not null) builder.UseSetting(clave, valor);
 
         builder.ConfigureLogging(logging => logging.AddProvider(Registro));
         builder.ConfigureServices(services => services.AddSingleton<IStartupFilter, RutaDeErrorDePrueba>());

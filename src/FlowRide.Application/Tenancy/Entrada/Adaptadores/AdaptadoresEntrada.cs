@@ -34,6 +34,7 @@ public sealed class AprovisionarOperadorAdaptadorEntrada(
             operador.NombreSilo,
             operador.AmbitoSecretos,
             operador.NombreRealm,
+            operador.NombreBucket,
             resultado.OperadorNuevo,
             resultado.ContrasenaNueva,
             resultado.MigracionesAplicadas,

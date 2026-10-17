@@ -87,6 +87,7 @@ public class EstiloHexagonalTests
     public void LosEndpointsDeLaApi_SoloConocenPuertosDeEntrada() =>
         // Los adaptadores de entrada HTTP de cada módulo funcional, igual que la herramienta: puerto de entrada y DTO.
         Types().That().ResideInNamespace("FlowRide.API.Identidad").Or().ResideInNamespace("FlowRide.API.Auditoria")
+            .Or().ResideInNamespace("FlowRide.API.Operacion").Or().ResideInNamespace("FlowRide.API.Parametros")
             .Should().NotDependOnAny(Types().That().ResideInNamespaceMatching(@"^FlowRide\.Application\.\w+\.CasosUso$"))
             .AndShould().NotDependOnAny(Types().That().ResideInAssembly(DomainAssembly))
             .Check(Arquitectura);

@@ -77,6 +77,15 @@ public sealed class Conductor : Usuario
         return documento;
     }
 
+    /// <summary>Quita el documento del conductor; el archivo en el almacenamiento lo borra el caso de uso.</summary>
+    public DocumentoConductor QuitarDocumento(Guid documentoId)
+    {
+        var documento = _documentos.SingleOrDefault(d => d.Id == documentoId)
+                        ?? throw new InvalidOperationException("El documento no pertenece a este conductor.");
+        _documentos.Remove(documento);
+        return documento;
+    }
+
     public void AceptarAsignacion(Asignacion asignacion)
     {
         ValidarPropia(asignacion);

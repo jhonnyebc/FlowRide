@@ -2,7 +2,7 @@
 # Un servidor PostgreSQL compartido (ADR-0010 §5) con:
 #   flowride_catalogo     → catálogo de plataforma (operadores; sin datos operacionales), creado al iniciar el volumen
 #   flowride_<tenant>     → un Silo por operador, con su propio rol, creado por la herramienta de aprovisionamiento
-# Keycloak (un realm por operador) y Mailpit (correos de Keycloak en local).
+# Keycloak (un realm por operador) y Mailpit (correos de Keycloak en local). Azurite (documentos, ADR-0013).
 # Las contraseñas se leen de .env, que no se versiona (ADR-0014).
 services:
   postgres:
@@ -44,6 +44,18 @@ services:
     depends_on:
       - mailpit
 
+  # Almacenamiento de objetos (ADR-0013): emulador de Azure Blob Storage, un bucket por operador.
+  # La cuenta de desarrollo es la pública de Azurite ("UseDevelopmentStorage=true"); no es un secreto.
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.35.0
+    container_name: flowride-azurite
+    restart: unless-stopped
+    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --location /data --loose --skipApiVersionCheck
+    ports:
+      - "10000:10000"
+    volumes:
+      - flowride-azurite-data:/data
+
   # Correos de Keycloak (definir o recuperar la contraseña) atrapados en local: http://localhost:8025
   mailpit:
     image: axllent/mailpit:v1.27.7
@@ -55,3 +67,4 @@ services:
 volumes:
   flowride-pgdata:
   flowride-keycloak-data:
+  flowride-azurite-data:
