@@ -16,8 +16,14 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.13" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.13" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Configuración local no secreta: URL de Keycloak y SMTP (Mailpit) de los realms. -->
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

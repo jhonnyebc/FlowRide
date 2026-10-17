@@ -19,9 +19,10 @@ public class EstiloHexagonalTests
     private static readonly Assembly DomainAssembly = typeof(Conductor).Assembly;
     private static readonly Assembly ApplicationAssembly = typeof(ICasoUsoConRetorno<,>).Assembly;
     private static readonly Assembly HerramientaAssembly = typeof(Comandos).Assembly;
+    private static readonly Assembly ApiAssembly = typeof(Program).Assembly;
 
     private static readonly Architecture Arquitectura = new ArchLoader()
-        .LoadAssemblies(DomainAssembly, ApplicationAssembly, HerramientaAssembly)
+        .LoadAssemblies(DomainAssembly, ApplicationAssembly, HerramientaAssembly, ApiAssembly)
         .Build();
 
     private static IEnumerable<Type> ClasesConcretas(Assembly assembly) =>
@@ -79,6 +80,14 @@ public class EstiloHexagonalTests
         // ni del dominio directamente.
         Types().That().ResideInAssembly(HerramientaAssembly)
             .Should().NotDependOnAny(Types().That().ResideInNamespace("FlowRide.Application.Tenancy.CasosUso"))
+            .AndShould().NotDependOnAny(Types().That().ResideInAssembly(DomainAssembly))
+            .Check(Arquitectura);
+
+    [Fact]
+    public void LosEndpointsDeLaApi_SoloConocenPuertosDeEntrada() =>
+        // Los adaptadores de entrada HTTP de cada módulo funcional, igual que la herramienta: puerto de entrada y DTO.
+        Types().That().ResideInNamespace("FlowRide.API.Identidad").Or().ResideInNamespace("FlowRide.API.Auditoria")
+            .Should().NotDependOnAny(Types().That().ResideInNamespaceMatching(@"^FlowRide\.Application\.\w+\.CasosUso$"))
             .AndShould().NotDependOnAny(Types().That().ResideInAssembly(DomainAssembly))
             .Check(Arquitectura);
 }

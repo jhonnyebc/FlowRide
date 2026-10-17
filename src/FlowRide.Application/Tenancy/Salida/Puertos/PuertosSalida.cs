@@ -44,4 +44,20 @@ public static class ClavesSecretos
     public const string CadenaConexionSilo = "ConnectionStrings:Silo";
 
     public const string ContrasenaSilo = "FlowRide:Silo:Contrasena";
+
+    /// <summary>Secreto del cliente de servicio del realm con el que la API gestiona las cuentas del operador.</summary>
+    public const string SecretoClienteIdentidad = "FlowRide:Identidad:SecretoCliente";
+}
+
+/// <summary>
+/// Servidor de identidad de la plataforma (Keycloak, ADR-0003) visto desde el aprovisionamiento: un realm por
+/// operador, creado a partir de la plantilla versionada.
+/// </summary>
+public interface IServidorIdentidad
+{
+    /// <summary>
+    /// Crea el realm si no existe y deja su configuración igual a la plantilla: clientes del Panel Web y de la API,
+    /// claim <c>tenant_id</c> con el Id del operador y el secreto indicado para el cliente de servicio. Es idempotente.
+    /// </summary>
+    Task AsegurarRealmAsync(string nombreRealm, string tenantId, string secretoClienteServicio, CancellationToken ct);
 }

@@ -16,8 +16,8 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | — | Revisión de ADR y roadmap | — | todos | ✅ |
 | — | Modelo de dominio completo (diagrama de clases, sin telemetría) | Todos | — | ✅ PR #3 fusionado |
 | 0 | Base ejecutable | Plataforma | 0010, 0011, 0014, 0017, 0018 | ✅ PR #2 fusionado |
-| 1 | Tenancy y persistencia Silo | Tenancy, Persistencia | 0002, 0004, 0010, 0014 | ✅ rama `feature/RF-03-tenancy-silo` (pendiente de PR) |
-| 2 | Identidad, usuarios y auditoría | Identidad, Auditoria | 0003, 0011 | ⬜ |
+| 1 | Tenancy y persistencia Silo | Tenancy, Persistencia | 0002, 0004, 0010, 0014 | ✅ PR #4 fusionada |
+| 2 | Identidad, usuarios y auditoría | Identidad, Auditoria | 0003, 0011 | ✅ rama `feature/RF-02-identidad-auditoria` (pendiente de PR) |
 | 3 | Recursos operativos y parámetros | Operacion | 0006, 0013, 0014, 0016 | ⬜ |
 | 4 | Solicitudes e itinerarios | Solicitudes | 0001, 0004, 0007 | ⬜ |
 | 5 | Asignación de punta a punta | Asignacion | 0007, 0009, 0016 | ⬜ |
@@ -56,9 +56,14 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 - RF cubiertos: RF-03, RF-19; RF-20 parcial (persistencia y secretos separados; reglas y parámetros en las Fases 3 y 5).
 
 ### Fase 2 — Identidad, usuarios y auditoría
-- [ ] Keycloak con un realm por operador y claim `tenant_id`; `IdentityProviderAdapter`; RBAC.
-- [ ] Revocación de acceso en 60 s o menos (ADM-SEG-01).
-- [ ] `AuditService` persistente por Silo, con cadena de hashes (ADR-0011).
+- [x] Keycloak (26.3, docker-compose) con un realm `flowride-<tenant>` por operador, creado por la CLI desde la plantilla versionada `plantilla-realm.json` (sin secretos): cliente público `flowride-panel` con PKCE, claims `tenant_id` y audiencia `flowride-api`, tokens de 5 min; cliente de servicio `flowride-api` (solo gestiona cuentas de su realm, secreto en el almacén del operador). Paso "realm" agregado al pipeline de aprovisionamiento.
+- [x] `IdentityProviderAdapter` (ADR-0003): la API valida el token, exige que `tenant_id` sea el del stack y resuelve el usuario interno por `sub` en cada petición; el rol sale de FlowRide (`RolesSistema`, sembrados por migración), no del token.
+- [x] RBAC: políticas `Administrador` y `PanelWeb`; endpoints `/api/usuarios` (crear, listar, activar, desactivar, cambiar rol, `yo`) bajo `/api`, que exige token. Reglas: solo roles del panel desde el panel, correo y WhatsApp únicos, nadie se desactiva ni se cambia el rol a sí mismo.
+- [x] Alta de usuarios: FlowRide crea la cuenta en el realm y Keycloak envía el correo para definir la contraseña (Mailpit en local). El primer Administrador lo crea la CLI (`crear-operador --admin-*`) con la composición del stack del operador.
+- [x] Revocación en 60 s o menos (ADM-SEG-01): inmediata, porque el estado interno se consulta en cada petición sin caché; además se deshabilita la cuenta y se cierran sus sesiones en Keycloak.
+- [x] Auditoría por Silo (ADR-0011): `audit.evento_auditoria` solo INSERT (trigger), cadena SHA-256 sellada en la misma transacción que el cambio (`IUnidadTrabajo` + candado consultivo), sin datos personales; `GET /api/auditoria/verificacion` detecta eventos alterados, borrados o insertados.
+- Pruebas: 235 unitarias (95,4 % líneas / 92,7 % ramas), 16 de arquitectura (la API solo conoce puertos de entrada y no usa la cuenta de administración de Keycloak), 78 de integración (Keycloak y Mailpit reales con Testcontainers: token de un realm rechazado por el stack de otro operador, revocación y correo de contraseña).
+- RF cubiertos: RF-01, RF-02; RF-23 parcial (el realm permite recuperar la contraseña y envía correos; el flujo se prueba con la pantalla de inicio de sesión del Panel Web, Fase 11).
 
 ### Fase 3 — Recursos operativos y parámetros
 - [ ] Conductores, vehículos y turnos. Cifrado de campo para documento y teléfono (ADR-0014).
@@ -107,8 +112,8 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 
 | RF | Nombre | Fase | Estado |
 |---|---|---|---|
-| RF-01 | Autenticación basada en token | 2 | ⬜ |
-| RF-02 | Autorización basada en roles | 2 | ⬜ |
+| RF-01 | Autenticación basada en token | 2 | ✅ |
+| RF-02 | Autorización basada en roles | 2 | ✅ |
 | RF-03 | Registro de operador como tenant | 1 | ✅ CLI `crear-operador` |
 | RF-04 | Configuración inicial del tenant | 3 | ⬜ |
 | RF-05 | Creación de usuarios por tenant | 2 | ⬜ |
@@ -129,7 +134,7 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-20 | Configuración separada por tenant | 1 | 🟡 BD y secretos por operador |
 | RF-21 | Configuración avanzada de reglas | 5 | ⬜ |
 | RF-22 | Cierre de sesión | 2 | ⬜ |
-| RF-23 | Recuperación de credenciales | 2 | ⬜ |
+| RF-23 | Recuperación de credenciales | 2 | 🟡 |
 | RF-24 | Actualización de información de usuarios | 2 | ⬜ |
 | RF-25 | Activación e inactivación de usuarios | 2 | ⬜ |
 | RF-26 | Registro de conductores | 3 | ⬜ |
@@ -175,3 +180,6 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 2026-10-16 | Los Silos ya no se crean en `docker-compose`: el contenedor crea solo el catálogo y la herramienta aprovisiona cada operador. Si un rol ya existía, el secreto manda y el rol toma su contraseña. |
 | 2026-10-16 | Se adopta el estilo de puertos y adaptadores del proyecto de referencia del profesor (`uco-test-api`): casos de uso con interfaz genérica, puertos/adaptadores de entrada con DTO, servicios de dominio `XxxDominio` con los repositorios como puertos del dominio y excepción de negocio → 400. Se mantiene el mapeo fluido de EF Core (sin modelo de persistencia aparte ni mappers) y la organización por módulo primero (ADR-0001). |
 | 2026-10-16 | `Viaje.EtaProgramada` se elimina: es un dato de ETA y ADR-0005 (RF-55/RF-56) está fuera de alcance. |
+| 2026-10-17 | Fase 2 (decisiones del usuario): FlowRide crea las cuentas del Panel Web en Keycloak (Admin API); la CLI crea el realm y el primer Administrador al aprovisionar; la contraseña la define el usuario con el correo de Keycloak (Mailpit en local); la revocación se cumple consultando el estado interno en cada petición, sin caché. |
+| 2026-10-17 | La API gestiona las cuentas con un cliente de servicio por realm (`flowride-api`, secreto en el almacén del operador), nunca con el administrador de Keycloak de la plataforma, que solo usa la CLI. En local, Keycloak corre en modo desarrollo con su almacenamiento en un volumen; su base propia llega con el despliegue (Fase 12). |
+| 2026-10-17 | Los cuatro roles son fijos (`RolesSistema`, Id sembrados por migración). La auditoría guarda solo rol y estado como valores antes/después (sin datos personales, ADR-0013). |

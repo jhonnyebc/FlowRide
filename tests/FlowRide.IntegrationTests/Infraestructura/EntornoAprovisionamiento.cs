@@ -1,12 +1,14 @@
 using FlowRide.Application.Tenancy.Entrada.Dto;
 using FlowRide.Application.Tenancy.Entrada.Puertos;
 using FlowRide.Application.Tenancy.Salida.Puertos;
+using FlowRide.Aprovisionamiento;
 using FlowRide.Infrastructure;
 using FlowRide.Infrastructure.Persistencia;
 using FlowRide.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
 
 namespace FlowRide.IntegrationTests.Infraestructura;
@@ -31,7 +33,8 @@ public sealed class EntornoAprovisionamiento : IAsyncDisposable
     public string CadenaAdministracion { get; }
     public AlmacenSecretosLocal Secretos => new(RaizSecretos);
 
-    public static async Task<EntornoAprovisionamiento> CrearAsync(PostgresFixture postgres)
+    /// <param name="keycloak">Keycloak real; sin él, los realms se registran en memoria.</param>
+    public static async Task<EntornoAprovisionamiento> CrearAsync(PostgresFixture postgres, KeycloakFixture? keycloak = null)
     {
         // La conexión de Testcontainers es de superusuario: hace de rol administrativo del servidor.
         var administracion = postgres.CadenaConexion;
@@ -42,12 +45,21 @@ public sealed class EntornoAprovisionamiento : IAsyncDisposable
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:Catalogo"] = new NpgsqlConnectionStringBuilder(administracion) { Database = catalogo }.ConnectionString,
-                ["ConnectionStrings:AdministracionServidor"] = administracion
+                ["ConnectionStrings:AdministracionServidor"] = administracion,
+                ["FlowRide:Identidad:UrlKeycloak"] = keycloak?.UrlBase ?? "http://keycloak.pruebas.invalid",
+                ["FlowRide:Keycloak:Administrador:Usuario"] = keycloak is null ? "admin" : KeycloakFixture.Usuario,
+                ["FlowRide:Keycloak:Administrador:Contrasena"] = keycloak is null ? "admin" : KeycloakFixture.Contrasena,
+                ["FlowRide:Keycloak:Smtp:Host"] = KeycloakFixture.HostMailpit
             })
             .Build();
 
         var raiz = Directory.CreateTempSubdirectory("flowride-secretos-").FullName;
-        var servicios = new ServiceCollection().AddAprovisionamiento(configuracion, raiz).BuildServiceProvider();
+        var coleccion = new ServiceCollection()
+            .AddAprovisionamiento(configuracion, raiz)
+            .AddSingleton(new FabricaStackOperador(configuracion, raiz));
+        if (keycloak is null)
+            coleccion.Replace(ServiceDescriptor.Singleton<IServidorIdentidad>(new ServidorIdentidadDePrueba()));
+        var servicios = coleccion.BuildServiceProvider();
 
         await using (var alcance = servicios.CreateAsyncScope())
             await alcance.ServiceProvider.GetRequiredService<CatalogoDbContext>().Database.MigrateAsync();

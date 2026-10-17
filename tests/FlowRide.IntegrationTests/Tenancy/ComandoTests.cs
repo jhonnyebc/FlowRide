@@ -19,6 +19,31 @@ public class ComandoTests
         Assert.Equal("Transportes C", comando.Opcion("razon-social"));
     }
 
+    [Fact]
+    public void CrearOperador_ConAdministradorInicial_SeInterpreta()
+    {
+        var ok = Comando.TryParse(
+            ["crear-operador", "--id", "tenant-c", "--razon-social", "C", "--nit", "900", "--correo", "c@c.co",
+                "--admin-nombre", "Ana", "--admin-correo", "ana@c.co", "--admin-telefono", "+57300"],
+            out var comando, out var error);
+
+        Assert.True(ok, error);
+        Assert.True(comando.Tiene("admin-correo"));
+        Assert.Equal("ana@c.co", comando.Opcion("admin-correo"));
+    }
+
+    [Fact]
+    public void CrearOperador_ConSoloAlgunasOpcionesDelAdministrador_SeRechaza()
+    {
+        var ok = Comando.TryParse(
+            ["crear-operador", "--id", "tenant-c", "--razon-social", "C", "--nit", "900", "--correo", "c@c.co",
+                "--admin-correo", "ana@c.co"],
+            out _, out var error);
+
+        Assert.False(ok);
+        Assert.Contains("van juntas", error, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("listar")]
     [InlineData("migrar-todos")]

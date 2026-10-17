@@ -14,8 +14,10 @@ public sealed record Comando(string Nombre, IReadOnlyDictionary<string, string> 
 
         Comandos:
           crear-operador --id <tenant> --razon-social <texto> --nit <texto> --correo <correo>
-              Registra el operador y aprovisiona su Silo: base, rol, secreto y migraciones.
-              Es idempotente: con el mismo --id se puede volver a ejecutar.
+                         [--admin-nombre <texto> --admin-correo <correo> --admin-telefono <whatsapp>]
+              Registra el operador y aprovisiona su Silo (base, rol, secretos y migraciones) y su realm de
+              Keycloak. Con las opciones --admin-* crea también su primer Administrador, que recibe un correo
+              para definir su contraseña. Es idempotente: con el mismo --id se puede volver a ejecutar.
           migrar --id <tenant>      Aplica las migraciones pendientes al Silo de un operador.
           migrar-todos              Migra todos los operadores no suspendidos, en orden por Id.
           listar                    Muestra los operadores del catálogo.
@@ -31,7 +33,15 @@ public sealed record Comando(string Nombre, IReadOnlyDictionary<string, string> 
         [AyudaNombre] = []
     };
 
+    /// <summary>Opciones que van todas juntas o ninguna.</summary>
+    private static readonly Dictionary<string, string[]> OpcionesOpcionales = new(StringComparer.Ordinal)
+    {
+        [CrearOperador] = ["admin-nombre", "admin-correo", "admin-telefono"]
+    };
+
     public string Opcion(string nombre) => Opciones[nombre];
+
+    public bool Tiene(string nombre) => Opciones.ContainsKey(nombre);
 
     public static bool TryParse(IReadOnlyList<string> args, out Comando comando, out string error)
     {
@@ -70,7 +80,8 @@ public sealed record Comando(string Nombre, IReadOnlyDictionary<string, string> 
             opciones[clave[2..]] = args[i + 1];
         }
 
-        var desconocidas = opciones.Keys.Where(clave => !requeridas.Contains(clave)).ToArray();
+        var opcionales = OpcionesOpcionales.GetValueOrDefault(nombre, []);
+        var desconocidas = opciones.Keys.Where(clave => !requeridas.Contains(clave) && !opcionales.Contains(clave)).ToArray();
         if (desconocidas.Length > 0)
         {
             error = $"Opción desconocida para '{nombre}': --{desconocidas[0]}.";
@@ -81,6 +92,13 @@ public sealed record Comando(string Nombre, IReadOnlyDictionary<string, string> 
         if (faltante is not null)
         {
             error = $"Falta la opción --{faltante} para '{nombre}'.";
+            return false;
+        }
+
+        var opcionalFaltante = opcionales.FirstOrDefault(clave => !opciones.ContainsKey(clave));
+        if (opcionalFaltante is not null && opcionales.Any(opciones.ContainsKey))
+        {
+            error = $"Falta la opción --{opcionalFaltante}: las opciones --{string.Join(", --", opcionales)} van juntas.";
             return false;
         }
 

@@ -2,18 +2,21 @@
 
 > **Léela al empezar cada sesión y actualízala al terminar.** Complementa a `docs/ROADMAP-V1.md` (qué falta por fase)
 > con lo que no está en el código: estado actual, decisiones, problemas del entorno y bitácora.
-> Última actualización: 2026-10-16.
+> Última actualización: 2026-10-17.
 
 ## Estado actual
-- **Rama de trabajo:** `feature/RF-03-tenancy-silo` (Fase 1 completa, todos los gates en verde), **sin commit todavía**,
-  pendiente del OK del usuario para el commit y el PR hacia `develop`.
-- **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0 (base ejecutable) y el modelo
-  de dominio completo (PR #3).
-- **Fase actual:** Fase 1 (Tenancy y persistencia Silo) terminada en la rama; la siguiente es la Fase 2 (Identidad,
-  usuarios y auditoría).
-- **Tests:** 144 unitarios (94,1 % líneas / 91,3 % ramas en Domain + Application), 10 de arquitectura, 46 de integración.
-- **Entorno local del usuario:** `tenant-a` (Transportes Andinos SAS) y `tenant-b` (Movilidad del Oriente SAS)
-  aprovisionados con la CLI; la API arranca como `tenant-a` y `/health/ready` responde 200.
+- **Rama de trabajo:** `feature/RF-02-identidad-auditoria` (Fase 2 completa, todos los gates en verde), **sin commit
+  todavía**, pendiente del OK del usuario para el commit y el PR hacia `develop`.
+- **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3) y
+  Fase 1 Tenancy/Silo con el estilo del profesor (PR #4).
+- **Fase actual:** Fase 2 (Identidad, usuarios y auditoría) terminada en la rama; la siguiente es la Fase 3 (Recursos
+  operativos y parámetros).
+- **Tests:** 235 unitarios (95,4 % líneas / 92,7 % ramas en Domain + Application), 16 de arquitectura, 78 de integración
+  (incluye Keycloak y Mailpit reales con Testcontainers).
+- **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080) y Mailpit (8025).
+  `tenant-a` y `tenant-b` tienen Silo, realm `flowride-<tenant>` y primer administrador (`admin@tenant-a.local`,
+  `admin@tenant-b.local`, datos de prueba) con su correo "Actualiza tu cuenta" en Mailpit, todavía sin contraseña. La
+  API arranca como `tenant-a`: `/health/ready` 200 y `/api/*` 401 sin token.
 
 ## Contexto de trabajo
 - El equipo del curso (Sebastián, Andrés y Jhonny) trabajó junto **hasta el parcial**: los ADR, el DAS y los diagramas
@@ -42,6 +45,12 @@
 | 2026-10-16 | El stack resuelve su Silo desde su configuración de despliegue (`FlowRide:TenantId` + `ConnectionStrings:Silo`), no desde la petición. En la Fase 2 se exige además que el claim `tenant_id` del JWT coincida con el `TenantId` del stack. |
 | 2026-10-16 | `docker-compose` crea solo el catálogo; los Silos los crea la CLI. Si un rol ya existía (los de la Fase 0), **el secreto manda** y el rol toma su contraseña. |
 | 2026-10-16 | Persistencia: esquema `ops` en snake_case (igual que el modelo ER), herencia TPT de `Usuario`, fechas guardadas en UTC (Npgsql solo admite offset 0 en `timestamptz`), enums como texto, y restricciones `EXCLUDE` escritas a mano en la migración. |
+
+| 2026-10-17 | **Fase 2 (respuestas del usuario):** FlowRide crea las cuentas del Panel Web en Keycloak; la CLI crea el realm y el primer Administrador; la contraseña la define el usuario con el correo de Keycloak (Mailpit en local); revocación consultando el estado interno en cada petición, sin caché. |
+| 2026-10-17 | El realm sale de `plantilla-realm.json` (versionada, sin secretos, recurso embebido), aplicada paso a paso por la Admin API para que reaprovisionar sea idempotente (los mappers se sincronizan por nombre). |
+| 2026-10-17 | La API usa la cuenta de servicio de su realm (`flowride-api`, secreto `FlowRide:Identidad:SecretoCliente` en el almacén del operador); el admin de Keycloak de la plataforma solo lo usa la CLI (regla de arquitectura). |
+| 2026-10-17 | Autorización: `/api` exige token (grupo con `RequireAuthorization`), no una política *fallback*, para no convertir los 404 en 401. Roles fijos en `RolesSistema` (Id sembrados por migración). |
+| 2026-10-17 | Auditoría: repositorios del Silo sin `SaveChanges`; `IUnidadTrabajo` confirma cambio + evento en una transacción, con candado consultivo y la cadena SHA-256. Fecha truncada a microsegundos y JSON canónico para que el hash sobreviva a timestamptz y jsonb. |
 
 ## Modelo de dominio (`src/FlowRide.Domain`)
 - **Entidades del Silo:** Usuario, Rol, Pasajero, Conductor, Turno, DocumentoConductor, Vehiculo, EmpresaCliente,
@@ -89,6 +98,17 @@
   convenciones de los contextos.
 - **`xmin` como token de versión:** la migración lo declara como columna, pero Npgsql lo omite al generar el SQL
   (verificado con `dotnet ef migrations script`).
+- **Configuración en memoria con valor null pisa el valor por defecto** de una propiedad de opciones al enlazar: no
+  agregar claves con null (se vio en `FabricaStackOperador` con `UrlPanel`).
+- **Una política *fallback* de autorización también aplica a las rutas inexistentes** (404 → 401): se exige token con un
+  grupo `/api` en su lugar.
+- **Hash de auditoría y PostgreSQL:** `timestamptz` guarda microsegundos y `jsonb` reordena claves; sin truncar la fecha
+  y canonizar el JSON, la verificación fallaría al releer.
+- **Tipos generados por el compilador** (expresiones de colección) no tienen namespace en ArchUnitNET: la prueba de ciclos
+  entre módulos debe ignorarlos.
+- **Keycloak en pruebas:** contenedor genérico con su puerto de gestión 9000 (`/health/ready`) y Mailpit en la misma red
+  de Testcontainers (alias `mailpit`); para obtener tokens sin navegador se habilita el flujo de contraseña directa en el
+  cliente del panel solo dentro de la prueba.
 
 ## Bitácora de sesiones
 | Fecha | Qué se hizo |
@@ -96,6 +116,7 @@
 | 2026-10-13 | Motor de asignación + 63 tests. ADR originales incorporados y revisados. Roadmap V1. Repo en GitHub. Docker instalado. Fase 0 completa (PR #1 y #2 fusionados, CI en verde). Protección de ramas. |
 | 2026-10-14 | Modelo de dominio completo según el diagrama de clases (17 entidades) con 51 pruebas nuevas. Creada esta memoria. PR #3 fusionado (se usó "Update branch" porque la protección exige la rama al día con `develop`). |
 | 2026-10-16 | Fase 1 completa en `feature/RF-03-tenancy-silo`: catálogo de plataforma, `FlowRideDbContext` con las 17 entidades y migración inicial, caso de uso `AprovisionarOperador` + `MigrarSilos`, CLI de aprovisionamiento, almacén local de secretos por operador, Spike 3 superado. 30 pruebas unitarias, 34 de integración y 1 regla de arquitectura nuevas. Probado de punta a punta en el entorno local del usuario. |
+| 2026-10-17 | Fase 2 completa en `feature/RF-02-identidad-auditoria`: Keycloak con un realm por operador desde una plantilla versionada, primer administrador desde la CLI con correo de contraseña (Mailpit), autenticación OIDC + `tenant_id` + usuario interno por petición, RBAC, revocación inmediata y auditoría con cadena de hashes. 235 + 16 + 78 pruebas en verde. |
 
 ## Sesión 2026-10-16 (continuación): estilo del profesor
 - `Viaje.EtaProgramada` **eliminada** (decisión del usuario) + migración `QuitarEtaProgramada`, ya aplicada a tenant-a/b locales.
@@ -110,12 +131,31 @@
   (NIT duplicado, Id inválido, operador inexistente → código de salida 1) y `migrar-todos`.
 - CLAUDE.md tiene la sección "Estilo de puertos y adaptadores (acordado con el profesor)"; ROADMAP actualizado (Fase 1 y
   dos decisiones del 2026-10-16).
-- **Pendiente:** commit + PR tras el OK del usuario.
+- Commit `ad2341c` → PR #4 fusionada en `develop` el 2026-10-17 con el CI en verde. **Fase 1 cerrada.**
+
+## Sesión 2026-10-17: Fase 2 (Identidad, usuarios y auditoría)
+- Rama `feature/RF-02-identidad-auditoria` desde `develop`. Decisiones del usuario en la tabla de decisiones (2026-10-17).
+- Dominio: `RolesSistema`, `UsuarioDominio`, datos por caso de uso en `Domain/Identidad/GestionUsuarios`, `EventoAuditoria`
+  (hash SHA-256) y `CadenaAuditoria`; repositorios `IUsuarioRepositorio` e `IEventoAuditoriaRepositorio`.
+- Aplicación: casos de uso Crear, AsegurarAdministradorInicial, CambiarEstado, CambiarRol, ConsultarUsuarios,
+  ResolverIdentidad y VerificarAuditoria, con sus puertos y adaptadores de entrada; puertos `IProveedorIdentidad`,
+  `IServidorIdentidad` (Tenancy) e `IUnidadTrabajo`.
+- Infraestructura: `ClienteKeycloak` (Admin API), `ServidorIdentidadKeycloak` (realm desde la plantilla),
+  `ProveedorIdentidadKeycloak` (cuentas, correo, habilitar/deshabilitar + cerrar sesiones), `UnidadTrabajoEf`, migración
+  `IdentidadYAuditoria` (roles sembrados, esquema `audit`, trigger solo INSERT).
+- API: JwtBearer contra el realm del operador + validación de `tenant_id` y usuario interno en `OnTokenValidated`;
+  `/api/usuarios` y `/api/auditoria/verificacion`. CLI: `crear-operador --admin-*`, `appsettings.json` (URL de Keycloak y SMTP).
+- Entorno local: `.env` y los user-secrets de la CLI recibieron el administrador de Keycloak (contraseña aleatoria, sin
+  imprimirla). tenant-a y tenant-b reaprovisionados con realm y primer administrador; el catálogo quedó con correos de
+  contacto `contacto@tenant-x.local`.
+- Gates al cierre: build sin advertencias, formato OK, 235 unitarias (95,4 % / 92,7 %), 16 arquitectura, 78 integración.
+- **Pendiente:** OK del usuario para commit + PR.
 
 ## Próximos pasos
-1. **Esperar el OK del usuario** sobre la Fase 1; luego commit (`feat(tenancy): …`) y PR de `feature/RF-03-tenancy-silo`
-   hacia `develop`, con el CI en verde.
-2. ~~Duda de `Viaje.EtaProgramada`~~ (eliminada).
-3. Fase 2 (Identidad, usuarios y auditoría): Keycloak con un realm por operador (agregar el paso "realm" al pipeline de
-   aprovisionamiento), claim `tenant_id` validado contra el `TenantId` del stack, RBAC, revocación ≤ 60 s y `AuditService`.
+1. **Esperar el OK del usuario** sobre la Fase 2; luego commit (`feat(identidad): …`) y PR de
+   `feature/RF-02-identidad-auditoria` hacia `develop`, con el CI en verde (el CI descargará las imágenes de Keycloak y
+   Mailpit para las pruebas de integración).
+2. Fase 3 (Recursos operativos y parámetros): conductores, vehículos, turnos, empresas cliente, itinerarios y
+   `ops.parametro` (catálogos y parámetros, ADR-0016), con auditoría de los cambios usando `IUnidadTrabajo`.
+3. RF-23: probar "Olvidé mi contraseña" con la pantalla de login cuando exista el Panel Web (Fase 11).
 4. Opcional: SonarCloud (crear el proyecto y el secreto `SONAR_TOKEN`).

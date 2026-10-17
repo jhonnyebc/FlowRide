@@ -33,6 +33,7 @@ public sealed class AprovisionarOperadorAdaptadorEntrada(
             operador.Estado.ToString(),
             operador.NombreSilo,
             operador.AmbitoSecretos,
+            operador.NombreRealm,
             resultado.OperadorNuevo,
             resultado.ContrasenaNueva,
             resultado.MigracionesAplicadas,
