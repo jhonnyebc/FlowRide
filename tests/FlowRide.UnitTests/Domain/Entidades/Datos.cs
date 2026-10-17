@@ -41,6 +41,6 @@ internal static class Datos
     {
         var asignacion = Asignacion();
         asignacion.Aceptar();
-        return asignacion.Iniciar(Id(70), Ahora.AddHours(5), Ahora.AddHours(4));
+        return asignacion.Iniciar(Id(70), Ahora.AddHours(4));
     }
 }

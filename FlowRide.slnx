@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/FlowRide.API/FlowRide.API.csproj" />
     <Project Path="src/FlowRide.Application/FlowRide.Application.csproj" />
+    <Project Path="src/FlowRide.Aprovisionamiento/FlowRide.Aprovisionamiento.csproj" />
     <Project Path="src/FlowRide.Domain/FlowRide.Domain.csproj" />
     <Project Path="src/FlowRide.Infrastructure/FlowRide.Infrastructure.csproj" />
   </Folder>

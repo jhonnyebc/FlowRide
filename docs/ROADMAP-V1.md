@@ -14,9 +14,9 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 |---|---|---|---|---|
 | — | Motor de asignación (PoC del ADR-0009) | Asignacion | 0009 | ✅ (commit `d751b09`) |
 | — | Revisión de ADR y roadmap | — | todos | ✅ |
-| — | Modelo de dominio completo (diagrama de clases, sin telemetría) | Todos | — | ✅ rama `feature/dominio-entidades` |
+| — | Modelo de dominio completo (diagrama de clases, sin telemetría) | Todos | — | ✅ PR #3 fusionado |
 | 0 | Base ejecutable | Plataforma | 0010, 0011, 0014, 0017, 0018 | ✅ PR #2 fusionado |
-| 1 | Tenancy y persistencia Silo | Tenancy | 0002, 0004, 0010, 0014 | ⬜ |
+| 1 | Tenancy y persistencia Silo | Tenancy, Persistencia | 0002, 0004, 0010, 0014 | ✅ rama `feature/RF-03-tenancy-silo` (pendiente de PR) |
 | 2 | Identidad, usuarios y auditoría | Identidad, Auditoria | 0003, 0011 | ⬜ |
 | 3 | Recursos operativos y parámetros | Operacion | 0006, 0013, 0014, 0016 | ⬜ |
 | 4 | Solicitudes e itinerarios | Solicitudes | 0001, 0004, 0007 | ⬜ |
@@ -42,12 +42,18 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 - RF cubiertos parcialmente: RF-50, RF-51, RF-53.
 
 ### Fase 1 — Tenancy y persistencia Silo
-- [ ] Catálogo de plataforma: operadores y su ruteo, sin datos operacionales.
-- [ ] `DbContext` por Silo con EF Core; cadena de conexión resuelta desde un tenant confiable que falla cerrado (ADR-0002).
-- [ ] Migraciones por tenant, idempotentes, con *migration bundle*.
-- [ ] Pipeline de aprovisionamiento idempotente: BD → migraciones → secretos → realm → ruteo (ADR-0010).
-- [ ] El arranque falla si falta un secreto (ADR-0014).
-- [ ] Spike 3: 0 lecturas o escrituras cross-tenant.
+- [x] Catálogo de plataforma (`flowride_catalogo`, esquema `plataforma`): entidad `Operador` (Id = tenant, razón social, NIT, correo, estado), sin datos operacionales. El ruteo (subdominio, `phone_number_id`) se agrega en la Fase 10.
+- [x] `FlowRideDbContext` por Silo con EF Core: las 17 entidades en el esquema `ops` (snake_case, como el modelo ER), herencia TPT, `xmin` como token de versión, únicos, checks y `EXCLUDE` (turnos y asignaciones sin solaparse, `btree_gist`). El stack resuelve su Silo desde su configuración de despliegue y falla cerrado si no tiene cadena de conexión (ADR-0002); el claim `tenant_id` del JWT se valida contra ella en la Fase 2.
+- [x] Migraciones por tenant, idempotentes: cada Silo registra su versión en `ops.__ef_migraciones`; `migrar` y `migrar-todos` (en orden por Id; un Silo con error no detiene a los demás).
+- [ ] *Migration bundle* (`dotnet ef migrations bundle`): se genera y versiona con la imagen en la Fase 12 (pipeline de despliegue). `dotnet-ef` ya está como herramienta local (`dotnet-tools.json`).
+- [x] Pipeline de aprovisionamiento idempotente (RF-03): catálogo → secreto → BD y rol → migraciones → operador activo, con la CLI `src/FlowRide.Aprovisionamiento`. El realm de Keycloak se agrega en la Fase 2 y la ruta del borde en la Fase 10.
+- [x] Secretos por operador: en local, un almacén user-secrets por operador (`flowride-<tenant>`); la API lo lee en Development. El adaptador de Azure Key Vault queda para la Fase 12.
+- [x] El arranque falla si falta un secreto (API: `ConnectionStrings:Silo`; CLI: `Catalogo` y `AdministracionServidor`).
+- [x] Spike 3: las credenciales de un operador no abren la base de otro (`42501`) y cada contexto solo ve sus datos.
+- [x] Estilo de puertos y adaptadores del profesor aplicado al módulo Tenancy (plantilla para las demás fases): casos de uso con interfaz genérica, puertos y adaptadores de entrada con DTO, servicio de dominio `OperadorDominio` (NIT único, operador suspendido), repositorios como puertos del dominio y `FlowRideExcepcion` → 400 en la API.
+- [x] `Viaje.EtaProgramada` eliminada (fuera de alcance: ADR-0005) con la migración `QuitarEtaProgramada`.
+- Pruebas: 173 unitarias (94,5 % líneas / 92,1 % ramas), 15 de arquitectura (la API no usa el catálogo; estilo hexagonal), 47 de integración.
+- RF cubiertos: RF-03, RF-19; RF-20 parcial (persistencia y secretos separados; reglas y parámetros en las Fases 3 y 5).
 
 ### Fase 2 — Identidad, usuarios y auditoría
 - [ ] Keycloak con un realm por operador y claim `tenant_id`; `IdentityProviderAdapter`; RBAC.
@@ -103,7 +109,7 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 |---|---|---|---|
 | RF-01 | Autenticación basada en token | 2 | ⬜ |
 | RF-02 | Autorización basada en roles | 2 | ⬜ |
-| RF-03 | Registro de operador como tenant | 1 | ⬜ |
+| RF-03 | Registro de operador como tenant | 1 | ✅ CLI `crear-operador` |
 | RF-04 | Configuración inicial del tenant | 3 | ⬜ |
 | RF-05 | Creación de usuarios por tenant | 2 | ⬜ |
 | RF-06 | Asignación de roles a usuarios | 2 | ⬜ |
@@ -119,8 +125,8 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-16 | Confirmaciones al pasajero | 8 | ⬜ |
 | RF-17 | Notificación al conductor asignado | 8 | ⬜ |
 | RF-18 | Actualización de estado del viaje por WhatsApp | 7 | ⬜ |
-| RF-19 | Aislamiento físico entre tenants | 1 | ⬜ |
-| RF-20 | Configuración separada por tenant | 1 | ⬜ |
+| RF-19 | Aislamiento físico entre tenants | 1 | ✅ Spike 3 |
+| RF-20 | Configuración separada por tenant | 1 | 🟡 BD y secretos por operador |
 | RF-21 | Configuración avanzada de reglas | 5 | ⬜ |
 | RF-22 | Cierre de sesión | 2 | ⬜ |
 | RF-23 | Recuperación de credenciales | 2 | ⬜ |
@@ -164,3 +170,8 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 2026-10-13 | El motor de asignación se mantiene en `FlowRide.Domain/Assignment` (ADR-0009 no exige Application). |
 | 2026-10-13 | Se agrega el atributo explícito "compatible con servicio crítico" para `CriticalServicePriorityRule` (Fase 5). |
 | 2026-10-13 | La BD de catálogo de plataforma guarda solo operadores y ruteo, sin datos operacionales. |
+| 2026-10-16 | El aprovisionamiento de operadores (RF-03) se dispara con una herramienta de línea de comandos (`src/FlowRide.Aprovisionamiento`), no con un endpoint: no se expone una API con permisos para crear bases y lo opera un administrador técnico. |
+| 2026-10-16 | En local, el equivalente del Key Vault por operador (ADR-0014) es un almacén user-secrets por operador (`flowride-<tenant>`). El adaptador de Azure Key Vault llega con el despliegue (Fase 12). |
+| 2026-10-16 | Los Silos ya no se crean en `docker-compose`: el contenedor crea solo el catálogo y la herramienta aprovisiona cada operador. Si un rol ya existía, el secreto manda y el rol toma su contraseña. |
+| 2026-10-16 | Se adopta el estilo de puertos y adaptadores del proyecto de referencia del profesor (`uco-test-api`): casos de uso con interfaz genérica, puertos/adaptadores de entrada con DTO, servicios de dominio `XxxDominio` con los repositorios como puertos del dominio y excepción de negocio → 400. Se mantiene el mapeo fluido de EF Core (sin modelo de persistencia aparte ni mappers) y la organización por módulo primero (ADR-0001). |
+| 2026-10-16 | `Viaje.EtaProgramada` se elimina: es un dato de ETA y ADR-0005 (RF-55/RF-56) está fuera de alcance. |
