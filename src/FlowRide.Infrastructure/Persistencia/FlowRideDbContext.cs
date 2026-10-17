@@ -1,7 +1,10 @@
 using FlowRide.Domain.Auditoria;
 using FlowRide.Domain.Entidades;
+using FlowRide.Domain.Parametros;
 using FlowRide.Infrastructure.Persistencia.Configuraciones;
+using FlowRide.Infrastructure.Seguridad;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql;
 
@@ -11,7 +14,8 @@ namespace FlowRide.Infrastructure.Persistencia;
 /// Base operativa del Silo de un operador (ADR-0002, ADR-0004). Cada stack la abre con las credenciales de su propio
 /// rol, así que una instancia de este contexto nunca puede ver datos de otro operador.
 /// </summary>
-public sealed class FlowRideDbContext(DbContextOptions<FlowRideDbContext> options) : DbContext(options)
+public sealed class FlowRideDbContext(DbContextOptions<FlowRideDbContext> options, CifradorCampos? cifrador = null)
+    : DbContext(options)
 {
     public const string Esquema = "ops";
     public const string TablaMigraciones = "__ef_migraciones";
@@ -28,6 +32,13 @@ public sealed class FlowRideDbContext(DbContextOptions<FlowRideDbContext> option
     public DbSet<Viaje> Viajes => Set<Viaje>();
     public DbSet<Calificacion> Calificaciones => Set<Calificacion>();
     public DbSet<EventoAuditoria> EventosAuditoria => Set<EventoAuditoria>();
+    public DbSet<Parametro> Parametros => Set<Parametro>();
+
+    /// <summary>
+    /// Cifrador de los campos sensibles del operador (ADR-0014). Sin él (migraciones, diseño) las columnas se leen y
+    /// escriben tal cual; el modelo se cachea por cifrador para no mezclar claves.
+    /// </summary>
+    internal CifradorCampos? Cifrador { get; } = cifrador;
 
     /// <summary>Opciones comunes del contexto del Silo, para la API, la herramienta de aprovisionamiento y las pruebas.</summary>
     public static void Configurar(DbContextOptionsBuilder options, NpgsqlDataSource dataSource)
@@ -35,7 +46,8 @@ public sealed class FlowRideDbContext(DbContextOptions<FlowRideDbContext> option
         ArgumentNullException.ThrowIfNull(options);
         options
             .UseNpgsql(dataSource, npgsql => npgsql.MigrationsHistoryTable(TablaMigraciones, Esquema))
-            .UseSnakeCaseNamingConvention();
+            .UseSnakeCaseNamingConvention()
+            .ReplaceService<IModelCacheKeyFactory, ModeloPorCifrador>();
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -63,6 +75,15 @@ public sealed class FlowRideDbContext(DbContextOptions<FlowRideDbContext> option
         modelBuilder.ApplyConfiguration(new IncidenteConfiguracion());
         modelBuilder.ApplyConfiguration(new CalificacionConfiguracion());
         modelBuilder.ApplyConfiguration(new EventoAuditoriaConfiguracion());
+        modelBuilder.ApplyConfiguration(new ParametroConfiguracion());
+
+        if (Cifrador is { } cifradorCampos)
+        {
+            var conversion = new ValueConverter<string, string>(
+                valor => cifradorCampos.Cifrar(valor), valor => cifradorCampos.Descifrar(valor));
+            modelBuilder.Entity<Usuario>().Property(usuario => usuario.TelefonoWhatsApp).HasConversion(conversion);
+            modelBuilder.Entity<Conductor>().Property(conductor => conductor.NumeroLicencia).HasConversion(conversion);
+        }
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -84,4 +105,11 @@ internal static class ConvencionesComunes
     private sealed class ConvertidorUtc() : ValueConverter<DateTimeOffset, DateTimeOffset>(
         valor => valor.ToUniversalTime(),
         valor => valor.ToUniversalTime());
+}
+
+/// <summary>Un modelo por cifrador: dos stacks en el mismo proceso (la herramienta) nunca comparten conversiones.</summary>
+internal sealed class ModeloPorCifrador : IModelCacheKeyFactory
+{
+    public object Create(DbContext context, bool designTime) =>
+        (context.GetType(), (context as FlowRideDbContext)?.Cifrador, designTime);
 }

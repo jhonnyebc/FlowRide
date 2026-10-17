@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using FlowRide.API.Auditoria;
 using FlowRide.API.Identidad;
+using FlowRide.API.Operacion;
+using FlowRide.API.Parametros;
 using FlowRide.API.Plataforma.Errores;
 using FlowRide.API.Plataforma.Observabilidad;
 using FlowRide.API.Plataforma.Salud;
@@ -19,6 +21,7 @@ if (builder.Environment.IsDevelopment())
 builder.AddObservabilidad();
 builder.Services.AddInfraestructura(builder.Configuration);
 builder.Services.AddIdentidad(builder.Configuration);
+builder.Services.AddOperacion(builder.Configuration);
 builder.Services.AddAutenticacionFlowRide();
 builder.Services.AddOpenApi();
 builder.Services.AddExceptionHandler<ManejadorExcepciones>();
@@ -61,6 +64,8 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 var api = app.MapGroup("/api").RequireAuthorization();
 api.MapUsuarios();
 api.MapAuditoria();
+api.MapOperacion();
+api.MapParametros();
 
 app.Run();
 

@@ -29,8 +29,8 @@ public sealed class CrearUsuarioCasoUso(
         // 1. Reglas, antes de tocar el proveedor.
         var rol = UsuarioDominio.ValidarRolDelPanel(datos.Rol);
         UsuarioDominio.ValidarFormatoCorreo(datos.Correo);
-        await usuarioDominio.ValidarCorreoDisponibleAsync(datos.Correo, ct);
-        await usuarioDominio.ValidarTelefonoDisponibleAsync(datos.TelefonoWhatsApp, ct);
+        await usuarioDominio.ValidarCorreoDisponibleAsync(datos.Correo, null, ct);
+        await usuarioDominio.ValidarTelefonoDisponibleAsync(datos.TelefonoWhatsApp, null, ct);
 
         // 2. Cuenta en el proveedor primero: si después falla la base, al reintentar se reutiliza (se busca por correo).
         var identidadExternaId = await proveedor.AsegurarUsuarioAsync(datos.Correo.Trim(), datos.Nombre.Trim(), ct);
