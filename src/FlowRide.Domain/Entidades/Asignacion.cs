@@ -9,6 +9,10 @@ namespace FlowRide.Domain.Entidades;
 /// </summary>
 public sealed class Asignacion
 {
+#pragma warning disable CS8618 // Solo para materializar desde la base: la franja se carga desde sus columnas.
+    private Asignacion() { }
+#pragma warning restore CS8618
+
     public Asignacion(
         Guid id,
         Guid solicitudId,
@@ -70,10 +74,10 @@ public sealed class Asignacion
     }
 
     /// <summary>El conductor inicia el servicio: la asignación pasa a EnCurso y nace el viaje.</summary>
-    public Viaje Iniciar(Guid viajeId, DateTimeOffset etaProgramada, DateTimeOffset ahora)
+    public Viaje Iniciar(Guid viajeId, DateTimeOffset ahora)
     {
         Exigir(EstadoAsignacion.Aceptada, "iniciar");
-        var viaje = new Viaje(viajeId, Id, etaProgramada);
+        var viaje = new Viaje(viajeId, Id);
         viaje.Iniciar(ahora);
         Estado = EstadoAsignacion.EnCurso;
         return viaje;

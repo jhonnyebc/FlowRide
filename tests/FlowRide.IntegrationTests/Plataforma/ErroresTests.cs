@@ -24,6 +24,21 @@ public class ErroresTests(PostgresFixture postgres)
     }
 
     [Fact]
+    public async Task ReglaDeNegocioIncumplida_DevuelveProblemDetails400ConElMensajeYTraceId()
+    {
+        await using var api = new FlowRideApiFactory(postgres.CadenaConexion);
+
+        var respuesta = await api.CreateClient().GetAsync(RutaDeErrorDePrueba.RutaRegla);
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        Assert.Equal("application/problem+json", respuesta.Content.Headers.ContentType?.MediaType);
+        using var json = await JsonDocument.ParseAsync(await respuesta.Content.ReadAsStreamAsync());
+        Assert.Equal(400, json.RootElement.GetProperty("status").GetInt32());
+        Assert.Equal(RutaDeErrorDePrueba.MensajeRegla, json.RootElement.GetProperty("detail").GetString());
+        Assert.Matches("^[0-9a-f]{32}$", json.RootElement.GetProperty("traceId").GetString());
+    }
+
+    [Fact]
     public async Task ExcepcionNoControlada_DevuelveProblemDetails500SinDetallesInternos_YLaRegistra()
     {
         await using var api = new FlowRideApiFactory(postgres.CadenaConexion);

@@ -1,14 +1,23 @@
 using System.Diagnostics;
+using FlowRide.API.Plataforma.Errores;
 using FlowRide.API.Plataforma.Observabilidad;
 using FlowRide.API.Plataforma.Salud;
 using FlowRide.Infrastructure;
+using FlowRide.Infrastructure.Plataforma;
+using FlowRide.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// En local, los secretos del stack viven en el almacén del operador que crea la herramienta de aprovisionamiento
+// (equivalente a su Key Vault, ADR-0014). En la nube se leerán del Key Vault del operador.
+if (builder.Environment.IsDevelopment())
+    builder.Configuration.AddSecretosLocalesDelOperador(builder.Configuration[$"{SiloOptions.Seccion}:TenantId"]);
+
 builder.AddObservabilidad();
 builder.Services.AddInfraestructura(builder.Configuration);
 builder.Services.AddOpenApi();
+builder.Services.AddExceptionHandler<ManejadorExcepciones>();
 builder.Services.AddProblemDetails(options =>
     options.CustomizeProblemDetails = context =>
     {

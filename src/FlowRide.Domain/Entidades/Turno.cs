@@ -6,6 +6,10 @@ namespace FlowRide.Domain.Entidades;
 /// <summary>Turno programado de un conductor. Ciclo: Programado → Activo → Finalizado, o Abandonado.</summary>
 public sealed class Turno
 {
+#pragma warning disable CS8618 // Solo para materializar desde la base: la franja se carga desde sus columnas.
+    private Turno() { }
+#pragma warning restore CS8618
+
     public Turno(
         Guid id,
         Guid conductorId,

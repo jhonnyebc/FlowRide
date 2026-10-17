@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\src\FlowRide.Application\FlowRide.Application.csproj" />
     <ProjectReference Include="..\..\src\FlowRide.Infrastructure\FlowRide.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\FlowRide.API\FlowRide.API.csproj" />
+    <ProjectReference Include="..\..\src\FlowRide.Aprovisionamiento\FlowRide.Aprovisionamiento.csproj" />
   </ItemGroup>
 
 </Project>

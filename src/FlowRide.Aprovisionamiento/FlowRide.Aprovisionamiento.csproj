@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Herramienta de plataforma para aprovisionar y migrar los Silos de los operadores (RF-03, ADR-0010).
+       La usa un administrador técnico; no forma parte del stack de ningún operador. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>flowride-aprovisionamiento</AssemblyName>
+    <!-- Secretos de plataforma (catálogo y administración del servidor), fuera del repositorio (ADR-0014). -->
+    <UserSecretsId>flowride-aprovisionamiento</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FlowRide.Application\FlowRide.Application.csproj" />
+    <ProjectReference Include="..\FlowRide.Infrastructure\FlowRide.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
+  </ItemGroup>
+
+</Project>
