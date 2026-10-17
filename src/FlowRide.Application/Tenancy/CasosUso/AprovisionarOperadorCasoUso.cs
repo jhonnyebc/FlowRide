@@ -14,14 +14,15 @@ public sealed record ResultadoAprovisionamiento(
 
 /// <summary>
 /// Registro de un operador como tenant (RF-03). Pipeline idempotente de ADR-0010: catálogo → secreto → base y rol
-/// → migraciones → operador activo. Si falla a mitad, se puede volver a ejecutar con los mismos datos.
-/// El realm de Keycloak (Fase 2) y la ruta en el borde (Fase 10) se agregan a este pipeline en sus fases.
+/// → migraciones → realm → operador activo. Si falla a mitad, se puede volver a ejecutar con los mismos datos.
+/// El primer administrador lo crea después el stack del operador; la ruta en el borde se agrega en la Fase 10.
 /// </summary>
 public sealed class AprovisionarOperadorCasoUso(
     OperadorDominio operadorDominio,
     IOperadorRepositorio operadores,
     IServidorSilos servidor,
     IMigradorSilo migrador,
+    IServidorIdentidad servidorIdentidad,
     IAlmacenSecretos secretos,
     IGeneradorSecretos generador,
     TimeProvider reloj) : ICasoUsoConRetorno<AprovisionarOperadorDominio, ResultadoAprovisionamiento>
@@ -63,8 +64,19 @@ public sealed class AprovisionarOperadorCasoUso(
         var cadenaConexion = servidor.CadenaConexion(operador.NombreSilo, contrasena);
         await secretos.GuardarAsync(operador.AmbitoSecretos, ClavesSecretos.CadenaConexionSilo, cadenaConexion, ct);
 
-        // 5. Esquema operativo al día y operador listo para operar.
+        // 5. Esquema operativo al día (incluye los roles del sistema).
         var migraciones = await migrador.MigrarAsync(cadenaConexion, ct);
+
+        // 6. Realm del operador en Keycloak, con el secreto de su cliente de servicio (se reutiliza si ya existe).
+        var secretoCliente = await secretos.ObtenerAsync(operador.AmbitoSecretos, ClavesSecretos.SecretoClienteIdentidad, ct);
+        if (secretoCliente is null)
+        {
+            secretoCliente = generador.NuevaContrasena();
+            await secretos.GuardarAsync(operador.AmbitoSecretos, ClavesSecretos.SecretoClienteIdentidad, secretoCliente, ct);
+        }
+        await servidorIdentidad.AsegurarRealmAsync(operador.NombreRealm, operador.Id, secretoCliente, ct);
+
+        // 7. Operador listo para operar.
         operador.Activar();
         await operadores.ModificarAsync(operador.Id, operador, ct);
 

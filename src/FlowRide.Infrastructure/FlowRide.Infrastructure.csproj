@@ -22,4 +22,9 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Plantilla versionada y sin secretos de los realms de los operadores (ADR-0003). -->
+    <EmbeddedResource Include="Identidad/Keycloak/plantilla-realm.json" LogicalName="FlowRide.plantilla-realm.json" />
+  </ItemGroup>
+
 </Project>

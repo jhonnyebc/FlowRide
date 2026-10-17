@@ -59,8 +59,9 @@ public class ModulosTests
 
     private static string? ModuloDe(IType tipo, string capa)
     {
-        var espacio = tipo.Namespace.FullName;
-        if (!espacio.StartsWith(capa + ".", StringComparison.Ordinal)) return null;
+        // Los tipos que genera el compilador (p. ej. para las expresiones de colección) no tienen namespace.
+        var espacio = tipo.Namespace?.FullName;
+        if (espacio is null || !espacio.StartsWith(capa + ".", StringComparison.Ordinal)) return null;
 
         var resto = espacio[(capa.Length + 1)..];
         var punto = resto.IndexOf('.');

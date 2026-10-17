@@ -1,3 +1,4 @@
+using FlowRide.Domain.Auditoria;
 using FlowRide.Domain.Entidades;
 using FlowRide.Infrastructure.Persistencia.Configuraciones;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,7 @@ public sealed class FlowRideDbContext(DbContextOptions<FlowRideDbContext> option
     public DbSet<Asignacion> Asignaciones => Set<Asignacion>();
     public DbSet<Viaje> Viajes => Set<Viaje>();
     public DbSet<Calificacion> Calificaciones => Set<Calificacion>();
+    public DbSet<EventoAuditoria> EventosAuditoria => Set<EventoAuditoria>();
 
     /// <summary>Opciones comunes del contexto del Silo, para la API, la herramienta de aprovisionamiento y las pruebas.</summary>
     public static void Configurar(DbContextOptionsBuilder options, NpgsqlDataSource dataSource)
@@ -60,6 +62,7 @@ public sealed class FlowRideDbContext(DbContextOptions<FlowRideDbContext> option
         modelBuilder.ApplyConfiguration(new ParadaConfiguracion());
         modelBuilder.ApplyConfiguration(new IncidenteConfiguracion());
         modelBuilder.ApplyConfiguration(new CalificacionConfiguracion());
+        modelBuilder.ApplyConfiguration(new EventoAuditoriaConfiguracion());
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

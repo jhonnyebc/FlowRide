@@ -25,9 +25,9 @@ Los ADR están en `docs/adr` (copia de los originales del equipo, con las revisi
 Monolito modular por capas; las dependencias apuntan hacia Domain:
 - `FlowRide.Domain`: entidades (`Entidades/`), value objects (`ValoresObjeto/`), enumeraciones y motor de asignación (`Assignment/`, lógica pura). **No depende de nada externo** (ni EF Core, ni ASP.NET). Las entidades validan sus invariantes en el constructor, cambian de estado solo por métodos, se relacionan con otros agregados por Id y reciben el tiempo como parámetro (`ahora`).
 - `FlowRide.Application` → Domain. Casos de uso y puertos (interfaces).
-- `FlowRide.Infrastructure` → Application. EF Core, Npgsql, implementaciones de puertos. `Persistencia/` (`FlowRideDbContext` del Silo, esquema `ops`, migraciones) y `Tenancy/` (catálogo de plataforma, servidor de Silos, secretos por operador).
-- `FlowRide.API` → Application, Infrastructure. Endpoints HTTP y composición (DI). Es el stack de **un** operador: nunca usa el catálogo ni el aprovisionamiento (regla de arquitectura).
-- `FlowRide.Aprovisionamiento` → Application, Infrastructure. Herramienta de plataforma (CLI) para aprovisionar y migrar los Silos (RF-03).
+- `FlowRide.Infrastructure` → Application. EF Core, Npgsql, implementaciones de puertos. `Persistencia/` (`FlowRideDbContext` del Silo, esquemas `ops` y `audit`, migraciones, `UnidadTrabajoEf`), `Tenancy/` (catálogo de plataforma, servidor de Silos, secretos por operador), `Identidad/` (repositorio de usuarios y adaptadores de Keycloak con la plantilla `plantilla-realm.json`) y `Auditoria/`.
+- `FlowRide.API` → Application, Infrastructure. Endpoints HTTP y composición (DI). Es el stack de **un** operador: nunca usa el catálogo, el aprovisionamiento ni la cuenta de administración de Keycloak (regla de arquitectura). Todo lo que cuelga de `/api` exige un token del realm del operador.
+- `FlowRide.Aprovisionamiento` → Application, Infrastructure. Herramienta de plataforma (CLI) para aprovisionar y migrar los Silos y crear sus realms (RF-03). El primer administrador lo crea con la composición del stack del operador (`FabricaStackOperador`).
 - Migraciones: `dotnet ef migrations add <Nombre> --project src/FlowRide.Infrastructure --context FlowRideDbContext --output-dir Persistencia/Migraciones` (catálogo: `--context CatalogoDbContext --output-dir Tenancy/Migraciones`). Las restricciones `EXCLUDE` se escriben a mano con `migrationBuilder.Sql`.
 - Módulos = primer namespace dentro de cada capa (p. ej. `FlowRide.API.Plataforma`); sin ciclos entre módulos.
 - Tests: `tests/FlowRide.UnitTests` (Domain + Application, con gate de cobertura), `tests/FlowRide.ArchitectureTests` (ArchUnitNET: capas, ciclos y estilo hexagonal), `tests/FlowRide.IntegrationTests` (Testcontainers, `[Trait("Category","Integration")]` en **toda** clase, porque el CI filtra por esa categoría).
@@ -41,7 +41,14 @@ Referencia: proyecto `uco-test-api` del curso (`C:\Users\Lenovo\IdeaProjects\cla
 5. **Puertos de salida:** los repositorios son interfaces de Domain (`Domain/<Modulo>/Repositorios`, armados con los genéricos de `Domain/Comun/Repositorios`); los demás puertos (servidores, secretos, mensajería) van en `Application/<Modulo>/Salida/Puertos`.
 6. **Adaptadores de salida** en Infrastructure (`<Entidad>RepositorioAdaptador`, etc.). EF Core mapea las entidades del dominio directamente con configuración fluida: **no** hay modelo de persistencia aparte ni mapper (decisión del 2026-10-16).
 7. Reglas de negocio incumplidas → `FlowRideExcepcion` (`Domain/Transversal`); la API la devuelve como 400 (`API/Plataforma/Errores/ManejadorExcepciones`).
+8. En el Silo, los repositorios dejan los cambios pendientes y el caso de uso confirma con `IUnidadTrabajo`: el cambio y su `EventoAuditoria` se guardan en la misma transacción, que sella la cadena de hashes.
 Las pruebas de `EstiloHexagonalTests` hacen cumplir los puntos 1, 2, 3 y 5.
+
+## Identidad y auditoría (Fase 2)
+- Keycloak, un realm `flowride-<tenant>` por operador, creado por la CLI desde `plantilla-realm.json`: cliente público `flowride-panel` (PKCE) con los claims `tenant_id` y audiencia `flowride-api`; cliente de servicio `flowride-api` con el que la API gestiona las cuentas de su realm (su secreto está en el almacén del operador).
+- Cada petición: token válido (firma, emisor, audiencia `flowride-api`, vigencia de 5 min) → `tenant_id` igual al del stack → usuario interno activo buscado por `sub`, **sin caché** (revocación inmediata, ADM-SEG-01). El rol sale de FlowRide (`RolesSistema`, Id fijos sembrados por migración), no del token.
+- Políticas: `Administrador` (gestión de usuarios y auditoría) y `PanelWeb` (Administrador u Operador logístico).
+- Auditoría en `audit.evento_auditoria`: solo INSERT (trigger), cadena SHA-256, sin datos personales en los valores; `GET /api/auditoria/verificacion` la comprueba.
 
 ## RF-10
 El sistema asigna automáticamente un conductor y un vehículo a cada solicitud pendiente, aplicando las reglas configurables del tenant.
@@ -76,12 +83,14 @@ Transacciones PostgreSQL, concurrencia optimista con token de versión, restricc
 - Arquitectura: `dotnet test tests/FlowRide.ArchitectureTests`
 - Integración (requiere Docker): `dotnet test tests/FlowRide.IntegrationTests`
 - Herramientas locales: `dotnet tool restore` (instala `dotnet-ef` desde `dotnet-tools.json`).
-- BD local: `cp .env.example .env`, definir contraseñas y `docker compose up -d`. PostgreSQL queda en el **puerto 5433** del host (5432 lo ocupa un PostgreSQL local). Al iniciar el volumen solo se crea el catálogo (`flowride_catalogo`); los Silos los crea la herramienta.
+- Entorno local: `cp .env.example .env`, definir contraseñas y `docker compose up -d`. PostgreSQL queda en el **puerto 5433** del host (5432 lo ocupa un PostgreSQL local), Keycloak en **8080** (consola: usuario `KEYCLOAK_ADMIN_USER`) y Mailpit en **8025** (ahí llegan los correos de Keycloak). Al iniciar el volumen solo se crea el catálogo (`flowride_catalogo`); los Silos y los realms los crea la herramienta.
 - Herramienta de aprovisionamiento (secretos de plataforma una sola vez, con los valores de `.env`):
   `dotnet user-secrets set "ConnectionStrings:Catalogo" "Host=localhost;Port=5433;Database=flowride_catalogo;Username=flowride_catalogo;Password=<CATALOGO_DB_PASSWORD>" --project src/FlowRide.Aprovisionamiento`
   `dotnet user-secrets set "ConnectionStrings:AdministracionServidor" "Host=localhost;Port=5433;Database=postgres;Username=<POSTGRES_USER>;Password=<POSTGRES_PASSWORD>" --project src/FlowRide.Aprovisionamiento`
-  y luego `dotnet run --project src/FlowRide.Aprovisionamiento -- crear-operador --id tenant-a --razon-social "..." --nit ... --correo ...` (también `migrar --id`, `migrar-todos`, `listar`, `ayuda`). Es idempotente.
-- API local: el `TenantId` está en `appsettings.Development.json`; en Development la API lee su cadena de conexión del almacén del operador que creó la herramienta (`%APPDATA%\Microsoft\UserSecrets\flowride-<tenant>\secrets.json`). `dotnet run --project src/FlowRide.API` (http://localhost:5237; pruebas en `src/FlowRide.API/FlowRide.API.http`). Las variables de entorno y la línea de comandos siguen pudiendo sobrescribirla.
+  `dotnet user-secrets set "FlowRide:Keycloak:Administrador:Usuario" "<KEYCLOAK_ADMIN_USER>" --project src/FlowRide.Aprovisionamiento` (y `...:Contrasena` con `<KEYCLOAK_ADMIN_PASSWORD>`)
+  y luego `dotnet run --project src/FlowRide.Aprovisionamiento -- crear-operador --id tenant-a --razon-social "..." --nit ... --correo ... --admin-nombre "..." --admin-correo ... --admin-telefono ...` (también `migrar --id`, `migrar-todos`, `listar`, `ayuda`). Es idempotente. La URL de Keycloak y el SMTP de los realms están en `src/FlowRide.Aprovisionamiento/appsettings.json`.
+- API local: el `TenantId` y la URL de Keycloak están en `appsettings.Development.json`; en Development la API lee su cadena de conexión y el secreto de su cliente de servicio del almacén del operador que creó la herramienta (`%APPDATA%\Microsoft\UserSecrets\flowride-<tenant>\secrets.json`). `dotnet run --project src/FlowRide.API` (http://localhost:5237; pruebas en `src/FlowRide.API/FlowRide.API.http`). Las variables de entorno y la línea de comandos siguen pudiendo sobrescribirla.
+- Primer inicio de sesión: abrir el correo "Actualiza tu cuenta" en Mailpit (http://localhost:8025), seguir el enlace y definir la contraseña.
 - En PowerShell, si `docker` no se encuentra, recargar el PATH o abrir una terminal nueva.
 
 ## Alcance

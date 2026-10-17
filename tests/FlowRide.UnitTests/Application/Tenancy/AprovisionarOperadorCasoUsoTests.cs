@@ -15,9 +15,10 @@ public class AprovisionarOperadorCasoUsoTests
     private readonly ServidorEnMemoria _servidor = new();
     private readonly MigradorEnMemoria _migrador = new();
     private readonly SecretosEnMemoria _secretos = new();
+    private readonly IdentidadEnMemoria _identidad = new();
 
     private AprovisionarOperadorCasoUso CasoUso() =>
-        new(new OperadorDominio(_operadores), _operadores, _servidor, _migrador, _secretos, new GeneradorSecuencial(), new RelojFijo(Ahora));
+        new(new OperadorDominio(_operadores), _operadores, _servidor, _migrador, _identidad, _secretos, new GeneradorSecuencial(), new RelojFijo(Ahora));
 
     [Fact]
     public async Task OperadorNuevo_QuedaActivoConSiloSecretoYEsquema()
@@ -34,6 +35,8 @@ public class AprovisionarOperadorCasoUsoTests
         Assert.Equal("clave-1", _secretos.Valores[("flowride-tenant-a", ClavesSecretos.ContrasenaSilo)]);
         Assert.Equal("Database=flowride_tenant_a;Password=clave-1",
             _secretos.Valores[("flowride-tenant-a", ClavesSecretos.CadenaConexionSilo)]);
+        Assert.Equal(("tenant-a", "clave-2"), _identidad.Realms["flowride-tenant-a"]);
+        Assert.Equal("clave-2", _secretos.Valores[("flowride-tenant-a", ClavesSecretos.SecretoClienteIdentidad)]);
     }
 
     [Fact]
@@ -50,6 +53,21 @@ public class AprovisionarOperadorCasoUsoTests
         Assert.Equal(1, _operadores.Creados);
         Assert.Equal("Transportes A SAS", _operadores.Operadores["tenant-a"].RazonSocial);
         Assert.Equal("clave-1", _servidor.Silos["flowride_tenant_a"]);
+        Assert.Equal(("tenant-a", "clave-2"), _identidad.Realms["flowride-tenant-a"]);
+    }
+
+    [Fact]
+    public async Task FalloEnKeycloak_DejaElOperadorSinActivarYAlReintentarReutilizaElSecreto()
+    {
+        _identidad.Falla = true;
+        await Assert.ThrowsAsync<InvalidOperationException>(() => CasoUso().EjecutarAsync(Datos, CancellationToken.None));
+        Assert.Equal(EstadoOperador.Aprovisionando, _operadores.Operadores["tenant-a"].Estado);
+
+        _identidad.Falla = false;
+        var resultado = await CasoUso().EjecutarAsync(Datos, CancellationToken.None);
+
+        Assert.Equal(EstadoOperador.Activo, resultado.Operador.Estado);
+        Assert.Equal("clave-2", _identidad.Realms["flowride-tenant-a"].Secreto);
     }
 
     [Fact]

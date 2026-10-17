@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using FlowRide.API.Auditoria;
+using FlowRide.API.Identidad;
 using FlowRide.API.Plataforma.Errores;
 using FlowRide.API.Plataforma.Observabilidad;
 using FlowRide.API.Plataforma.Salud;
@@ -16,6 +18,8 @@ if (builder.Environment.IsDevelopment())
 
 builder.AddObservabilidad();
 builder.Services.AddInfraestructura(builder.Configuration);
+builder.Services.AddIdentidad(builder.Configuration);
+builder.Services.AddAutenticacionFlowRide();
 builder.Services.AddOpenApi();
 builder.Services.AddExceptionHandler<ManejadorExcepciones>();
 builder.Services.AddProblemDetails(options =>
@@ -31,10 +35,12 @@ var app = builder.Build();
 app.UseMiddleware<RegistroDeSolicitudesMiddleware>();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseAuthentication();
+app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
 }
 
 // El TLS termina en el borde común (ADR-0012); el stack del operador no redirige a HTTPS.
@@ -44,12 +50,17 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
     Predicate = _ => false,
     ResponseWriter = RespuestaDeSalud.EscribirAsync
-});
+}).AllowAnonymous();
 app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains(DependencyInjection.EtiquetaReadiness),
     ResponseWriter = RespuestaDeSalud.EscribirAsync
-});
+}).AllowAnonymous();
+
+// Todo lo que cuelga de /api exige un token válido del realm del operador (ADR-0003).
+var api = app.MapGroup("/api").RequireAuthorization();
+api.MapUsuarios();
+api.MapAuditoria();
 
 app.Run();
 

@@ -1,4 +1,5 @@
 using FlowRide.Domain.Entidades;
+using FlowRide.Domain.Identidad;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -14,6 +15,9 @@ internal sealed class RolConfiguracion : IEntityTypeConfiguration<Rol>
         entidad.Property(rol => rol.Nombre).HasMaxLength(50).IsRequired();
         entidad.Property(rol => rol.Descripcion).HasMaxLength(200).IsRequired();
         entidad.HasIndex(rol => rol.Nombre).IsUnique();
+
+        // Los cuatro roles del sistema llegan con la migración, con Id fijos (RBAC, ADR-0003).
+        entidad.HasData(RolesSistema.Todos.Select(rol => new { rol.Id, rol.Nombre, rol.Descripcion }));
     }
 }
 
