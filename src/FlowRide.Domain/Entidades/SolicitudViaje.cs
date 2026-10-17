@@ -11,6 +11,10 @@ public sealed class SolicitudViaje
 {
     private readonly List<EstadoSolicitudHistorial> _historial = [];
 
+#pragma warning disable CS8618 // Solo para materializar desde la base: el constructor público registra el historial inicial.
+    private SolicitudViaje() { }
+#pragma warning restore CS8618
+
     public SolicitudViaje(
         Guid id,
         Guid pasajeroId,
