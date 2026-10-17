@@ -1,5 +1,6 @@
 using FlowRide.Application.Identidad.Entrada.Dto;
 using FlowRide.Application.Identidad.Entrada.Puertos;
+using FlowRide.Application.Seguridad.Entrada.Puertos;
 using FlowRide.Application.Tenancy.Entrada.Dto;
 using FlowRide.Application.Tenancy.Entrada.Puertos;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,8 +31,7 @@ public static class Comandos
                         CorreoContacto = comando.Opcion("correo")
                     }, ct);
                 await EscribirAprovisionamientoAsync(aprovisionado, salida);
-                if (comando.Tiene("admin-correo"))
-                    await CrearAdministradorInicialAsync(comando, aprovisionado.TenantId, servicios, salida, ct);
+                await PrepararStackAsync(comando, aprovisionado.TenantId, servicios, salida, ct);
                 return 0;
 
             case Comando.Migrar:
@@ -55,12 +55,24 @@ public static class Comandos
         }
     }
 
-    /// <summary>El primer administrador se crea desde el stack del propio operador (su Silo y su realm).</summary>
-    private static async Task CrearAdministradorInicialAsync(
+    /// <summary>
+    /// Pasos que se hacen con el stack del propio operador (su Silo, su clave y su realm): dejar cifrados los campos
+    /// sensibles (ADR-0014) y, si se pidió, crear el primer administrador.
+    /// </summary>
+    private static async Task PrepararStackAsync(
         Comando comando, string tenantId, IServiceProvider servicios, TextWriter salida, CancellationToken ct)
     {
         await using var stack = servicios.GetRequiredService<FabricaStackOperador>().Crear(tenantId);
         await using var alcance = stack.CreateAsyncScope();
+
+        var cifrados = await alcance.ServiceProvider.GetRequiredService<IAsegurarCifradoPuertoEntrada>().AsegurarAsync(ct);
+        await salida.WriteLineAsync(cifrados == 0
+            ? "  Cifrado: los campos sensibles ya estaban cifrados con la clave vigente."
+            : $"  Cifrado: {cifrados} valor(es) cifrado(s) con la clave vigente.");
+
+        if (!comando.Tiene("admin-correo"))
+            return;
+
         var administrador = await alcance.ServiceProvider.GetRequiredService<IAsegurarAdministradorInicialPuertoEntrada>()
             .AsegurarAsync(new CrearUsuarioPeticion
             {
@@ -85,6 +97,7 @@ public static class Comandos
             ? "  Esquema: ya estaba al día."
             : $"  Esquema: {respuesta.MigracionesAplicadas.Count} migración(es) aplicada(s): {string.Join(", ", respuesta.MigracionesAplicadas)}.");
         await salida.WriteLineAsync($"  Identidad: realm '{respuesta.NombreRealm}' en Keycloak.");
+        await salida.WriteLineAsync($"  Documentos: bucket privado '{respuesta.NombreBucket}'.");
         await salida.WriteLineAsync($"  Estado: {respuesta.Estado}. {respuesta.Mensaje}");
     }
 

@@ -47,3 +47,17 @@ public sealed class ServidorIdentidadDePrueba : IServidorIdentidad
         return Task.CompletedTask;
     }
 }
+
+/// <summary>Servidor de objetos en memoria para las pruebas de aprovisionamiento que no necesitan Azurite.</summary>
+public sealed class ServidorObjetosDePrueba : IServidorObjetos
+{
+    public ConcurrentDictionary<string, bool> Buckets { get; } = new(StringComparer.Ordinal);
+
+    public Task AsegurarBucketAsync(string nombreBucket, CancellationToken ct)
+    {
+        Buckets[nombreBucket] = true;
+        return Task.CompletedTask;
+    }
+
+    public string CadenaConexion(string nombreBucket) => "UseDevelopmentStorage=true";
+}

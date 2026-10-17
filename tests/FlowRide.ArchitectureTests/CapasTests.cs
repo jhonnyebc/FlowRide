@@ -58,6 +58,8 @@ public class CapasTests
                 typeof(FlowRide.Infrastructure.Tenancy.ServidorSilosPostgres),
                 typeof(FlowRide.Infrastructure.Identidad.Keycloak.ServidorIdentidadKeycloak),
                 typeof(FlowRide.Application.Tenancy.Salida.Puertos.IServidorIdentidad),
+                typeof(FlowRide.Infrastructure.Operacion.ServidorObjetosAzureBlob),
+                typeof(FlowRide.Application.Tenancy.Salida.Puertos.IServidorObjetos),
                 typeof(FlowRide.Application.Tenancy.CasosUso.AprovisionarOperadorCasoUso),
                 typeof(FlowRide.Application.Tenancy.CasosUso.MigrarSilosCasoUso),
                 typeof(FlowRide.Application.Tenancy.Entrada.Puertos.IAprovisionarOperadorPuertoEntrada))

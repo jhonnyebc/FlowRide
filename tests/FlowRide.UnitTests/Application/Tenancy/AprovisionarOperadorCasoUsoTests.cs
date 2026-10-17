@@ -16,9 +16,10 @@ public class AprovisionarOperadorCasoUsoTests
     private readonly MigradorEnMemoria _migrador = new();
     private readonly SecretosEnMemoria _secretos = new();
     private readonly IdentidadEnMemoria _identidad = new();
+    private readonly ObjetosEnMemoria _objetos = new();
 
     private AprovisionarOperadorCasoUso CasoUso() =>
-        new(new OperadorDominio(_operadores), _operadores, _servidor, _migrador, _identidad, _secretos, new GeneradorSecuencial(), new RelojFijo(Ahora));
+        new(new OperadorDominio(_operadores), _operadores, _servidor, _migrador, _identidad, _objetos, _secretos, new GeneradorSecuencial(), new RelojFijo(Ahora));
 
     [Fact]
     public async Task OperadorNuevo_QuedaActivoConSiloSecretoYEsquema()
@@ -37,6 +38,10 @@ public class AprovisionarOperadorCasoUsoTests
             _secretos.Valores[("flowride-tenant-a", ClavesSecretos.CadenaConexionSilo)]);
         Assert.Equal(("tenant-a", "clave-2"), _identidad.Realms["flowride-tenant-a"]);
         Assert.Equal("clave-2", _secretos.Valores[("flowride-tenant-a", ClavesSecretos.SecretoClienteIdentidad)]);
+        Assert.Equal("clave-3", _secretos.Valores[("flowride-tenant-a", ClavesSecretos.ClaveCifradoV1)]);
+        Assert.Equal("v1", _secretos.Valores[("flowride-tenant-a", ClavesSecretos.VersionCifradoVigente)]);
+        Assert.Contains("flowride-tenant-a", _objetos.Buckets);
+        Assert.Equal("Bucket=flowride-tenant-a", _secretos.Valores[("flowride-tenant-a", ClavesSecretos.CadenaConexionObjetos)]);
     }
 
     [Fact]
@@ -54,6 +59,7 @@ public class AprovisionarOperadorCasoUsoTests
         Assert.Equal("Transportes A SAS", _operadores.Operadores["tenant-a"].RazonSocial);
         Assert.Equal("clave-1", _servidor.Silos["flowride_tenant_a"]);
         Assert.Equal(("tenant-a", "clave-2"), _identidad.Realms["flowride-tenant-a"]);
+        Assert.Equal("clave-3", _secretos.Valores[("flowride-tenant-a", ClavesSecretos.ClaveCifradoV1)]);
     }
 
     [Fact]

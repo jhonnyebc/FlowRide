@@ -16,16 +16,16 @@ public sealed class UsuarioDominio(IUsuarioRepositorio usuarios)
         ?? throw new FlowRideExcepcion($"El usuario {usuarioId} no existe.");
 
     /// <summary>El correo identifica a un único usuario del operador (también es su usuario en el Panel Web).</summary>
-    public async Task ValidarCorreoDisponibleAsync(string correo, CancellationToken ct)
+    public async Task ValidarCorreoDisponibleAsync(string correo, Guid? usuarioId, CancellationToken ct)
     {
-        if (await usuarios.ConsultarPorCorreoAsync(correo.Trim(), ct) is not null)
+        if (await usuarios.ConsultarPorCorreoAsync(correo.Trim(), ct) is { } titular && titular.Id != usuarioId)
             throw new FlowRideExcepcion($"Ya existe un usuario con el correo {correo.Trim()}.");
     }
 
     /// <summary>El número de WhatsApp identifica al usuario en el canal (ADR-0008), así que no se repite.</summary>
-    public async Task ValidarTelefonoDisponibleAsync(string telefonoWhatsApp, CancellationToken ct)
+    public async Task ValidarTelefonoDisponibleAsync(string telefonoWhatsApp, Guid? usuarioId, CancellationToken ct)
     {
-        if (await usuarios.ConsultarPorTelefonoAsync(telefonoWhatsApp.Trim(), ct) is not null)
+        if (await usuarios.ConsultarPorTelefonoAsync(telefonoWhatsApp.Trim(), ct) is { } titular && titular.Id != usuarioId)
             throw new FlowRideExcepcion($"Ya existe un usuario con el número de WhatsApp {telefonoWhatsApp.Trim()}.");
     }
 

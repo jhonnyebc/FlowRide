@@ -39,6 +39,9 @@ public sealed partial class Operador
     /// <summary>Realm de Keycloak del operador (ADR-0003): uno por operador; emite el claim <c>tenant_id</c>.</summary>
     public string NombreRealm => NombreRealmDe(Id);
 
+    /// <summary>Bucket privado del operador en el almacenamiento de objetos (ADR-0013).</summary>
+    public string NombreBucket => NombreBucketDe(Id);
+
     public static bool EsIdValido(string? id) => id is not null && id.Length <= 40 && PatronId().IsMatch(id);
 
     public static string NombreSiloDe(string id) => "flowride_" + id.Replace('-', '_');
@@ -47,6 +50,9 @@ public sealed partial class Operador
 
     /// <summary>El stack del operador deriva su realm de su TenantId con esta misma regla.</summary>
     public static string NombreRealmDe(string id) => "flowride-" + id;
+
+    /// <summary>El stack del operador deriva su bucket de su TenantId con esta misma regla.</summary>
+    public static string NombreBucketDe(string id) => "flowride-" + id;
 
     public void ActualizarDatos(string razonSocial, string nit, string correoContacto)
     {

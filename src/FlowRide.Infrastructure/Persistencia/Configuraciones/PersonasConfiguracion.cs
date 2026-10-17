@@ -32,7 +32,8 @@ internal sealed class UsuarioConfiguracion : IEntityTypeConfiguration<Usuario>
         entidad.Property(usuario => usuario.Id).ValueGeneratedNever();
         entidad.Property(usuario => usuario.Nombre).HasMaxLength(150).IsRequired();
         entidad.Property(usuario => usuario.Correo).HasMaxLength(150);
-        entidad.Property(usuario => usuario.TelefonoWhatsApp).HasMaxLength(20).IsRequired();
+        // Cifrado a nivel de aplicación (ADR-0014): "v1." + base64url; el largo cubre el texto cifrado.
+        entidad.Property(usuario => usuario.TelefonoWhatsApp).HasMaxLength(Mapeo.LargoCifrado).IsRequired();
         entidad.Property(usuario => usuario.IdentidadExternaId).HasMaxLength(100);
         entidad.Property(usuario => usuario.RolId);
         entidad.Property(usuario => usuario.Activo);
@@ -66,7 +67,7 @@ internal sealed class ConductorConfiguracion : IEntityTypeConfiguration<Conducto
     public void Configure(EntityTypeBuilder<Conductor> entidad)
     {
         entidad.ToTable("conductor");
-        entidad.Property(conductor => conductor.NumeroLicencia).HasMaxLength(30).IsRequired();
+        entidad.Property(conductor => conductor.NumeroLicencia).HasMaxLength(Mapeo.LargoCifrado).IsRequired();
         entidad.Property(conductor => conductor.CategoriaLicencia).HasMaxLength(5).IsRequired();
         entidad.Property(conductor => conductor.VencimientoLicencia);
         entidad.Property(conductor => conductor.Estado).ComoTexto();

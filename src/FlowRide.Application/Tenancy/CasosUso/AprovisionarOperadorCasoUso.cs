@@ -14,7 +14,8 @@ public sealed record ResultadoAprovisionamiento(
 
 /// <summary>
 /// Registro de un operador como tenant (RF-03). Pipeline idempotente de ADR-0010: catálogo → secreto → base y rol
-/// → migraciones → realm → operador activo. Si falla a mitad, se puede volver a ejecutar con los mismos datos.
+/// → migraciones → realm → clave de cifrado → bucket → operador activo. Si falla a mitad, se puede volver a ejecutar
+/// con los mismos datos.
 /// El primer administrador lo crea después el stack del operador; la ruta en el borde se agrega en la Fase 10.
 /// </summary>
 public sealed class AprovisionarOperadorCasoUso(
@@ -23,6 +24,7 @@ public sealed class AprovisionarOperadorCasoUso(
     IServidorSilos servidor,
     IMigradorSilo migrador,
     IServidorIdentidad servidorIdentidad,
+    IServidorObjetos servidorObjetos,
     IAlmacenSecretos secretos,
     IGeneradorSecretos generador,
     TimeProvider reloj) : ICasoUsoConRetorno<AprovisionarOperadorDominio, ResultadoAprovisionamiento>
@@ -68,18 +70,36 @@ public sealed class AprovisionarOperadorCasoUso(
         var migraciones = await migrador.MigrarAsync(cadenaConexion, ct);
 
         // 6. Realm del operador en Keycloak, con el secreto de su cliente de servicio (se reutiliza si ya existe).
-        var secretoCliente = await secretos.ObtenerAsync(operador.AmbitoSecretos, ClavesSecretos.SecretoClienteIdentidad, ct);
-        if (secretoCliente is null)
-        {
-            secretoCliente = generador.NuevaContrasena();
-            await secretos.GuardarAsync(operador.AmbitoSecretos, ClavesSecretos.SecretoClienteIdentidad, secretoCliente, ct);
-        }
+        var secretoCliente = await ObtenerOGenerarAsync(operador, ClavesSecretos.SecretoClienteIdentidad, ct);
         await servidorIdentidad.AsegurarRealmAsync(operador.NombreRealm, operador.Id, secretoCliente, ct);
 
-        // 7. Operador listo para operar.
+        // 7. Clave propia del operador para cifrar los campos sensibles (ADR-0014). Nunca se reemplaza: rotarla es
+        //    agregar una versión nueva.
+        await ObtenerOGenerarAsync(operador, ClavesSecretos.ClaveCifradoV1, ct);
+        if (await secretos.ObtenerAsync(operador.AmbitoSecretos, ClavesSecretos.VersionCifradoVigente, ct) is null)
+            await secretos.GuardarAsync(operador.AmbitoSecretos, ClavesSecretos.VersionCifradoVigente, "v1", ct);
+
+        // 8. Bucket privado del operador para sus documentos (ADR-0013).
+        await servidorObjetos.AsegurarBucketAsync(operador.NombreBucket, ct);
+        await secretos.GuardarAsync(operador.AmbitoSecretos, ClavesSecretos.CadenaConexionObjetos,
+            servidorObjetos.CadenaConexion(operador.NombreBucket), ct);
+
+        // 9. Operador listo para operar.
         operador.Activar();
         await operadores.ModificarAsync(operador.Id, operador, ct);
 
         return new ResultadoAprovisionamiento(operador, operadorNuevo, contrasenaNueva, migraciones);
+    }
+
+    /// <summary>Reutiliza el secreto guardado del operador; solo genera uno si todavía no existe.</summary>
+    private async Task<string> ObtenerOGenerarAsync(Operador operador, string clave, CancellationToken ct)
+    {
+        var valor = await secretos.ObtenerAsync(operador.AmbitoSecretos, clave, ct);
+        if (valor is not null)
+            return valor;
+
+        valor = generador.NuevaContrasena();
+        await secretos.GuardarAsync(operador.AmbitoSecretos, clave, valor, ct);
+        return valor;
     }
 }

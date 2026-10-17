@@ -47,6 +47,14 @@ public static class ClavesSecretos
 
     /// <summary>Secreto del cliente de servicio del realm con el que la API gestiona las cuentas del operador.</summary>
     public const string SecretoClienteIdentidad = "FlowRide:Identidad:SecretoCliente";
+
+    /// <summary>Acceso del stack a su bucket de objetos (ADR-0013).</summary>
+    public const string CadenaConexionObjetos = "ConnectionStrings:Objetos";
+
+    /// <summary>Clave maestra v1 del cifrado de campos del operador (ADR-0014) y versión vigente.</summary>
+    public const string ClaveCifradoV1 = "FlowRide:Cifrado:Claves:v1";
+
+    public const string VersionCifradoVigente = "FlowRide:Cifrado:Vigente";
 }
 
 /// <summary>
@@ -60,4 +68,14 @@ public interface IServidorIdentidad
     /// claim <c>tenant_id</c> con el Id del operador y el secreto indicado para el cliente de servicio. Es idempotente.
     /// </summary>
     Task AsegurarRealmAsync(string nombreRealm, string tenantId, string secretoClienteServicio, CancellationToken ct);
+}
+
+/// <summary>Almacenamiento de objetos de la plataforma (ADR-0013) visto desde el aprovisionamiento.</summary>
+public interface IServidorObjetos
+{
+    /// <summary>Crea el bucket privado del operador si no existe. Es idempotente.</summary>
+    Task AsegurarBucketAsync(string nombreBucket, CancellationToken ct);
+
+    /// <summary>Cadena de conexión con la que el stack del operador accede a su bucket.</summary>
+    string CadenaConexion(string nombreBucket);
 }
