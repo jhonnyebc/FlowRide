@@ -111,7 +111,7 @@ public class AsignacionTests
         Assert.True(asignacion.EstaVigente);
 
         asignacion.Aceptar();
-        var viaje = asignacion.Iniciar(Id(70), Ahora.AddHours(5), Ahora.AddHours(4));
+        var viaje = asignacion.Iniciar(Id(70), Ahora.AddHours(4));
         Assert.Equal((EstadoAsignacion.EnCurso, EstadoViaje.EnCurso, asignacion.Id),
             (asignacion.Estado, viaje.Estado, viaje.AsignacionId));
 
@@ -162,7 +162,7 @@ public class AsignacionTests
     {
         var asignacion = Asignacion();
         asignacion.Aceptar();
-        asignacion.Iniciar(Id(70), Ahora.AddHours(5), Ahora.AddHours(4));
+        asignacion.Iniciar(Id(70), Ahora.AddHours(4));
 
         Assert.Throws<InvalidOperationException>(() => asignacion.Reemplazar(Id(42), Id(21), Id(51), "x", Ahora));
         Assert.Throws<InvalidOperationException>(() => asignacion.Cancelar("x"));
@@ -220,7 +220,7 @@ public class ViajeTests
     [Fact]
     public void ViajeProgramado_SePuedeIniciarUnaVez()
     {
-        var viaje = new Viaje(Id(70), Id(40), Ahora.AddHours(5));
+        var viaje = new Viaje(Id(70), Id(40));
 
         viaje.Iniciar(Ahora);
         Assert.Throws<InvalidOperationException>(() => viaje.Iniciar(Ahora));

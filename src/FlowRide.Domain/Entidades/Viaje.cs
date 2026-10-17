@@ -8,18 +8,16 @@ public sealed class Viaje
     private readonly List<Parada> _paradas = [];
     private readonly List<Incidente> _incidentes = [];
 
-    public Viaje(Guid id, Guid asignacionId, DateTimeOffset etaProgramada)
+    public Viaje(Guid id, Guid asignacionId)
     {
         Id = Guardas.Id(id, "El viaje requiere un Id.", nameof(id));
         AsignacionId = Guardas.Id(asignacionId, "El viaje requiere una asignación.", nameof(asignacionId));
-        EtaProgramada = etaProgramada;
         Estado = EstadoViaje.Programado;
     }
 
     public Guid Id { get; }
     public Guid AsignacionId { get; }
     public EstadoViaje Estado { get; private set; }
-    public DateTimeOffset EtaProgramada { get; }
     public DateTimeOffset? FechaHoraInicio { get; private set; }
     public DateTimeOffset? FechaHoraFin { get; private set; }
     public IReadOnlyList<Parada> Paradas => _paradas;

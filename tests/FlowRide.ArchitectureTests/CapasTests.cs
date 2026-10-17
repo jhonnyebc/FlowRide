@@ -39,12 +39,26 @@ public class CapasTests
     public void Application_SoloDependeDeDomain() =>
         Types().That().Are(Application)
             .Should().NotDependOnAny(Infrastructure).AndShould().NotDependOnAny(Api)
-            .WithoutRequiringPositiveResults() // Application aún no tiene tipos (se puebla desde la Fase 1).
             .Check(Arquitectura);
 
     [Fact]
     public void Infrastructure_NoDependeDeLaApi() =>
         Types().That().Are(Infrastructure).Should().NotDependOnAny(Api).Check(Arquitectura);
+
+    [Fact]
+    public void LaApi_NoUsaElCatalogoNiElAprovisionamiento() =>
+        // El stack de un operador solo conoce su propio Silo; el catálogo de plataforma y el aprovisionamiento
+        // son de la herramienta de plataforma (ADR-0002, ADR-0010).
+        // Límite conocido: ArchUnitNET no analiza el cuerpo del Main de nivel superior (Program.cs), solo las clases.
+        Types().That().Are(Api)
+            .Should().NotDependOnAny(
+                typeof(FlowRide.Infrastructure.Tenancy.CatalogoDbContext),
+                typeof(FlowRide.Infrastructure.Tenancy.OperadorRepositorioAdaptador),
+                typeof(FlowRide.Infrastructure.Tenancy.ServidorSilosPostgres),
+                typeof(FlowRide.Application.Tenancy.CasosUso.AprovisionarOperadorCasoUso),
+                typeof(FlowRide.Application.Tenancy.CasosUso.MigrarSilosCasoUso),
+                typeof(FlowRide.Application.Tenancy.Entrada.Puertos.IAprovisionarOperadorPuertoEntrada))
+            .Check(Arquitectura);
 
     [Fact]
     public void Domain_SoloReferenciaElRuntimeDeNet()
