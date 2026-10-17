@@ -36,11 +36,17 @@ public sealed partial class Operador
     /// <summary>Ámbito de secretos del operador (Key Vault en la nube; user-secrets en local, ADR-0014).</summary>
     public string AmbitoSecretos => AmbitoSecretosDe(Id);
 
+    /// <summary>Realm de Keycloak del operador (ADR-0003): uno por operador; emite el claim <c>tenant_id</c>.</summary>
+    public string NombreRealm => NombreRealmDe(Id);
+
     public static bool EsIdValido(string? id) => id is not null && id.Length <= 40 && PatronId().IsMatch(id);
 
     public static string NombreSiloDe(string id) => "flowride_" + id.Replace('-', '_');
 
     public static string AmbitoSecretosDe(string id) => "flowride-" + id;
+
+    /// <summary>El stack del operador deriva su realm de su TenantId con esta misma regla.</summary>
+    public static string NombreRealmDe(string id) => "flowride-" + id;
 
     public void ActualizarDatos(string razonSocial, string nit, string correoContacto)
     {

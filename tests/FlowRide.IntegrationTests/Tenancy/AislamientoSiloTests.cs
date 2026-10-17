@@ -52,7 +52,7 @@ public class AislamientoSiloTests(PostgresFixture postgres) : IAsyncLifetime
     [Fact]
     public async Task LosDatosDeUnOperador_NoSeVenDesdeOtro()
     {
-        var rolDeA = new Rol(Guid.NewGuid(), "Conductor", "Rol del operador A");
+        var rolDeA = new Rol(Guid.NewGuid(), "Supervisor", "Rol del operador A");
         await using (var siloA = await _entorno.AbrirSiloAsync("aislado-a"))
         {
             siloA.Contexto.Roles.Add(rolDeA);
@@ -63,7 +63,7 @@ public class AislamientoSiloTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.False(await siloB.Contexto.Roles.AnyAsync(rol => rol.Id == rolDeA.Id));
 
         // El mismo nombre (único dentro de un Silo) no choca: cada operador tiene su propio catálogo de roles.
-        var rolDeB = new Rol(Guid.NewGuid(), "Conductor", "Rol del operador B");
+        var rolDeB = new Rol(Guid.NewGuid(), "Supervisor", "Rol del operador B");
         siloB.Contexto.Roles.Add(rolDeB);
         await siloB.Contexto.SaveChangesAsync();
 

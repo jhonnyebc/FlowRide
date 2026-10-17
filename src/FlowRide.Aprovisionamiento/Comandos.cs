@@ -1,3 +1,5 @@
+using FlowRide.Application.Identidad.Entrada.Dto;
+using FlowRide.Application.Identidad.Entrada.Puertos;
 using FlowRide.Application.Tenancy.Entrada.Dto;
 using FlowRide.Application.Tenancy.Entrada.Puertos;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +30,8 @@ public static class Comandos
                         CorreoContacto = comando.Opcion("correo")
                     }, ct);
                 await EscribirAprovisionamientoAsync(aprovisionado, salida);
+                if (comando.Tiene("admin-correo"))
+                    await CrearAdministradorInicialAsync(comando, aprovisionado.TenantId, servicios, salida, ct);
                 return 0;
 
             case Comando.Migrar:
@@ -51,6 +55,23 @@ public static class Comandos
         }
     }
 
+    /// <summary>El primer administrador se crea desde el stack del propio operador (su Silo y su realm).</summary>
+    private static async Task CrearAdministradorInicialAsync(
+        Comando comando, string tenantId, IServiceProvider servicios, TextWriter salida, CancellationToken ct)
+    {
+        await using var stack = servicios.GetRequiredService<FabricaStackOperador>().Crear(tenantId);
+        await using var alcance = stack.CreateAsyncScope();
+        var administrador = await alcance.ServiceProvider.GetRequiredService<IAsegurarAdministradorInicialPuertoEntrada>()
+            .AsegurarAsync(new CrearUsuarioPeticion
+            {
+                Nombre = comando.Opcion("admin-nombre"),
+                Correo = comando.Opcion("admin-correo"),
+                TelefonoWhatsApp = comando.Opcion("admin-telefono")
+            }, ct);
+
+        await salida.WriteLineAsync($"  Administrador: {administrador.Usuario.Correo}. {administrador.Mensaje}");
+    }
+
     private static async Task EscribirAprovisionamientoAsync(AprovisionarOperadorRespuesta respuesta, TextWriter salida)
     {
         await salida.WriteLineAsync(respuesta.OperadorNuevo
@@ -63,6 +84,7 @@ public static class Comandos
         await salida.WriteLineAsync(respuesta.MigracionesAplicadas.Count == 0
             ? "  Esquema: ya estaba al día."
             : $"  Esquema: {respuesta.MigracionesAplicadas.Count} migración(es) aplicada(s): {string.Join(", ", respuesta.MigracionesAplicadas)}.");
+        await salida.WriteLineAsync($"  Identidad: realm '{respuesta.NombreRealm}' en Keycloak.");
         await salida.WriteLineAsync($"  Estado: {respuesta.Estado}. {respuesta.Mensaje}");
     }
 

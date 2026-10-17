@@ -25,6 +25,82 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "btree_gist");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("FlowRide.Domain.Auditoria.EventoAuditoria", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("accion");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_id");
+
+                    b.Property<DateTimeOffset>("FechaHora")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha_hora");
+
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasColumnType("char(64)")
+                        .HasColumnName("hash");
+
+                    b.Property<string>("HashPrevio")
+                        .IsRequired()
+                        .HasColumnType("char(64)")
+                        .HasColumnName("hash_previo");
+
+                    b.Property<string>("Motivo")
+                        .HasColumnType("text")
+                        .HasColumnName("motivo");
+
+                    b.Property<string>("Recurso")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("recurso");
+
+                    b.Property<string>("RecursoId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("recurso_id");
+
+                    b.Property<string>("Resultado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("resultado");
+
+                    b.Property<string>("ValoresAntes")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("valores_antes");
+
+                    b.Property<string>("ValoresDespues")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("valores_despues");
+
+                    b.HasKey("Id")
+                        .HasName("pk_evento_auditoria");
+
+                    b.HasIndex("Hash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_evento_auditoria_hash");
+
+                    b.HasIndex("Recurso", "RecursoId")
+                        .HasDatabaseName("ix_evento_auditoria_recurso_recurso_id");
+
+                    b.ToTable("evento_auditoria", "audit");
+                });
+
             modelBuilder.Entity("FlowRide.Domain.Entidades.Asignacion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -465,6 +541,32 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                         .HasDatabaseName("ix_rol_nombre");
 
                     b.ToTable("rol", "ops");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("a1000000-0000-0000-0000-000000000001"),
+                            Descripcion = "Administrador del operador: gestiona usuarios, recursos y parámetros.",
+                            Nombre = "Administrador"
+                        },
+                        new
+                        {
+                            Id = new Guid("a1000000-0000-0000-0000-000000000002"),
+                            Descripcion = "Operador logístico: supervisa solicitudes, asignaciones y viajes.",
+                            Nombre = "OperadorLogistico"
+                        },
+                        new
+                        {
+                            Id = new Guid("a1000000-0000-0000-0000-000000000003"),
+                            Descripcion = "Pasajero: solicita y sigue sus viajes por WhatsApp.",
+                            Nombre = "Pasajero"
+                        },
+                        new
+                        {
+                            Id = new Guid("a1000000-0000-0000-0000-000000000004"),
+                            Descripcion = "Conductor: recibe y ejecuta asignaciones por WhatsApp.",
+                            Nombre = "Conductor"
+                        });
                 });
 
             modelBuilder.Entity("FlowRide.Domain.Entidades.SolicitudViaje", b =>

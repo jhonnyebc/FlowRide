@@ -48,13 +48,16 @@ public class CapasTests
     [Fact]
     public void LaApi_NoUsaElCatalogoNiElAprovisionamiento() =>
         // El stack de un operador solo conoce su propio Silo; el catálogo de plataforma y el aprovisionamiento
-        // son de la herramienta de plataforma (ADR-0002, ADR-0010).
+        // son de la herramienta de plataforma (ADR-0002, ADR-0010), igual que la cuenta de administración de Keycloak:
+        // la API solo usa la cuenta de servicio de su propio realm (ADR-0003, ADR-0014).
         // Límite conocido: ArchUnitNET no analiza el cuerpo del Main de nivel superior (Program.cs), solo las clases.
         Types().That().Are(Api)
             .Should().NotDependOnAny(
                 typeof(FlowRide.Infrastructure.Tenancy.CatalogoDbContext),
                 typeof(FlowRide.Infrastructure.Tenancy.OperadorRepositorioAdaptador),
                 typeof(FlowRide.Infrastructure.Tenancy.ServidorSilosPostgres),
+                typeof(FlowRide.Infrastructure.Identidad.Keycloak.ServidorIdentidadKeycloak),
+                typeof(FlowRide.Application.Tenancy.Salida.Puertos.IServidorIdentidad),
                 typeof(FlowRide.Application.Tenancy.CasosUso.AprovisionarOperadorCasoUso),
                 typeof(FlowRide.Application.Tenancy.CasosUso.MigrarSilosCasoUso),
                 typeof(FlowRide.Application.Tenancy.Entrada.Puertos.IAprovisionarOperadorPuertoEntrada))
