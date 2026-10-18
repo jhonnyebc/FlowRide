@@ -30,7 +30,8 @@ public sealed record RegistrarConductorDominio(
     string NumeroLicencia,
     string CategoriaLicencia,
     DateOnly VencimientoLicencia,
-    Guid? ActorId);
+    Guid? ActorId,
+    bool AptoServicioCritico = false);
 
 public sealed record ActualizarConductorDominio(
     Guid ConductorId,
@@ -40,7 +41,8 @@ public sealed record ActualizarConductorDominio(
     string NumeroLicencia,
     string CategoriaLicencia,
     DateOnly VencimientoLicencia,
-    Guid? ActorId);
+    Guid? ActorId,
+    bool AptoServicioCritico = false);
 
 public sealed record CambiarEstadoConductorDominio(Guid ConductorId, EstadoConductor Estado, Guid? ActorId);
 

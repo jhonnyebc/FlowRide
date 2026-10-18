@@ -293,7 +293,8 @@ public class OperacionApiTests(PostgresFixture postgres, AzuriteFixture azurite)
     public async Task OtraReplica_VeElCambioAlVencerSuCache()
     {
         var clave = CatalogoParametros.AnticipacionRecordatorioMinutos;
-        await using var otraReplica = await ApiAsync(ttlParametrosSegundos: 1);
+        // TTL corto pero holgado: la segunda lectura debe llegar antes de que venza, aun con el equipo cargado.
+        await using var otraReplica = await ApiAsync(ttlParametrosSegundos: 5);
         var clienteDeLaOtra = await ClienteConRolAsync(otraReplica, RolesSistema.OperadorLogisticoId);
         async Task<int> ValorEnLaOtraAsync() =>
             (await clienteDeLaOtra.GetFromJsonAsync<List<ParametroRespuesta>>("/api/parametros"))!.Single(p => p.Clave == clave).Valor.GetInt32();
@@ -302,7 +303,7 @@ public class OperacionApiTests(PostgresFixture postgres, AzuriteFixture azurite)
         await _administrador.PutAsJsonAsync($"/api/parametros/{clave}", new CambiarParametroPeticion { Valor = JsonDocument.Parse("90").RootElement });
 
         Assert.Equal(60, await ValorEnLaOtraAsync());
-        await Task.Delay(TimeSpan.FromMilliseconds(1500));
+        await Task.Delay(TimeSpan.FromSeconds(5.5));
         Assert.Equal(90, await ValorEnLaOtraAsync());
     }
 }

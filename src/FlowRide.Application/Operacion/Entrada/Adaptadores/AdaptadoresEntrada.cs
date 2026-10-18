@@ -91,7 +91,7 @@ public sealed class ConductoresAdaptadorEntrada(
         ValidarConductor(peticion);
         return Mapeo.Conductor(await registrar.EjecutarAsync(new RegistrarConductorDominio(
             peticion.Nombre!.Trim(), peticion.TelefonoWhatsApp!.Trim(), Requeridos.Texto(peticion.Correo),
-            peticion.NumeroLicencia!.Trim(), peticion.CategoriaLicencia!.Trim(), peticion.VencimientoLicencia!.Value, actorId), ct));
+            peticion.NumeroLicencia!.Trim(), peticion.CategoriaLicencia!.Trim(), peticion.VencimientoLicencia!.Value, actorId, peticion.AptoServicioCritico ?? false), ct));
     }
 
     public async Task<ConductorRespuesta> ActualizarAsync(Guid conductorId, ConductorPeticion peticion, Guid? actorId, CancellationToken ct)
@@ -99,7 +99,7 @@ public sealed class ConductoresAdaptadorEntrada(
         ValidarConductor(peticion);
         return Mapeo.Conductor(await actualizar.EjecutarAsync(new ActualizarConductorDominio(
             conductorId, peticion.Nombre!.Trim(), peticion.TelefonoWhatsApp!.Trim(), Requeridos.Texto(peticion.Correo),
-            peticion.NumeroLicencia!.Trim(), peticion.CategoriaLicencia!.Trim(), peticion.VencimientoLicencia!.Value, actorId), ct));
+            peticion.NumeroLicencia!.Trim(), peticion.CategoriaLicencia!.Trim(), peticion.VencimientoLicencia!.Value, actorId, peticion.AptoServicioCritico ?? false), ct));
     }
 
     public async Task<ConductorRespuesta> CambiarEstadoAsync(
@@ -276,7 +276,7 @@ internal static class Mapeo
         new(p.Id, p.Nombre, p.TelefonoWhatsApp, p.Correo, p.EmpresaClienteId, p.CodigoInterno, p.Activo);
 
     public static ConductorRespuesta Conductor(Conductor c) => new(c.Id, c.Nombre, c.TelefonoWhatsApp, c.Correo,
-        c.NumeroLicencia, c.CategoriaLicencia, c.VencimientoLicencia, c.Estado.ToString(), c.Activo);
+        c.NumeroLicencia, c.CategoriaLicencia, c.VencimientoLicencia, c.Estado.ToString(), c.Activo, c.AptoServicioCritico);
 
     public static TurnoRespuesta Turno(Turno t) => new(t.Id, t.Inicio, t.Fin, t.Estado.ToString());
 

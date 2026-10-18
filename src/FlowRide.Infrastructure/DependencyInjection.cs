@@ -1,4 +1,8 @@
 using Azure.Storage.Blobs;
+using FlowRide.Application.Asignaciones.CasosUso;
+using FlowRide.Application.Asignaciones.Entrada.Adaptadores;
+using FlowRide.Application.Asignaciones.Entrada.Puertos;
+using FlowRide.Application.Asignaciones.Salida.Puertos;
 using FlowRide.Application.Auditoria.CasosUso;
 using FlowRide.Application.Auditoria.Entrada.Adaptadores;
 using FlowRide.Application.Auditoria.Entrada.Puertos;
@@ -28,6 +32,11 @@ using FlowRide.Application.Tenancy.CasosUso;
 using FlowRide.Application.Tenancy.Entrada.Adaptadores;
 using FlowRide.Application.Tenancy.Entrada.Puertos;
 using FlowRide.Application.Tenancy.Salida.Puertos;
+using FlowRide.Domain.Asignaciones;
+using FlowRide.Domain.Asignaciones.GestionAsignaciones;
+using FlowRide.Domain.Asignaciones.Repositorios;
+using FlowRide.Domain.Assignment;
+using FlowRide.Domain.Assignment.Rules;
 using FlowRide.Domain.Auditoria.Repositorios;
 using FlowRide.Domain.Comun;
 using FlowRide.Domain.Comun.Consultas;
@@ -47,12 +56,14 @@ using FlowRide.Domain.Plataforma.Repositorios;
 using FlowRide.Domain.Solicitudes;
 using FlowRide.Domain.Solicitudes.GestionSolicitudes;
 using FlowRide.Domain.Solicitudes.Repositorios;
+using FlowRide.Infrastructure.Asignaciones;
 using FlowRide.Infrastructure.Auditoria;
 using FlowRide.Infrastructure.Identidad;
 using FlowRide.Infrastructure.Identidad.Keycloak;
 using FlowRide.Infrastructure.Operacion;
 using FlowRide.Infrastructure.Parametros;
 using FlowRide.Infrastructure.Persistencia;
+using FlowRide.Infrastructure.Persistencia.Outbox;
 using FlowRide.Infrastructure.Plataforma;
 using FlowRide.Infrastructure.Seguridad;
 using FlowRide.Infrastructure.Solicitudes;
@@ -333,6 +344,53 @@ public static class DependencyInjection
         services.AddScoped<ICasoUsoConRetorno<BuscarItinerariosDominio, PaginaResultado<Itinerario>>, BuscarItinerariosCasoUso>();
         services.AddScoped<ISolicitudesPuertoEntrada, SolicitudesAdaptadorEntrada>();
         services.AddScoped<IItinerariosPuertoEntrada, ItinerariosAdaptadorEntrada>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registra la asignación de punta a punta (RF-10 a RF-13, RF-21; ADR-0007, ADR-0009): motor con su catálogo,
+    /// configuración versionada, decision log, Outbox, casos de uso y el worker de la cola. Requiere <see cref="AddSolicitudes"/>.
+    /// </summary>
+    public static IServiceCollection AddAsignaciones(this IServiceCollection services, IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var tenantId = ConfiguracionRequerida(configuration, $"{SiloOptions.Seccion}:TenantId", "Es el operador al que sirve este stack.");
+        var catalogo = new CatalogoReglas(DefaultAssignmentRules.Create());
+        services.AddSingleton(catalogo);
+        services.AddSingleton(new AssignmentEngine(catalogo.Reglas));
+        services.AddSingleton(new OperadorDelStack(tenantId));
+
+        // Adaptadores de salida.
+        services.AddScoped<IBandejaSalida, BandejaSalidaEf>();
+        services.AddScoped<IConfiguracionAsignacionRepositorio, ConfiguracionAsignacionRepositorioAdaptador>();
+        services.AddScoped<IDecisionAsignacionRepositorio, DecisionAsignacionRepositorioAdaptador>();
+        services.AddScoped<IConsultasAsignaciones, ConsultasAsignacionesEf>();
+
+        // Casos de uso y adaptadores de entrada.
+        services.AddScoped<PreparadorDecision>();
+        services.AddScoped<ValidadorCandidatoManual>();
+        services.AddScoped<ICasoUsoConRetorno<AsignarSolicitudDominio, ResultadoAsignacion>, AsignarSolicitudCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarColaDominio, IReadOnlyList<Guid>>, ConsultarColaCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<AsignarManualDominio, Asignacion>, AsignarManualCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<DevolverAColaDominio, SolicitudViaje>, DevolverAColaCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ReasignarDominio, Asignacion>, ReasignarCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<AbandonarTurnoDominio, IReadOnlyList<Guid>>, AbandonarTurnoCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarDecisionesDominio, IReadOnlyList<DecisionLectura>>, ConsultarDecisionesCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<BuscarAsignacionesDominio, PaginaResultado<AsignacionLectura>>, BuscarAsignacionesCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarConfiguracionesDominio, IReadOnlyList<ConfiguracionAsignacion>>, ConsultarConfiguracionesCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<CrearConfiguracionDominio, ConfiguracionAsignacion>, CrearConfiguracionCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ActivarConfiguracionDominio, ConfiguracionAsignacion>, ActivarConfiguracionCasoUso>();
+        services.AddScoped<IAsignacionesPuertoEntrada, AsignacionesAdaptadorEntrada>();
+        services.AddScoped<IConfiguracionMotorPuertoEntrada, ConfiguracionMotorAdaptadorEntrada>();
+
+        // Worker de la cola (adaptador de entrada en segundo plano); se apaga con FlowRide:Asignacion:Worker:Habilitado=false.
+        var worker = configuration.GetSection(WorkerAsignacionOptions.Seccion).Get<WorkerAsignacionOptions>() ?? new WorkerAsignacionOptions();
+        services.AddSingleton(worker);
+        services.AddSingleton<WorkerColaAsignacion>();
+        if (worker.Habilitado)
+            services.AddHostedService(proveedor => proveedor.GetRequiredService<WorkerColaAsignacion>());
 
         return services;
     }

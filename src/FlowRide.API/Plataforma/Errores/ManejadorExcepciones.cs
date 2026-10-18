@@ -1,3 +1,4 @@
+using FlowRide.Application.Comun.Salida.Puertos;
 using FlowRide.Domain.Transversal;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +19,8 @@ public sealed class ManejadorExcepciones(IProblemDetailsService problemDetails) 
         var (estado, titulo, detalle) = exception switch
         {
             FlowRideExcepcion regla => (StatusCodes.Status400BadRequest, "La solicitud no cumple una regla de negocio.", regla.Message),
+            ConflictoConcurrenciaExcepcion conflicto => (StatusCodes.Status409Conflict, "El recurso cambió mientras lo editabas.",
+                conflicto.Message + " Vuelve a consultarlo e intenta de nuevo."),
             DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "El recurso cambió mientras lo editabas.",
                 "Otro usuario lo modificó al mismo tiempo; vuelve a consultarlo e intenta de nuevo."),
             _ => (0, string.Empty, string.Empty)

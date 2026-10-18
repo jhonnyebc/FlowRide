@@ -25,6 +25,377 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "btree_gist");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("FlowRide.Domain.Asignaciones.ConfiguracionAsignacion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("ActivadaEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("activada_en");
+
+                    b.Property<DateTimeOffset>("CreadaEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creada_en");
+
+                    b.Property<Guid?>("CreadaPorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("creada_por_id");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("estado");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_configuracion_asignacion");
+
+                    b.HasIndex("CreadaPorId")
+                        .HasDatabaseName("ix_configuracion_asignacion_creada_por_id");
+
+                    b.HasIndex("Version")
+                        .IsUnique()
+                        .HasDatabaseName("ix_configuracion_asignacion_version");
+
+                    b.ToTable("configuracion_asignacion", "motor", t =>
+                        {
+                            t.HasCheckConstraint("ck_configuracion_version", "version > 0");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("b1000000-0000-0000-0000-000000000001"),
+                            ActivadaEn = new DateTimeOffset(new DateTime(2026, 10, 18, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreadaEn = new DateTimeOffset(new DateTime(2026, 10, 18, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Estado = "Activa",
+                            Version = 1
+                        });
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Asignaciones.DecisionAsignacion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("ConductorSeleccionadoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("conductor_seleccionado_id");
+
+                    b.Property<Guid>("ConfiguracionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("configuracion_id");
+
+                    b.Property<string>("Desempate")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("desempate");
+
+                    b.Property<string>("EntradaSnapshot")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("entrada_snapshot");
+
+                    b.Property<DateTimeOffset>("EvaluadaEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("evaluada_en");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("motivo");
+
+                    b.Property<string>("Origen")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("origen");
+
+                    b.Property<string>("Resultado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("resultado");
+
+                    b.Property<Guid>("SolicitudId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("solicitud_id");
+
+                    b.Property<Guid?>("VehiculoSeleccionadoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("vehiculo_seleccionado_id");
+
+                    b.Property<int>("VersionConfiguracion")
+                        .HasColumnType("integer")
+                        .HasColumnName("version_configuracion");
+
+                    b.HasKey("Id")
+                        .HasName("pk_decision_asignacion");
+
+                    b.HasIndex("ConfiguracionId")
+                        .HasDatabaseName("ix_decision_asignacion_configuracion_id");
+
+                    b.HasIndex("SolicitudId", "EvaluadaEn")
+                        .HasDatabaseName("ix_decision_asignacion_solicitud_id_evaluada_en");
+
+                    b.ToTable("decision_asignacion", "motor");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Asignaciones.EvaluacionCandidato", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ConductorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("conductor_id");
+
+                    b.Property<Guid>("DecisionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("decision_id");
+
+                    b.Property<bool>("Elegible")
+                        .HasColumnType("boolean")
+                        .HasColumnName("elegible");
+
+                    b.Property<string>("MotivoDescarte")
+                        .HasColumnType("text")
+                        .HasColumnName("motivo_descarte");
+
+                    b.Property<int?>("PosicionRanking")
+                        .HasColumnType("integer")
+                        .HasColumnName("posicion_ranking");
+
+                    b.Property<decimal>("Prioridad")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("numeric(9,4)")
+                        .HasColumnName("prioridad");
+
+                    b.Property<decimal>("PuntajeTotal")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("numeric(9,4)")
+                        .HasColumnName("puntaje_total");
+
+                    b.Property<Guid>("TurnoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("turno_id");
+
+                    b.Property<Guid>("VehiculoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("vehiculo_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_evaluacion_candidato");
+
+                    b.HasIndex("DecisionId", "ConductorId", "VehiculoId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_evaluacion_candidato_decision_id_conductor_id_vehiculo_id");
+
+                    b.ToTable("evaluacion_candidato", "motor");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Asignaciones.ReglaConfigurada", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CodigoRegla")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("codigo_regla");
+
+                    b.Property<Guid>("ConfiguracionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("configuracion_id");
+
+                    b.Property<bool>("Habilitada")
+                        .HasColumnType("boolean")
+                        .HasColumnName("habilitada");
+
+                    b.Property<short>("Orden")
+                        .HasColumnType("smallint")
+                        .HasColumnName("orden");
+
+                    b.Property<string>("Parametros")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("parametros");
+
+                    b.Property<decimal>("Peso")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("numeric(5,4)")
+                        .HasColumnName("peso");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("tipo");
+
+                    b.HasKey("Id")
+                        .HasName("pk_regla_configurada");
+
+                    b.HasIndex("ConfiguracionId", "CodigoRegla")
+                        .IsUnique()
+                        .HasDatabaseName("ix_regla_configurada_configuracion_id_codigo_regla");
+
+                    b.HasIndex("ConfiguracionId", "Tipo", "Orden")
+                        .IsUnique()
+                        .HasDatabaseName("ix_regla_configurada_configuracion_id_tipo_orden");
+
+                    b.ToTable("regla_configurada", "motor", t =>
+                        {
+                            t.HasCheckConstraint("ck_regla_orden", "orden > 0");
+
+                            t.HasCheckConstraint("ck_regla_peso", "peso BETWEEN 0 AND 1");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("b2000000-0000-0000-0000-000000000001"),
+                            CodigoRegla = "AvailabilityRule",
+                            ConfiguracionId = new Guid("b1000000-0000-0000-0000-000000000001"),
+                            Habilitada = true,
+                            Orden = (short)1,
+                            Peso = 1m,
+                            Tipo = "Filtering"
+                        },
+                        new
+                        {
+                            Id = new Guid("b2000000-0000-0000-0000-000000000002"),
+                            CodigoRegla = "ShiftCompatibilityRule",
+                            ConfiguracionId = new Guid("b1000000-0000-0000-0000-000000000001"),
+                            Habilitada = true,
+                            Orden = (short)2,
+                            Peso = 1m,
+                            Tipo = "Filtering"
+                        },
+                        new
+                        {
+                            Id = new Guid("b2000000-0000-0000-0000-000000000003"),
+                            CodigoRegla = "RegulatoryRestrictionRule",
+                            ConfiguracionId = new Guid("b1000000-0000-0000-0000-000000000001"),
+                            Habilitada = true,
+                            Orden = (short)3,
+                            Peso = 1m,
+                            Tipo = "Filtering"
+                        },
+                        new
+                        {
+                            Id = new Guid("b2000000-0000-0000-0000-000000000004"),
+                            CodigoRegla = "ServiceCapabilityRule",
+                            ConfiguracionId = new Guid("b1000000-0000-0000-0000-000000000001"),
+                            Habilitada = true,
+                            Orden = (short)4,
+                            Peso = 1m,
+                            Tipo = "Filtering"
+                        },
+                        new
+                        {
+                            Id = new Guid("b2000000-0000-0000-0000-000000000005"),
+                            CodigoRegla = "CriticalServicePriorityRule",
+                            ConfiguracionId = new Guid("b1000000-0000-0000-0000-000000000001"),
+                            Habilitada = true,
+                            Orden = (short)1,
+                            Peso = 1m,
+                            Tipo = "Priority"
+                        },
+                        new
+                        {
+                            Id = new Guid("b2000000-0000-0000-0000-000000000006"),
+                            CodigoRegla = "WorkloadBalanceRule",
+                            ConfiguracionId = new Guid("b1000000-0000-0000-0000-000000000001"),
+                            Habilitada = true,
+                            Orden = (short)1,
+                            Parametros = "{\"ventanaDias\":\"7\"}",
+                            Peso = 1m,
+                            Tipo = "Scoring"
+                        },
+                        new
+                        {
+                            Id = new Guid("b2000000-0000-0000-0000-000000000007"),
+                            CodigoRegla = "StableTieBreaker",
+                            ConfiguracionId = new Guid("b1000000-0000-0000-0000-000000000001"),
+                            Habilitada = true,
+                            Orden = (short)1,
+                            Peso = 1m,
+                            Tipo = "TieBreak"
+                        });
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Asignaciones.ResultadoRegla", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool?>("Aprobado")
+                        .HasColumnType("boolean")
+                        .HasColumnName("aprobado");
+
+                    b.Property<string>("CodigoRegla")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("codigo_regla");
+
+                    b.Property<Guid>("EvaluacionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("evaluacion_id");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("motivo");
+
+                    b.Property<short>("Orden")
+                        .HasColumnType("smallint")
+                        .HasColumnName("orden");
+
+                    b.Property<decimal?>("Peso")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("numeric(5,4)")
+                        .HasColumnName("peso");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("tipo");
+
+                    b.Property<decimal?>("Valor")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("numeric(9,4)")
+                        .HasColumnName("valor");
+
+                    b.Property<decimal?>("ValorPonderado")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("numeric(9,4)")
+                        .HasColumnName("valor_ponderado");
+
+                    b.Property<int>("VersionRegla")
+                        .HasColumnType("integer")
+                        .HasColumnName("version_regla");
+
+                    b.HasKey("Id")
+                        .HasName("pk_resultado_regla");
+
+                    b.HasIndex("EvaluacionId", "CodigoRegla")
+                        .IsUnique()
+                        .HasDatabaseName("ix_resultado_regla_evaluacion_id_codigo_regla");
+
+                    b.ToTable("resultado_regla", "motor");
+                });
+
             modelBuilder.Entity("FlowRide.Domain.Auditoria.EventoAuditoria", b =>
                 {
                     b.Property<long>("Id")
@@ -932,9 +1303,68 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                         });
                 });
 
+            modelBuilder.Entity("FlowRide.Infrastructure.Persistencia.Outbox.MensajeOutbox", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_id");
+
+                    b.Property<short>("Intentos")
+                        .HasColumnType("smallint")
+                        .HasColumnName("intentos");
+
+                    b.Property<DateTimeOffset>("OcurridoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ocurrido_en");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("payload");
+
+                    b.Property<DateTimeOffset?>("ProcesadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("procesado_en");
+
+                    b.Property<DateTimeOffset>("ProximoIntento")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("proximo_intento");
+
+                    b.Property<string>("TipoEvento")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("tipo_evento");
+
+                    b.Property<string>("UltimoError")
+                        .HasColumnType("text")
+                        .HasColumnName("ultimo_error");
+
+                    b.HasKey("Id")
+                        .HasName("pk_outbox_mensaje");
+
+                    b.HasIndex("EventId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_outbox_mensaje_event_id");
+
+                    b.HasIndex("ProximoIntento")
+                        .HasDatabaseName("ix_outbox_mensaje_proximo_intento")
+                        .HasFilter("procesado_en IS NULL");
+
+                    b.ToTable("outbox_mensaje", "notif");
+                });
+
             modelBuilder.Entity("FlowRide.Domain.Entidades.Conductor", b =>
                 {
                     b.HasBaseType("FlowRide.Domain.Entidades.Usuario");
+
+                    b.Property<bool>("AptoServicioCritico")
+                        .HasColumnType("boolean")
+                        .HasColumnName("apto_servicio_critico");
 
                     b.Property<string>("CategoriaLicencia")
                         .IsRequired()
@@ -988,6 +1418,62 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                         .HasDatabaseName("ix_pasajero_empresa_cliente_id_codigo_interno");
 
                     b.ToTable("pasajero", "ops");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Asignaciones.ConfiguracionAsignacion", b =>
+                {
+                    b.HasOne("FlowRide.Domain.Entidades.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("CreadaPorId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_configuracion_asignacion_usuario_creada_por_id");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Asignaciones.DecisionAsignacion", b =>
+                {
+                    b.HasOne("FlowRide.Domain.Asignaciones.ConfiguracionAsignacion", null)
+                        .WithMany()
+                        .HasForeignKey("ConfiguracionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_decision_asignacion_configuracion_asignacion_configuracion_");
+
+                    b.HasOne("FlowRide.Domain.Entidades.SolicitudViaje", null)
+                        .WithMany()
+                        .HasForeignKey("SolicitudId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_decision_asignacion_solicitud_viaje_solicitud_id");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Asignaciones.EvaluacionCandidato", b =>
+                {
+                    b.HasOne("FlowRide.Domain.Asignaciones.DecisionAsignacion", null)
+                        .WithMany("Evaluaciones")
+                        .HasForeignKey("DecisionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_evaluacion_candidato_decision_asignacion_decision_id");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Asignaciones.ReglaConfigurada", b =>
+                {
+                    b.HasOne("FlowRide.Domain.Asignaciones.ConfiguracionAsignacion", null)
+                        .WithMany("Reglas")
+                        .HasForeignKey("ConfiguracionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_regla_configurada_configuracion_asignacion_configuracion_id");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Asignaciones.ResultadoRegla", b =>
+                {
+                    b.HasOne("FlowRide.Domain.Asignaciones.EvaluacionCandidato", null)
+                        .WithMany("Resultados")
+                        .HasForeignKey("EvaluacionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_resultado_regla_evaluacion_candidato_evaluacion_id");
                 });
 
             modelBuilder.Entity("FlowRide.Domain.Entidades.Asignacion", b =>
@@ -1212,6 +1698,21 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_pasajero_usuario_id");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Asignaciones.ConfiguracionAsignacion", b =>
+                {
+                    b.Navigation("Reglas");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Asignaciones.DecisionAsignacion", b =>
+                {
+                    b.Navigation("Evaluaciones");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Asignaciones.EvaluacionCandidato", b =>
+                {
+                    b.Navigation("Resultados");
                 });
 
             modelBuilder.Entity("FlowRide.Domain.Entidades.SolicitudViaje", b =>

@@ -43,6 +43,8 @@ public sealed class FlowRideApiFactory(string? cadenaConexion, string? tenantId 
         builder.UseSetting("FlowRide:Cifrado:Claves:v1", ClaveCifradoDePrueba);
         builder.UseSetting("FlowRide:Cifrado:Vigente", "v1");
         builder.UseSetting("ConnectionStrings:Objetos", "UseDevelopmentStorage=true");
+        // El worker de la cola se apaga en las pruebas: cada prueba asigna cuando lo necesita.
+        builder.UseSetting("FlowRide:Asignacion:Worker:Habilitado", "false");
         foreach (var (clave, valor) in Ajustes)
             if (valor is not null) builder.UseSetting(clave, valor);
 
