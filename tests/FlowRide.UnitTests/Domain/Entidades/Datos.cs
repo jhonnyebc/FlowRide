@@ -40,7 +40,8 @@ internal static class Datos
     public static Viaje ViajeEnCurso()
     {
         var asignacion = Asignacion();
-        asignacion.Aceptar();
-        return asignacion.Iniciar(Id(70), Ahora.AddHours(4));
+        var viaje = asignacion.Aceptar(Id(70));
+        asignacion.Iniciar(viaje, Ahora.AddHours(4));
+        return viaje;
     }
 }

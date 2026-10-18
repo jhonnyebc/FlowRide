@@ -118,7 +118,7 @@ public class SolicitudesCasosUsoTests : CasosUsoOperacionBase
             itinerarioId is null ? servicio ?? Servicio : null, itinerarioId is null ? TimeSpan.FromMinutes(45) : null, 2, false, personal,
             CanalSolicitud.PanelWeb, Actor);
 
-    private CancelarSolicitudCasoUso Cancelar() => new(SolicitudDominio, _solicitudes, Asignaciones, Auditoria, UnidadTrabajo, Reloj);
+    private CancelarSolicitudCasoUso Cancelar() => new(SolicitudDominio, _solicitudes, Asignaciones, Viajes, Auditoria, UnidadTrabajo, Reloj);
 
     [Fact]
     public async Task Registrar_QuedaPendienteEnLaCola_YSeAudita()

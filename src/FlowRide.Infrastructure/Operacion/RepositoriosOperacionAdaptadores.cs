@@ -245,6 +245,19 @@ public sealed class AsignacionRepositorioAdaptador(FlowRideDbContext contexto) :
             .ToListAsync(ct);
     }
 
+    public async Task<IReadOnlySet<Guid>> ConsultarConductoresQueRechazaronAsync(Guid solicitudId, CancellationToken ct) =>
+        (await contexto.Asignaciones.AsNoTracking()
+            .Where(a => a.SolicitudId == solicitudId && a.Estado == EstadoAsignacion.Rechazada)
+            .Select(a => a.ConductorId).Distinct().ToListAsync(ct)).ToHashSet();
+
+    public async Task<IReadOnlyList<Guid>> ConsultarSinRespuestaAsync(DateTimeOffset asignadasAntesDe, int maximo, CancellationToken ct) =>
+        await contexto.Asignaciones.AsNoTracking()
+            .Where(a => a.Estado == EstadoAsignacion.Asignada && a.AsignadaEn <= asignadasAntesDe)
+            .OrderBy(a => a.AsignadaEn).ThenBy(a => a.Id)
+            .Select(a => a.Id)
+            .Take(maximo)
+            .ToListAsync(ct);
+
     private IQueryable<Asignacion> Solapadas(FranjaHoraria franja)
     {
         ArgumentNullException.ThrowIfNull(franja);

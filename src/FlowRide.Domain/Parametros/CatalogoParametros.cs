@@ -105,13 +105,15 @@ public sealed partial class DefinicionParametro
     private static partial Regex PatronFranja();
 }
 
-/// <summary>Parámetros de V1 con sus valores por defecto (decididos con el usuario el 2026-10-17).</summary>
+/// <summary>Parámetros de V1 con sus valores por defecto (decididos con el usuario el 2026-10-17; plazos de respuesta y calificación, 2026-10-18).</summary>
 public static class CatalogoParametros
 {
     public const string AnticipacionRecordatorioMinutos = "recordatorio.anticipacion_minutos";
     public const string VentanaCancelacionMinutos = "solicitud.ventana_cancelacion_minutos";
     public const string FranjasCriticas = "operacion.franjas_criticas";
     public const string VisibilidadSolicitudesPersonales = "solicitud.visibilidad_personales";
+    public const string PlazoRespuestaAsignacionMinutos = "asignacion.plazo_respuesta_minutos";
+    public const string PlazoCalificacionDias = "calificacion.plazo_dias";
 
     public const string VisiblesParaPasajeroYOperadorLogistico = "PasajeroYOperadorLogistico";
     public const string VisiblesSoloParaPasajero = "SoloPasajero";
@@ -126,7 +128,11 @@ public static class CatalogoParametros
             "Franjas horarias críticas de la operación, como lista de \"HH:mm-HH:mm\"."),
         DefinicionParametro.Opcion(VisibilidadSolicitudesPersonales,
             "Quién ve las solicitudes personales (PAS-SEG-01).",
-            VisiblesParaPasajeroYOperadorLogistico, VisiblesParaPasajeroYOperadorLogistico, VisiblesSoloParaPasajero)
+            VisiblesParaPasajeroYOperadorLogistico, VisiblesParaPasajeroYOperadorLogistico, VisiblesSoloParaPasajero),
+        DefinicionParametro.Entero(PlazoRespuestaAsignacionMinutos,
+            "Minutos que tiene el conductor para aceptar o rechazar una asignación; si no responde, vuelve a la cola (RF-34).", 15, 1, 1440),
+        DefinicionParametro.Entero(PlazoCalificacionDias,
+            "Días después de terminado el viaje en que el pasajero puede calificarlo (RF-54).", 7, 1, 90)
     ];
 
     public static DefinicionParametro Buscar(string clave) =>

@@ -2,7 +2,10 @@ using FlowRide.Domain.Enumeraciones;
 
 namespace FlowRide.Domain.Entidades;
 
-/// <summary>Ejecución de una asignación. Ciclo: Programado → EnCurso → Finalizado, o Cancelado.</summary>
+/// <summary>
+/// Ejecución de una asignación: nace al aceptarla (Programado). Ciclo: Programado → EnCurso → Finalizado, o Cancelado si
+/// la asignación se cancela o se reemplaza antes de empezar.
+/// </summary>
 public sealed class Viaje
 {
     private readonly List<Parada> _paradas = [];
@@ -56,6 +59,17 @@ public sealed class Viaje
 
         var parada = new Parada(paradaId, Id, orden, direccion, horaEstimada);
         _paradas.Add(parada);
+        return parada;
+    }
+
+    /// <summary>El vehículo llegó a una parada: solo con el viaje en curso.</summary>
+    public Parada RegistrarLlegada(Guid paradaId, DateTimeOffset horaReal)
+    {
+        if (Estado != EstadoViaje.EnCurso)
+            throw Guardas.TransicionInvalida("registrar llegadas en", "el viaje", Estado);
+        var parada = _paradas.SingleOrDefault(p => p.Id == paradaId)
+                     ?? throw new InvalidOperationException($"El viaje no tiene la parada {paradaId}.");
+        parada.RegistrarLlegada(horaReal);
         return parada;
     }
 
