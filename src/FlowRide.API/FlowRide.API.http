@@ -208,3 +208,47 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "motivo": "El pasajero ya no viaja" }
+
+# ---------------------------------------------------------------------------------------------------------------
+# Fase 5 — Asignación de punta a punta (RF-10 a RF-13, RF-21, RF-38). El worker asigna la cola cada 15 s.
+
+### RF-10 — Asignar ya una solicitud pendiente con el motor
+POST {{FlowRide.API_HostAddress}}/api/solicitudes/00000000-0000-0000-0000-000000000000/asignar
+Authorization: Bearer {{token}}
+
+### ADR-0009 — Decision log: candidatos, resultado de cada regla (con su versión), puntajes y desempate
+GET {{FlowRide.API_HostAddress}}/api/solicitudes/00000000-0000-0000-0000-000000000000/decisiones
+Authorization: Bearer {{token}}
+
+### RF-38 — Asignaciones por conductor, solicitud, estado o fechas
+GET {{FlowRide.API_HostAddress}}/api/asignaciones?estado=Asignada
+Authorization: Bearer {{token}}
+
+### RF-12 — Reasignar por contingencia (solo Operador logístico; el candidato debe pasar las eliminatorias)
+POST {{FlowRide.API_HostAddress}}/api/asignaciones/00000000-0000-0000-0000-000000000000/reasignar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "conductorId": "00000000-0000-0000-0000-000000000000", "vehiculoId": "00000000-0000-0000-0000-000000000000", "motivo": "Conductor enfermo" }
+
+### RF-12 — Asignar a mano una solicitud sin candidatos (o devolverla a la cola)
+POST {{FlowRide.API_HostAddress}}/api/solicitudes/00000000-0000-0000-0000-000000000000/asignacion-manual
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "conductorId": "00000000-0000-0000-0000-000000000000", "vehiculoId": "00000000-0000-0000-0000-000000000000", "motivo": "Contingencia" }
+
+### RF-12 — El conductor abandona su turno: sus solicitudes vuelven a la cola
+POST {{FlowRide.API_HostAddress}}/api/conductores/00000000-0000-0000-0000-000000000000/turnos/00000000-0000-0000-0000-000000000000/abandonar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "motivo": "Emergencia familiar" }
+
+### RF-21 — Versiones de la configuración del motor
+GET {{FlowRide.API_HostAddress}}/api/motor/configuraciones
+Authorization: Bearer {{token}}
+
+### RF-21 — Activar una versión (activar una anterior es el rollback; solo Administrador)
+POST {{FlowRide.API_HostAddress}}/api/motor/configuraciones/1/activar
+Authorization: Bearer {{token}}

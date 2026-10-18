@@ -98,6 +98,28 @@ internal sealed class AsignacionesEnMemoria : IAsignacionRepositorio
     public Task<Asignacion?> ConsultarVigentePorSolicitudAsync(Guid solicitudId, CancellationToken ct) =>
         Task.FromResult(VigentesPorSolicitud.GetValueOrDefault(solicitudId));
 
+    public Dictionary<Guid, Asignacion> Todas { get; } = [];
+    public HashSet<Guid> VehiculosOcupados { get; } = [];
+    public Dictionary<Guid, int> Recientes { get; } = [];
+
+    public Task CrearAsync(Asignacion asignacion, CancellationToken ct)
+    {
+        Todas.Add(asignacion.Id, asignacion);
+        return Task.CompletedTask;
+    }
+
+    public Task<Asignacion?> ConsultarPorIdAsync(Guid asignacionId, CancellationToken ct) => Task.FromResult(Todas.GetValueOrDefault(asignacionId));
+
+    public Task<IReadOnlySet<Guid>> ConsultarVehiculosOcupadosAsync(FranjaHoraria franja, CancellationToken ct) =>
+        Task.FromResult<IReadOnlySet<Guid>>(VehiculosOcupados);
+
+    public Task<IReadOnlyDictionary<Guid, int>> ContarRecientesAsync(IReadOnlyCollection<Guid> conductorIds, DateTimeOffset desde, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyDictionary<Guid, int>>(Recientes);
+
+    public Task<IReadOnlyList<Asignacion>> ConsultarVigentesDelConductorAsync(Guid conductorId, FranjaHoraria franja, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<Asignacion>>(Todas.Values.Where(a => a.ConductorId == conductorId && a.EstaVigente
+                                                                          && a.Franja.SeSolapaCon(franja)).ToList());
+
     public Task<IReadOnlySet<Guid>> ConsultarConductoresOcupadosAsync(FranjaHoraria franja, CancellationToken ct) =>
         Task.FromResult<IReadOnlySet<Guid>>(Ocupados);
 }

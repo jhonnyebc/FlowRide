@@ -23,7 +23,8 @@ public sealed class Conductor : Usuario
         DateOnly vencimientoLicencia,
         string? correo = null,
         EstadoConductor estado = EstadoConductor.Activo,
-        DateTimeOffset? fechaUltimaAsignacion = null)
+        DateTimeOffset? fechaUltimaAsignacion = null,
+        bool aptoServicioCritico = false)
         : base(id, nombre, telefonoWhatsApp, rolId, creadoEn, correo)
     {
         NumeroLicencia = Guardas.Texto(numeroLicencia, nameof(numeroLicencia));
@@ -31,6 +32,7 @@ public sealed class Conductor : Usuario
         VencimientoLicencia = vencimientoLicencia;
         Estado = estado;
         FechaUltimaAsignacion = fechaUltimaAsignacion;
+        AptoServicioCritico = aptoServicioCritico;
     }
 
     public string NumeroLicencia { get; private set; }
@@ -38,6 +40,12 @@ public sealed class Conductor : Usuario
     public DateOnly VencimientoLicencia { get; private set; }
     public EstadoConductor Estado { get; private set; }
     public DateTimeOffset? FechaUltimaAsignacion { get; private set; }
+
+    /// <summary>
+    /// Compatible con servicio crítico (ADR-0009, escenario 3): lo marca el Administrador y da prioridad al conductor en
+    /// las solicitudes urgentes.
+    /// </summary>
+    public bool AptoServicioCritico { get; private set; }
 
     public IReadOnlyList<Turno> Turnos => _turnos;
     public IReadOnlyList<DocumentoConductor> Documentos => _documentos;
@@ -111,6 +119,8 @@ public sealed class Conductor : Usuario
         CategoriaLicencia = Guardas.Texto(categoriaLicencia, nameof(categoriaLicencia));
         VencimientoLicencia = vencimientoLicencia;
     }
+
+    public void CambiarAptitudServicioCritico(bool apto) => AptoServicioCritico = apto;
 
     /// <summary>Activación e inactivación operativa del conductor (RF-28).</summary>
     public void CambiarEstado(EstadoConductor estado) => Estado = estado;

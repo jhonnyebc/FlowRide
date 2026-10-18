@@ -13,14 +13,13 @@ public class CriticalServicePriorityRuleTests
     private readonly CriticalServicePriorityRule _rule = new();
 
     [Theory]
-    [InlineData(true, EstadoTurno.Activo, 100)]
-    [InlineData(true, EstadoTurno.Programado, 0)]
-    [InlineData(false, EstadoTurno.Activo, 0)]
-    [InlineData(false, EstadoTurno.Programado, 0)]
-    public void SumaPuntosSoloSiLaSolicitudEsCriticaYElConductorEstaEnTurnoActivo(
-        bool urgente, EstadoTurno estadoTurno, int esperado)
+    [InlineData(true, true, 100)]
+    [InlineData(true, false, 0)]
+    [InlineData(false, true, 0)]
+    [InlineData(false, false, 0)]
+    public void SumaPuntosSoloSiLaSolicitudEsCriticaYElConductorEsCompatible(bool urgente, bool apto, int esperado)
     {
-        var candidato = Candidato(1, estadoTurno: estadoTurno);
+        var candidato = Candidato(1, aptoCritico: apto);
 
         var score = _rule.Evaluate(Contexto(Solicitud(urgente: urgente), Configuracion(), candidato), candidato);
 

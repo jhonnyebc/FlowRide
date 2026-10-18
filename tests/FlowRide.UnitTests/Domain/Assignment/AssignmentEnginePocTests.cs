@@ -44,8 +44,8 @@ public class AssignmentEnginePocTests
     [Fact]
     public void Escenario3_ServicioCritico_ModificaLaPrioridadSegunConfiguracion()
     {
-        var enTurnoActivo = Candidato(1, estadoTurno: EstadoTurno.Activo, asignacionesRecientes: 3);
-        var turnoProgramado = Candidato(2, estadoTurno: EstadoTurno.Programado, asignacionesRecientes: 0);
+        var enTurnoActivo = Candidato(1, aptoCritico: true, asignacionesRecientes: 3);
+        var turnoProgramado = Candidato(2, aptoCritico: false, asignacionesRecientes: 0);
         var configuracion = Configuracion(pesoCritico: 1m, pesoCarga: 0.5m);
         var motor = Motor();
 
@@ -100,8 +100,8 @@ public class AssignmentEnginePocTests
     public void Escenario5_ReglasEnConflicto_SeResuelvenPorPesos(double pesoCritico, double pesoCarga, int esperado)
     {
         // Prioridad favorece a A (turno activo); balance de carga favorece a B (sin carga).
-        var a = Candidato(1, estadoTurno: EstadoTurno.Activo, asignacionesRecientes: 4);
-        var b = Candidato(2, estadoTurno: EstadoTurno.Programado, asignacionesRecientes: 0);
+        var a = Candidato(1, aptoCritico: true, asignacionesRecientes: 4);
+        var b = Candidato(2, aptoCritico: false, asignacionesRecientes: 0);
         var configuracion = Configuracion(pesoCritico: (decimal)pesoCritico, pesoCarga: (decimal)pesoCarga);
 
         var result = Motor().Decide(Contexto(Solicitud(urgente: true), configuracion, a, b));
@@ -113,8 +113,8 @@ public class AssignmentEnginePocTests
     [Fact]
     public void Escenario6_DosTenantsConConfiguracionesDistintas_DecidenDistinto()
     {
-        var enTurnoActivo = Candidato(1, estadoTurno: EstadoTurno.Activo, asignacionesRecientes: 2);
-        var descansado = Candidato(2, estadoTurno: EstadoTurno.Programado, asignacionesRecientes: 0);
+        var enTurnoActivo = Candidato(1, aptoCritico: true, asignacionesRecientes: 2);
+        var descansado = Candidato(2, aptoCritico: false, asignacionesRecientes: 0);
         var solicitud = Solicitud(urgente: true);
         var tenantA = Configuracion("tenant-a", version: 3, pesoCritico: 0.9m, pesoCarga: 0.3m);
         var tenantB = Configuracion("tenant-b", version: 7, criticoHabilitado: false, pesoCarga: 1m);

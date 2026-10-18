@@ -86,16 +86,10 @@ public class AssignmentEngineTests
     [Fact]
     public void ReglaDeshabilitada_NoSeEjecuta()
     {
-        var configuracion = new AssignmentConfiguration("tenant-a", 1,
-        [
-            new RuleSetting(AvailabilityRule.RuleName, false, 1, 1m),
-            new RuleSetting(ServiceCapabilityRule.RuleName, true, 2, 1m)
-        ]);
-
-        var result = Motor().Decide(Contexto(Solicitud(), configuracion, Candidato(1, estadoConductor: EstadoConductor.Suspendido)));
+        var result = Motor().Decide(Contexto(Solicitud(), Configuracion(cargaHabilitada: false), Candidato(1)));
 
         Assert.True(result.IsAssigned);
-        Assert.DoesNotContain(result.DecisionLog.Evaluations.Single().RuleOutcomes, o => o.RuleName == AvailabilityRule.RuleName);
+        Assert.DoesNotContain(result.DecisionLog.Evaluations.Single().RuleOutcomes, o => o.RuleName == WorkloadBalanceRule.RuleName);
     }
 
     [Fact]
@@ -104,14 +98,17 @@ public class AssignmentEngineTests
         var configuracion = new AssignmentConfiguration("tenant-a", 1,
         [
             new RuleSetting(AvailabilityRule.RuleName, true, 20, 1m),
-            new RuleSetting(ServiceCapabilityRule.RuleName, true, 10, 1m)
+            new RuleSetting(ServiceCapabilityRule.RuleName, true, 10, 1m),
+            new RuleSetting(ShiftCompatibilityRule.RuleName, true, 30, 1m),
+            new RuleSetting(RegulatoryRestrictionRule.RuleName, true, 40, 1m)
         ]);
 
         var result = Motor().Decide(Contexto(Solicitud(pasajeros: 9), configuracion,
             Candidato(1, estadoConductor: EstadoConductor.Suspendido)));
 
         var evaluacion = result.DecisionLog.Evaluations.Single();
-        Assert.Equal(new[] { ServiceCapabilityRule.RuleName, AvailabilityRule.RuleName }, evaluacion.RuleOutcomes.Select(o => o.RuleName));
+        Assert.Equal(new[] { ServiceCapabilityRule.RuleName, AvailabilityRule.RuleName, ShiftCompatibilityRule.RuleName,
+            RegulatoryRestrictionRule.RuleName }, evaluacion.RuleOutcomes.Select(o => o.RuleName));
         Assert.StartsWith(ServiceCapabilityRule.RuleName, evaluacion.DiscardReason);
     }
 

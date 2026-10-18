@@ -72,6 +72,7 @@ internal sealed class ConductorConfiguracion : IEntityTypeConfiguration<Conducto
         entidad.Property(conductor => conductor.VencimientoLicencia);
         entidad.Property(conductor => conductor.Estado).ComoTexto();
         entidad.Property(conductor => conductor.FechaUltimaAsignacion);
+        entidad.Property(conductor => conductor.AptoServicioCritico);
 
         entidad.HasIndex(conductor => conductor.NumeroLicencia).IsUnique();
 

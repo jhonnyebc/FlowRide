@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using FlowRide.API.Asignaciones;
 using FlowRide.API.Auditoria;
 using FlowRide.API.Identidad;
 using FlowRide.API.Operacion;
@@ -24,6 +25,7 @@ builder.Services.AddInfraestructura(builder.Configuration);
 builder.Services.AddIdentidad(builder.Configuration);
 builder.Services.AddOperacion(builder.Configuration);
 builder.Services.AddSolicitudes(builder.Configuration);
+builder.Services.AddAsignaciones(builder.Configuration);
 builder.Services.AddAutenticacionFlowRide();
 builder.Services.AddOpenApi();
 builder.Services.AddExceptionHandler<ManejadorExcepciones>();
@@ -69,6 +71,7 @@ api.MapAuditoria();
 api.MapOperacion();
 api.MapParametros();
 api.MapSolicitudes();
+api.MapAsignaciones();
 
 app.Run();
 
