@@ -93,6 +93,10 @@ internal sealed class VehiculosEnMemoria() : RepositorioEnMemoria<Vehiculo>(v =>
 internal sealed class AsignacionesEnMemoria : IAsignacionRepositorio
 {
     public HashSet<Guid> Ocupados { get; } = [];
+    public Dictionary<Guid, Asignacion> VigentesPorSolicitud { get; } = [];
+
+    public Task<Asignacion?> ConsultarVigentePorSolicitudAsync(Guid solicitudId, CancellationToken ct) =>
+        Task.FromResult(VigentesPorSolicitud.GetValueOrDefault(solicitudId));
 
     public Task<IReadOnlySet<Guid>> ConsultarConductoresOcupadosAsync(FranjaHoraria franja, CancellationToken ct) =>
         Task.FromResult<IReadOnlySet<Guid>>(Ocupados);

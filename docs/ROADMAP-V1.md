@@ -18,8 +18,8 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 0 | Base ejecutable | Plataforma | 0010, 0011, 0014, 0017, 0018 | ✅ PR #2 fusionado |
 | 1 | Tenancy y persistencia Silo | Tenancy, Persistencia | 0002, 0004, 0010, 0014 | ✅ PR #4 fusionada |
 | 2 | Identidad, usuarios y auditoría | Identidad, Auditoria | 0003, 0011 | ✅ PR #5 fusionada |
-| 3 | Recursos operativos y parámetros | Operacion, Parametros | 0006, 0013, 0014, 0016 | ✅ rama `feature/RF-04-recursos-parametros` (pendiente de PR) |
-| 4 | Solicitudes e itinerarios | Solicitudes | 0001, 0004, 0007 | ⬜ |
+| 3 | Recursos operativos y parámetros | Operacion, Parametros | 0006, 0013, 0014, 0016 | ✅ PR #6 fusionada |
+| 4 | Solicitudes e itinerarios | Solicitudes | 0001, 0004, 0007 | ✅ rama `feature/RF-09-solicitudes-itinerarios` (pendiente de PR) |
 | 5 | Asignación de punta a punta | Asignacion | 0007, 0009, 0016 | ⬜ |
 | 6 | Viajes y calificación | Viajes, Calificacion | 0007, 0011 | ⬜ |
 | 7 | Canal WhatsApp | Mensajeria | 0003, 0008, 0012 | ⬜ |
@@ -76,7 +76,15 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 - RF cubiertos: RF-04, RF-05 (pasajeros y conductores), RF-07, RF-26, RF-27, RF-28, RF-41; RF-38 parcial (las asignaciones se consultan desde la Fase 5).
 
 ### Fase 4 — Solicitudes e itinerarios
-- [ ] `SolicitudViaje` completa con `EstadoSolicitudHistorial`; CQRS ligero para consultas.
+- [x] `SolicitudViaje` completa con `EstadoSolicitudHistorial`: se registra desde el Panel Web por el pasajero (canal PanelWeb; el bot de WhatsApp reutilizará el caso de uso en la Fase 7), se modifica sin asignar y se cancela con motivo; cada cambio queda en el historial y en la auditoría (sin direcciones).
+- [x] RF-29: datos mínimos, servicio futuro, pasajero y empresa activos, y sin solicitudes activas solapadas del mismo pasajero.
+- [x] RF-32: ventana del parámetro `solicitud.ventana_cancelacion_minutos` para modificar o cancelar; fuera de ella solo cancela el Operador logístico, con motivo; cancelar una asignada cancela su asignación vigente.
+- [x] CQRS ligero: lectura por `IConsultasSolicitudes` con proyecciones (cola de asignación con urgentes primero, historial por pasajero, empresa, estado y fechas, detalle con historial); escritura por el agregado.
+- [x] PAS-SEG-01: las solicitudes personales llegan sin direcciones a quien no puede verlas según `solicitud.visibilidad_personales` (el Administrador nunca).
+- [x] RF-08: itinerarios por rango de fechas y días de la semana (uno por fecha, sin repetir código y fecha); una solicitud toma origen, destino y horario del itinerario, en la hora local del operador.
+- [x] Conflictos de concurrencia optimista devueltos como 409.
+- Pruebas: 329 unitarias (95,6 % líneas / 87,5 % ramas), 16 de arquitectura, 99 de integración.
+- RF cubiertos: RF-08, RF-09, RF-29, RF-30, RF-32; RF-31 parcial (los viajes se agregan en la Fase 6).
 
 ### Fase 5 — Asignación de punta a punta
 - [ ] Caso de uso `AssignPendingRequestHandler` con transacción, concurrencia optimista y Outbox (ADR-0007).
@@ -124,8 +132,8 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-05 | Creación de usuarios por tenant | 2-3 | ✅ panel (Fase 2), pasajeros y conductores (Fase 3) |
 | RF-06 | Asignación de roles a usuarios | 2 | ✅ roles del panel; pasajero y conductor reciben su rol al registrarse |
 | RF-07 | Consulta de disponibilidad de conductores | 3 | ✅ |
-| RF-08 | Registro de itinerarios | 4 | ⬜ |
-| RF-09 | Recepción de solicitudes de transporte | 4 | ⬜ |
+| RF-08 | Registro de itinerarios | 4 | ✅ |
+| RF-09 | Recepción de solicitudes de transporte | 4 | ✅ |
 | RF-10 | Asignación automática de conductores | 5 | 🟡 motor listo, falta el caso de uso |
 | RF-11 | Aplicación de reglas de negocio | 5 | 🟡 7 reglas implementadas |
 | RF-12 | Reasignación manual | 5 | ⬜ |
@@ -145,10 +153,10 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-26 | Registro de conductores | 3 | ✅ |
 | RF-27 | Actualización de datos de conductores | 3 | ✅ |
 | RF-28 | Activación e inactivación de conductores | 3 | ✅ |
-| RF-29 | Validación de datos mínimos de solicitud | 4 | ⬜ |
-| RF-30 | Consulta del estado de solicitudes | 4 | ⬜ |
-| RF-31 | Historial de solicitudes y viajes | 4 | ⬜ |
-| RF-32 | Modificación o cancelación de solicitudes | 4 | ⬜ |
+| RF-29 | Validación de datos mínimos de solicitud | 4 | ✅ |
+| RF-30 | Consulta del estado de solicitudes | 4 | ✅ |
+| RF-31 | Historial de solicitudes y viajes | 4 | 🟡 solicitudes por pasajero, empresa, estado y fechas; viajes en la Fase 6 |
+| RF-32 | Modificación o cancelación de solicitudes | 4 | ✅ |
 | RF-33 | Visualización de asignaciones generadas | 5 | ⬜ |
 | RF-34 | Actualización del estado de asignación | 5 | ⬜ |
 | RF-35 | Recordatorios automáticos | 8 | ⬜ |
@@ -191,3 +199,5 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 2026-10-17 | Fase 3 (decisiones del usuario): cifrado determinista del teléfono y la licencia (permite índice único y búsqueda exacta); empresas cliente y pasajeros entran en la Fase 3; parámetros por defecto: recordatorio 60 min, ventana de cancelación 30 min, franjas críticas vacías, solicitudes personales visibles para el pasajero y el Operador logístico; documentos subidos por la API (PDF/PNG/JPG ≤ 5 MB). |
 | 2026-10-17 | En Operación, un puerto de entrada por recurso (con varias operaciones) en lugar de uno por acción, para no multiplicar archivos; se mantiene la regla `XAdaptadorEntrada` → `IXPuertoEntrada`. |
 | 2026-10-17 | En local, todos los buckets comparten la cuenta de desarrollo de Azurite; en Azure la credencial de cada operador debe limitarse a su contenedor (Fase 12). |
+| 2026-10-17 | Fase 4 (decisiones del usuario): la ventana de cancelación aplica al pasajero y a quien registra por él, y el Operador logístico puede cancelar fuera de ella con motivo; solo se modifican solicitudes sin asignar; no se permiten solicitudes activas solapadas del mismo pasajero; los itinerarios recurrentes se registran por rango de fechas y días (uno por fecha). |
+| 2026-10-17 | La hora de los itinerarios es local del operador: configuración `FlowRide:ZonaHoraria` del stack, por defecto `America/Bogota` (V1 opera en Colombia, es-CO). |

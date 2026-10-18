@@ -28,7 +28,8 @@ public sealed class SolicitudViaje
         bool urgente = false,
         bool esPersonal = false,
         Guid? empresaClienteId = null,
-        Guid? itinerarioId = null)
+        Guid? itinerarioId = null,
+        Guid? registradaPorId = null)
     {
         Id = Guardas.Id(id, "La solicitud requiere un Id.", nameof(id));
         PasajeroId = Guardas.Id(pasajeroId, "La solicitud requiere un pasajero.", nameof(pasajeroId));
@@ -50,21 +51,21 @@ public sealed class SolicitudViaje
 
         Estado = EstadoSolicitud.Pendiente;
         _historial.Add(new EstadoSolicitudHistorial(
-            Guid.CreateVersion7(registradaEn), Id, null, EstadoSolicitud.Pendiente, registradaEn, pasajeroId, null));
+            Guid.CreateVersion7(registradaEn), Id, null, EstadoSolicitud.Pendiente, registradaEn, registradaPorId ?? pasajeroId, null));
     }
 
     public Guid Id { get; }
     public Guid PasajeroId { get; }
     public Guid? EmpresaClienteId { get; }
     public Guid? ItinerarioId { get; }
-    public string DireccionOrigen { get; }
-    public string DireccionDestino { get; }
-    public DateTimeOffset FechaHoraServicio { get; }
-    public TimeSpan DuracionEstimada { get; }
-    public int CantidadPasajeros { get; }
+    public string DireccionOrigen { get; private set; }
+    public string DireccionDestino { get; private set; }
+    public DateTimeOffset FechaHoraServicio { get; private set; }
+    public TimeSpan DuracionEstimada { get; private set; }
+    public int CantidadPasajeros { get; private set; }
 
     /// <summary>Servicio crítico (RF-13).</summary>
-    public bool Urgente { get; }
+    public bool Urgente { get; private set; }
 
     /// <summary>Solicitud personal: visibilidad restringida (PAS-SEG-01).</summary>
     public bool EsPersonal { get; }
@@ -79,6 +80,44 @@ public sealed class SolicitudViaje
 
     public FranjaHoraria Franja() => new(FechaHoraServicio, FechaHoraServicio + DuracionEstimada);
 
+
+    /// <summary>Puede modificarse mientras no esté asignada (RF-32): en estado Pendiente o SinCandidatos.</summary>
+    public bool EsModificable => Estado is EstadoSolicitud.Pendiente or EstadoSolicitud.SinCandidatos;
+
+    /// <summary>Solicitud que todavía ocupa una franja del pasajero (no terminada ni cancelada).</summary>
+    public bool EstaActiva => Estado is EstadoSolicitud.Pendiente or EstadoSolicitud.Asignada
+        or EstadoSolicitud.SinCandidatos or EstadoSolicitud.EnCurso;
+
+    /// <summary>
+    /// Ajusta los datos del servicio (RF-32). Solo sin asignar; una solicitud sin candidatos vuelve a la cola de
+    /// asignación para que el motor la intente de nuevo con los datos nuevos.
+    /// </summary>
+    public void Modificar(
+        string direccionOrigen,
+        string direccionDestino,
+        DateTimeOffset fechaHoraServicio,
+        TimeSpan duracionEstimada,
+        int cantidadPasajeros,
+        bool urgente,
+        Guid? actorId,
+        DateTimeOffset ahora)
+    {
+        if (!EsModificable)
+            throw Guardas.TransicionInvalida("modificar", "la solicitud", Estado);
+        if (duracionEstimada <= TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(duracionEstimada), "La duración estimada debe ser positiva.");
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cantidadPasajeros);
+
+        DireccionOrigen = Guardas.Texto(direccionOrigen, nameof(direccionOrigen));
+        DireccionDestino = Guardas.Texto(direccionDestino, nameof(direccionDestino));
+        FechaHoraServicio = fechaHoraServicio;
+        DuracionEstimada = duracionEstimada;
+        CantidadPasajeros = cantidadPasajeros;
+        Urgente = urgente;
+
+        if (Estado == EstadoSolicitud.SinCandidatos)
+            CambiarEstado(EstadoSolicitud.Pendiente, actorId, "Solicitud modificada.", ahora);
+    }
     public void MarcarAsignada(Asignacion asignacion, Guid? actorId, DateTimeOffset ahora)
     {
         ArgumentNullException.ThrowIfNull(asignacion);

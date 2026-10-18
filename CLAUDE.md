@@ -57,6 +57,13 @@ Las pruebas de `EstiloHexagonalTests` hacen cumplir los puntos 1, 2, 3 y 5.
 - Parámetros (ADR-0016): catálogo en código (`CatalogoParametros`), `ops.parametro` solo guarda los cambiados (versión = token de concurrencia), caché `IMemoryCache` con TTL ≤ 60 s (`FlowRide:Cache:TtlParametrosSegundos`) invalidada tras confirmar.
 - Pruebas: cada prueba que reaprovisiona un operador usa un tenant propio (un entorno nuevo genera una clave de cifrado nueva).
 
+## Solicitudes e itinerarios (Fase 4)
+- Módulo `Solicitudes` con **CQRS ligero**: escribir pasa por el agregado `SolicitudViaje` (`ISolicitudRepositorio`, puerto del dominio); leer, por `IConsultasSolicitudes` (Application, salida), con proyecciones sin rastreo a `SolicitudLectura`. La API lo registra con `AddSolicitudes` (requiere `AddOperacion`).
+- Reglas: datos mínimos y servicio futuro (RF-29); sin solicitudes activas solapadas del mismo pasajero; modificar solo sin asignar y dentro de la ventana (`solicitud.ventana_cancelacion_minutos`); cancelar con motivo, y fuera de la ventana solo el Operador logístico; cancelar una asignada cancela su asignación vigente.
+- Visibilidad (PAS-SEG-01, `solicitud.visibilidad_personales`): las personales llegan sin direcciones (`DetalleRestringido`) a quien no puede verlas; el Administrador nunca las ve.
+- Itinerarios: un rango de fechas y días crea un itinerario por fecha; su hora es local del operador (`FlowRide:ZonaHoraria`, por defecto `America/Bogota`, `ZonaHorariaOperador`).
+- Los conflictos de concurrencia optimista (`DbUpdateConcurrencyException`) se devuelven como 409.
+
 ## RF-10
 El sistema asigna automáticamente un conductor y un vehículo a cada solicitud pendiente, aplicando las reglas configurables del tenant.
 
