@@ -1,7 +1,9 @@
+using FlowRide.Domain.Asignaciones;
 using FlowRide.Domain.Auditoria;
 using FlowRide.Domain.Entidades;
 using FlowRide.Domain.Parametros;
 using FlowRide.Infrastructure.Persistencia.Configuraciones;
+using FlowRide.Infrastructure.Persistencia.Outbox;
 using FlowRide.Infrastructure.Seguridad;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -33,6 +35,9 @@ public sealed class FlowRideDbContext(DbContextOptions<FlowRideDbContext> option
     public DbSet<Calificacion> Calificaciones => Set<Calificacion>();
     public DbSet<EventoAuditoria> EventosAuditoria => Set<EventoAuditoria>();
     public DbSet<Parametro> Parametros => Set<Parametro>();
+    public DbSet<ConfiguracionAsignacion> ConfiguracionesAsignacion => Set<ConfiguracionAsignacion>();
+    public DbSet<DecisionAsignacion> DecisionesAsignacion => Set<DecisionAsignacion>();
+    public DbSet<MensajeOutbox> MensajesOutbox => Set<MensajeOutbox>();
 
     /// <summary>
     /// Cifrador de los campos sensibles del operador (ADR-0014). Sin él (migraciones, diseño) las columnas se leen y
@@ -76,6 +81,12 @@ public sealed class FlowRideDbContext(DbContextOptions<FlowRideDbContext> option
         modelBuilder.ApplyConfiguration(new CalificacionConfiguracion());
         modelBuilder.ApplyConfiguration(new EventoAuditoriaConfiguracion());
         modelBuilder.ApplyConfiguration(new ParametroConfiguracion());
+        modelBuilder.ApplyConfiguration(new ConfiguracionAsignacionConfiguracion());
+        modelBuilder.ApplyConfiguration(new ReglaConfiguradaConfiguracion());
+        modelBuilder.ApplyConfiguration(new DecisionAsignacionConfiguracion());
+        modelBuilder.ApplyConfiguration(new EvaluacionCandidatoConfiguracion());
+        modelBuilder.ApplyConfiguration(new ResultadoReglaConfiguracion());
+        modelBuilder.ApplyConfiguration(new MensajeOutboxConfiguracion());
 
         if (Cifrador is { } cifradorCampos)
         {

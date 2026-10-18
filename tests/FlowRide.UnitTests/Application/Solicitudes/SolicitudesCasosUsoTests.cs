@@ -38,6 +38,10 @@ internal sealed class SolicitudesEnMemoria(PasajerosEnMemoria pasajeros, Empresa
         Task.FromResult(Solicitudes.Values.Any(s => s.PasajeroId == pasajeroId && s.Id != excluirSolicitudId && s.EstaActiva
                                                     && s.Franja().SeSolapaCon(franja)));
 
+    public Task<IReadOnlyList<Guid>> ConsultarIdsPendientesAsync(int maximo, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<Guid>>(Solicitudes.Values.Where(s => s.Estado == EstadoSolicitud.Pendiente)
+            .OrderByDescending(s => s.Urgente).ThenBy(s => s.FechaHoraServicio).Select(s => s.Id).Take(maximo).ToList());
+
     public Task<SolicitudDetalleLectura?> DetalleAsync(Guid solicitudId, CancellationToken ct) =>
         Task.FromResult(Solicitudes.GetValueOrDefault(solicitudId) is { } s
             ? new SolicitudDetalleLectura(Lectura(s), s.Historial.Select(h =>

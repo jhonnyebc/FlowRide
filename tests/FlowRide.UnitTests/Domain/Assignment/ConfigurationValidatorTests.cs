@@ -50,9 +50,7 @@ public class ConfigurationValidatorTests
     [InlineData(1.01)]
     public void PesoFueraDeRango_SeRechaza(double peso)
     {
-        var result = Validar(
-            new RuleSetting(AvailabilityRule.RuleName, true, 1, 1m),
-            new RuleSetting(WorkloadBalanceRule.RuleName, true, 1, (decimal)peso));
+        var result = Validar([.. Escenario.Eliminatorias(), new RuleSetting(WorkloadBalanceRule.RuleName, true, 1, (decimal)peso)]);
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.Contains("fuera de [0, 1]") && e.Contains(WorkloadBalanceRule.RuleName));
@@ -63,11 +61,9 @@ public class ConfigurationValidatorTests
     [InlineData(1)]
     public void PesoEnLosLimites_EsValido(double peso)
     {
-        var result = Validar(
-            new RuleSetting(AvailabilityRule.RuleName, true, 1, 1m),
-            new RuleSetting(WorkloadBalanceRule.RuleName, true, 1, (decimal)peso));
+        var result = Validar([.. Eliminatorias(), new RuleSetting(WorkloadBalanceRule.RuleName, true, 1, (decimal)peso)]);
 
-        Assert.True(result.IsValid);
+        Assert.Empty(result.Errors);
     }
 
     [Fact]
@@ -108,6 +104,7 @@ public class ConfigurationValidatorTests
             new RuleSetting("Fantasma", true, 1, 2m),
             new RuleSetting("Fantasma", true, 2, 0.5m));
 
-        Assert.Equal(4, result.Errors.Count); // duplicada, inexistente, peso, sin eliminatoria
+        // Duplicada, inexistente, peso, sin eliminatoria y las cuatro obligatorias sin habilitar.
+        Assert.Equal(8, result.Errors.Count);
     }
 }

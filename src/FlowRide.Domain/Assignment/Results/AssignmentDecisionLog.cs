@@ -10,6 +10,7 @@ public sealed record CandidateScore(
     int Rank);
 
 /// <summary>Todo lo necesario para reconstruir una decisión del motor (ADR-0009).</summary>
+/// <param name="EvaluatedAt">Momento de la evaluación (del reloj del caso de uso, no del motor).</param>
 /// <param name="Evaluations">Resultado de cada regla por candidato, en el orden de evaluación.</param>
 public sealed record AssignmentDecisionLog(
     Guid SolicitudId,
@@ -22,4 +23,5 @@ public sealed record AssignmentDecisionLog(
     IReadOnlyList<CandidateEvaluation> Evaluations,
     IReadOnlyList<DiscardedCandidate> Discarded,
     IReadOnlyList<CandidateScore> Scores,
-    TieBreakRecord? TieBreak);
+    TieBreakRecord? TieBreak,
+    DateTimeOffset EvaluatedAt);

@@ -27,6 +27,9 @@ public sealed record ConductorPeticion
     public string? NumeroLicencia { get; init; }
     public string? CategoriaLicencia { get; init; }
     public DateOnly? VencimientoLicencia { get; init; }
+
+    /// <summary>Compatible con servicio crítico (prioridad en solicitudes urgentes). Por defecto, no.</summary>
+    public bool? AptoServicioCritico { get; init; }
 }
 
 public sealed record EstadoConductorPeticion
@@ -101,7 +104,8 @@ public sealed record ConductorRespuesta(
     string CategoriaLicencia,
     DateOnly VencimientoLicencia,
     string Estado,
-    bool Activo);
+    bool Activo,
+    bool AptoServicioCritico);
 
 public sealed record TurnoRespuesta(Guid Id, DateTimeOffset Inicio, DateTimeOffset Fin, string Estado);
 

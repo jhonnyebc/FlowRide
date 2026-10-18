@@ -14,6 +14,9 @@ public interface ISolicitudRepositorio
 {
     /// <summary>¿El pasajero tiene otra solicitud activa cuya franja se solapa con esta?</summary>
     Task<bool> ExisteActivaQueSeSolapaAsync(Guid pasajeroId, FranjaHoraria franja, Guid? excluirSolicitudId, CancellationToken ct);
+
+    /// <summary>Solicitudes pendientes en el orden en que se atienden (urgentes primero, luego por hora del servicio).</summary>
+    Task<IReadOnlyList<Guid>> ConsultarIdsPendientesAsync(int maximo, CancellationToken ct);
 }
 
 public sealed record FiltroItinerarios(Guid? EmpresaClienteId = null, string? CodigoServicio = null, DateOnly? Desde = null, DateOnly? Hasta = null);

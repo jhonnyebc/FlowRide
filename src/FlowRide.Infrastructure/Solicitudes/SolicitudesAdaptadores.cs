@@ -41,6 +41,14 @@ public sealed class SolicitudRepositorioAdaptador(FlowRideDbContext contexto) : 
     public async Task<IReadOnlyList<SolicitudViaje>> ConsultarTodosAsync(CancellationToken ct) =>
         await contexto.Solicitudes.OrderBy(solicitud => solicitud.FechaHoraServicio).ToListAsync(ct);
 
+    public async Task<IReadOnlyList<Guid>> ConsultarIdsPendientesAsync(int maximo, CancellationToken ct) =>
+        await contexto.Solicitudes.AsNoTracking()
+            .Where(s => s.Estado == EstadoSolicitud.Pendiente)
+            .OrderByDescending(s => s.Urgente).ThenBy(s => s.FechaHoraServicio).ThenBy(s => s.Id)
+            .Select(s => s.Id)
+            .Take(maximo)
+            .ToListAsync(ct);
+
     public Task<bool> ExisteActivaQueSeSolapaAsync(Guid pasajeroId, FranjaHoraria franja, Guid? excluirSolicitudId, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(franja);

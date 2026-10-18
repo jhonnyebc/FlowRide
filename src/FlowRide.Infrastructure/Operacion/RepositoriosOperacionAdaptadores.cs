@@ -197,21 +197,58 @@ public sealed class VehiculoRepositorioAdaptador(FlowRideDbContext contexto) : I
 
 public sealed class AsignacionRepositorioAdaptador(FlowRideDbContext contexto) : IAsignacionRepositorio
 {
-    public Task<Asignacion?> ConsultarVigentePorSolicitudAsync(Guid solicitudId, CancellationToken ct) =>
-        contexto.Asignaciones.SingleOrDefaultAsync(a => a.SolicitudId == solicitudId
-                                                        && (a.Estado == EstadoAsignacion.Asignada || a.Estado == EstadoAsignacion.Aceptada
-                                                            || a.Estado == EstadoAsignacion.EnCurso), ct);
+    private static readonly EstadoAsignacion[] Vigentes = [EstadoAsignacion.Asignada, EstadoAsignacion.Aceptada, EstadoAsignacion.EnCurso];
 
-    public async Task<IReadOnlySet<Guid>> ConsultarConductoresOcupadosAsync(FranjaHoraria franja, CancellationToken ct)
+    // Las que cuentan como carga del conductor: todas menos las que no llegaron a hacerse.
+    private static readonly EstadoAsignacion[] SinCarga = [EstadoAsignacion.Rechazada, EstadoAsignacion.Cancelada, EstadoAsignacion.Reemplazada];
+
+    public Task CrearAsync(Asignacion asignacion, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(asignacion);
+        contexto.Asignaciones.Add(asignacion);
+        return Task.CompletedTask;
+    }
+
+    public Task<Asignacion?> ConsultarPorIdAsync(Guid asignacionId, CancellationToken ct) =>
+        contexto.Asignaciones.SingleOrDefaultAsync(a => a.Id == asignacionId, ct);
+
+    public Task<Asignacion?> ConsultarVigentePorSolicitudAsync(Guid solicitudId, CancellationToken ct) =>
+        contexto.Asignaciones.SingleOrDefaultAsync(a => a.SolicitudId == solicitudId && Vigentes.Contains(a.Estado), ct);
+
+    public async Task<IReadOnlySet<Guid>> ConsultarConductoresOcupadosAsync(FranjaHoraria franja, CancellationToken ct) =>
+        (await Solapadas(franja).Select(a => a.ConductorId).Distinct().ToListAsync(ct)).ToHashSet();
+
+    public async Task<IReadOnlySet<Guid>> ConsultarVehiculosOcupadosAsync(FranjaHoraria franja, CancellationToken ct) =>
+        (await Solapadas(franja).Select(a => a.VehiculoId).Distinct().ToListAsync(ct)).ToHashSet();
+
+    public async Task<IReadOnlyDictionary<Guid, int>> ContarRecientesAsync(
+        IReadOnlyCollection<Guid> conductorIds, DateTimeOffset desde, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(conductorIds);
+        if (conductorIds.Count == 0)
+            return new Dictionary<Guid, int>();
+
+        return await contexto.Asignaciones.AsNoTracking()
+            .Where(a => conductorIds.Contains(a.ConductorId) && a.AsignadaEn >= desde && !SinCarga.Contains(a.Estado))
+            .GroupBy(a => a.ConductorId)
+            .Select(g => new { ConductorId = g.Key, Cantidad = g.Count() })
+            .ToDictionaryAsync(g => g.ConductorId, g => g.Cantidad, ct);
+    }
+
+    public async Task<IReadOnlyList<Asignacion>> ConsultarVigentesDelConductorAsync(Guid conductorId, FranjaHoraria franja, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(franja);
-        var ocupados = await contexto.Asignaciones.AsNoTracking()
-            .Where(a => (a.Estado == EstadoAsignacion.Asignada || a.Estado == EstadoAsignacion.Aceptada
-                         || a.Estado == EstadoAsignacion.EnCurso)
+        return await contexto.Asignaciones
+            .Where(a => a.ConductorId == conductorId && Vigentes.Contains(a.Estado)
                         && a.Franja.Inicio < franja.Fin && a.Franja.Fin > franja.Inicio)
-            .Select(a => a.ConductorId)
-            .Distinct()
+            .OrderBy(a => a.Franja.Inicio)
             .ToListAsync(ct);
-        return ocupados.ToHashSet();
+    }
+
+    private IQueryable<Asignacion> Solapadas(FranjaHoraria franja)
+    {
+        ArgumentNullException.ThrowIfNull(franja);
+        return contexto.Asignaciones.AsNoTracking()
+            .Where(a => Vigentes.Contains(a.Estado) && a.Franja.Inicio < franja.Fin && a.Franja.Fin > franja.Inicio);
     }
 }

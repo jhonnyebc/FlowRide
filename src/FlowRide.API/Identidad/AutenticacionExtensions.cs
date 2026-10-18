@@ -13,6 +13,7 @@ public static class Politicas
 {
     public const string Administrador = "Administrador";
     public const string PanelWeb = "PanelWeb";
+    public const string OperadorLogistico = "OperadorLogistico";
 }
 
 /// <summary>Claims que la API agrega tras resolver el usuario interno.</summary>
@@ -49,7 +50,8 @@ public static partial class AutenticacionExtensions
 
         services.AddAuthorizationBuilder()
             .AddPolicy(Politicas.Administrador, politica => politica.RequireRole(RolesPanel.Administrador))
-            .AddPolicy(Politicas.PanelWeb, politica => politica.RequireRole(RolesPanel.Administrador, RolesPanel.OperadorLogistico));
+            .AddPolicy(Politicas.PanelWeb, politica => politica.RequireRole(RolesPanel.Administrador, RolesPanel.OperadorLogistico))
+            .AddPolicy(Politicas.OperadorLogistico, politica => politica.RequireRole(RolesPanel.OperadorLogistico));
 
         return services;
     }
