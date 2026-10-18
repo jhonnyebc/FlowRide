@@ -197,6 +197,11 @@ public sealed class VehiculoRepositorioAdaptador(FlowRideDbContext contexto) : I
 
 public sealed class AsignacionRepositorioAdaptador(FlowRideDbContext contexto) : IAsignacionRepositorio
 {
+    public Task<Asignacion?> ConsultarVigentePorSolicitudAsync(Guid solicitudId, CancellationToken ct) =>
+        contexto.Asignaciones.SingleOrDefaultAsync(a => a.SolicitudId == solicitudId
+                                                        && (a.Estado == EstadoAsignacion.Asignada || a.Estado == EstadoAsignacion.Aceptada
+                                                            || a.Estado == EstadoAsignacion.EnCurso), ct);
+
     public async Task<IReadOnlySet<Guid>> ConsultarConductoresOcupadosAsync(FranjaHoraria franja, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(franja);

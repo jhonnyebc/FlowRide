@@ -6,6 +6,7 @@ using FlowRide.API.Parametros;
 using FlowRide.API.Plataforma.Errores;
 using FlowRide.API.Plataforma.Observabilidad;
 using FlowRide.API.Plataforma.Salud;
+using FlowRide.API.Solicitudes;
 using FlowRide.Infrastructure;
 using FlowRide.Infrastructure.Plataforma;
 using FlowRide.Infrastructure.Tenancy;
@@ -22,6 +23,7 @@ builder.AddObservabilidad();
 builder.Services.AddInfraestructura(builder.Configuration);
 builder.Services.AddIdentidad(builder.Configuration);
 builder.Services.AddOperacion(builder.Configuration);
+builder.Services.AddSolicitudes(builder.Configuration);
 builder.Services.AddAutenticacionFlowRide();
 builder.Services.AddOpenApi();
 builder.Services.AddExceptionHandler<ManejadorExcepciones>();
@@ -66,6 +68,7 @@ api.MapUsuarios();
 api.MapAuditoria();
 api.MapOperacion();
 api.MapParametros();
+api.MapSolicitudes();
 
 app.Run();
 
