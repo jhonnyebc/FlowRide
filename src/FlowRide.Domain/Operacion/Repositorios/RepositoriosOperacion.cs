@@ -61,4 +61,7 @@ public interface IAsignacionRepositorio
 {
     /// <summary>Conductores con una asignación vigente (asignada, aceptada o en curso) que se solapa con la franja.</summary>
     Task<IReadOnlySet<Guid>> ConsultarConductoresOcupadosAsync(FranjaHoraria franja, CancellationToken ct);
+
+    /// <summary>Asignación vigente de la solicitud (rastreada, para cambiarla), o null si no tiene.</summary>
+    Task<Asignacion?> ConsultarVigentePorSolicitudAsync(Guid solicitudId, CancellationToken ct);
 }

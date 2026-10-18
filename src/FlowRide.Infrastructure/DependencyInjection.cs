@@ -20,11 +20,16 @@ using FlowRide.Application.Seguridad.CasosUso;
 using FlowRide.Application.Seguridad.Entrada.Adaptadores;
 using FlowRide.Application.Seguridad.Entrada.Puertos;
 using FlowRide.Application.Seguridad.Salida.Puertos;
+using FlowRide.Application.Solicitudes.CasosUso;
+using FlowRide.Application.Solicitudes.Entrada.Adaptadores;
+using FlowRide.Application.Solicitudes.Entrada.Puertos;
+using FlowRide.Application.Solicitudes.Salida.Puertos;
 using FlowRide.Application.Tenancy.CasosUso;
 using FlowRide.Application.Tenancy.Entrada.Adaptadores;
 using FlowRide.Application.Tenancy.Entrada.Puertos;
 using FlowRide.Application.Tenancy.Salida.Puertos;
 using FlowRide.Domain.Auditoria.Repositorios;
+using FlowRide.Domain.Comun;
 using FlowRide.Domain.Comun.Consultas;
 using FlowRide.Domain.Entidades;
 using FlowRide.Domain.Identidad;
@@ -39,6 +44,9 @@ using FlowRide.Domain.Plataforma;
 using FlowRide.Domain.Plataforma.AprovisionarOperador;
 using FlowRide.Domain.Plataforma.MigrarSilos;
 using FlowRide.Domain.Plataforma.Repositorios;
+using FlowRide.Domain.Solicitudes;
+using FlowRide.Domain.Solicitudes.GestionSolicitudes;
+using FlowRide.Domain.Solicitudes.Repositorios;
 using FlowRide.Infrastructure.Auditoria;
 using FlowRide.Infrastructure.Identidad;
 using FlowRide.Infrastructure.Identidad.Keycloak;
@@ -47,6 +55,7 @@ using FlowRide.Infrastructure.Parametros;
 using FlowRide.Infrastructure.Persistencia;
 using FlowRide.Infrastructure.Plataforma;
 using FlowRide.Infrastructure.Seguridad;
+using FlowRide.Infrastructure.Solicitudes;
 using FlowRide.Infrastructure.Tenancy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -63,6 +72,8 @@ public static class DependencyInjection
     public const string CadenaConexionObjetos = "Objetos";
     public const string CadenaConexionServidorObjetos = "ServidorObjetos";
     public const string EtiquetaReadiness = "ready";
+    public const string ClaveZonaHoraria = "FlowRide:ZonaHoraria";
+    public const string ZonaHorariaPorDefecto = "America/Bogota";
     public const string ClaveUsuarioAdministradorKeycloak = "FlowRide:Keycloak:Administrador:Usuario";
     public const string ClaveContrasenaAdministradorKeycloak = "FlowRide:Keycloak:Administrador:Contrasena";
 
@@ -281,6 +292,47 @@ public static class DependencyInjection
         services.AddScoped<IDocumentosConductorPuertoEntrada, DocumentosConductorAdaptadorEntrada>();
         services.AddScoped<IVehiculosPuertoEntrada, VehiculosAdaptadorEntrada>();
         services.AddScoped<IParametrosPuertoEntrada, ParametrosAdaptadorEntrada>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registra las solicitudes e itinerarios del stack del operador (RF-08, RF-09, RF-29 a RF-32): escritura por el
+    /// dominio y lectura por proyecciones (CQRS ligero). Requiere <see cref="AddOperacion"/>.
+    /// </summary>
+    public static IServiceCollection AddSolicitudes(this IServiceCollection services, IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var nombreZona = configuration[ClaveZonaHoraria] ?? ZonaHorariaPorDefecto;
+        TimeZoneInfo zona;
+        try
+        {
+            zona = TimeZoneInfo.FindSystemTimeZoneById(nombreZona);
+        }
+        catch (TimeZoneNotFoundException error)
+        {
+            throw new InvalidOperationException($"La zona horaria '{nombreZona}' de '{ClaveZonaHoraria}' no existe.", error);
+        }
+        services.AddSingleton(new ZonaHorariaOperador(zona));
+
+        // Adaptadores de salida (escritura y lectura).
+        services.AddScoped<ISolicitudRepositorio, SolicitudRepositorioAdaptador>();
+        services.AddScoped<IItinerarioRepositorio, ItinerarioRepositorioAdaptador>();
+        services.AddScoped<IConsultasSolicitudes, ConsultasSolicitudesEf>();
+
+        // Dominio, casos de uso y adaptadores de entrada.
+        services.TryAddScoped<ParametrosDominio>();
+        services.AddScoped<SolicitudDominio>();
+        services.AddScoped<ICasoUsoConRetorno<RegistrarSolicitudDominio, SolicitudViaje>, RegistrarSolicitudCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ModificarSolicitudDominio, SolicitudViaje>, ModificarSolicitudCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<CancelarSolicitudDominio, SolicitudViaje>, CancelarSolicitudCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarSolicitudDominio, SolicitudDetalleLectura>, ConsultarSolicitudCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<BuscarSolicitudesDominio, PaginaResultado<SolicitudLectura>>, BuscarSolicitudesCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<RegistrarItinerariosDominio, IReadOnlyList<Itinerario>>, RegistrarItinerariosCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<BuscarItinerariosDominio, PaginaResultado<Itinerario>>, BuscarItinerariosCasoUso>();
+        services.AddScoped<ISolicitudesPuertoEntrada, SolicitudesAdaptadorEntrada>();
+        services.AddScoped<IItinerariosPuertoEntrada, ItinerariosAdaptadorEntrada>();
 
         return services;
     }
