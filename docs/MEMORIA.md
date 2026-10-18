@@ -5,13 +5,14 @@
 > Última actualización: 2026-10-17.
 
 ## Estado actual
-- **Rama de trabajo:** `feature/RF-09-solicitudes-itinerarios` (Fase 4 completa, todos los gates en verde), **sin commit
-  todavía**, pendiente del OK del usuario para el commit y el PR hacia `develop`.
+- **Rama de trabajo:** `feature/RF-10-asignacion` (Fase 5 completa, todos los gates en verde), **sin commit todavía**,
+  pendiente del OK del usuario para el commit y el PR hacia `develop`.
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
-  Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5) y Fase 3 Recursos y parámetros (PR #6).
-- **Fase actual:** Fase 4 (Solicitudes e itinerarios) terminada en la rama; la siguiente es la Fase 5 (Asignación de
-  punta a punta).
-- **Tests:** 329 unitarios (95,6 % líneas / 87,5 % ramas en Domain + Application), 16 de arquitectura, 99 de integración
+  Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6) y Fase 4
+  Solicitudes e itinerarios (PR #7).
+- **Fase actual:** Fase 5 (Asignación de punta a punta) terminada en la rama; la siguiente es la Fase 6 (Viajes y
+  calificación).
+- **Tests:** 361 unitarios (94,4 % líneas / 87,5 % ramas en Domain + Application), 16 de arquitectura, 107 de integración
   (Keycloak, Mailpit y Azurite reales con Testcontainers).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
   Azurite (10000). `tenant-a` y `tenant-b` tienen Silo (migración `ParametrosYCamposCifrados` aplicada), realm, bucket
@@ -128,6 +129,7 @@
 | 2026-10-17 | Fase 2 completa en `feature/RF-02-identidad-auditoria`: Keycloak con un realm por operador desde una plantilla versionada, primer administrador desde la CLI con correo de contraseña (Mailpit), autenticación OIDC + `tenant_id` + usuario interno por petición, RBAC, revocación inmediata y auditoría con cadena de hashes. 235 + 16 + 78 pruebas en verde. |
 | 2026-10-17 | Fase 3 completa en `feature/RF-04-recursos-parametros`: empresas cliente, pasajeros, conductores, turnos, documentos (Azurite), vehículos, disponibilidad (RF-07), búsqueda paginada, parámetros versionados con caché ≤ 60 s y cifrado determinista de teléfono y licencia. 293 + 16 + 92 pruebas en verde. |
 | 2026-10-17 | Fase 4 completa en `feature/RF-09-solicitudes-itinerarios`: solicitudes desde el panel con validación, ventana de cancelación, modificación sin asignar, cancelación con motivo (y de su asignación), visibilidad de personales, CQRS ligero e itinerarios recurrentes. 329 + 16 + 99 pruebas en verde. |
+| 2026-10-18 | Fase 5 completa en `feature/RF-10-asignacion`: asignación automática transaccional con Outbox y worker de la cola, brechas del motor cerradas, configuración versionada con rollback, decision log persistente, reasignación manual completa y Spike 2 (0 dobles asignaciones). 361 + 16 + 107 pruebas en verde. |
 
 ## Sesión 2026-10-16 (continuación): estilo del profesor
 - `Viaje.EtaProgramada` **eliminada** (decisión del usuario) + migración `QuitarEtaProgramada`, ya aplicada a tenant-a/b locales.
@@ -192,14 +194,38 @@
   `ManejadorExcepciones` devuelve 409 ante `DbUpdateConcurrencyException`. Sin migración (solo setters privados).
 - Gates al cierre: build sin advertencias, formato OK, 329 unitarias (95,6 % / 87,5 %), 16 arquitectura, 99 integración.
   Docker Desktop estaba cerrado al empezar: se inició y Testcontainers tardó unos segundos más en verlo.
+- Commit `4cd269c` → PR #7 fusionada en `develop` el 2026-10-18 con el CI en verde. **Fase 4 cerrada.**
+
+## Sesión 2026-10-18: Fase 5 (Asignación de punta a punta)
+- Rama `feature/RF-10-asignacion` (llevó también la documentación que cerraba la Fase 4).
+- Decisiones del usuario (roadmap 2026-10-18): worker cada 15 s + "asignar ya"; vehículo habitual o cada vehículo libre;
+  marca "apto para servicio crítico" en el conductor; RF-12 completa. Decisiones propias anotadas: configuración en
+  `motor.*` con v1 sembrada, ventana de carga de 7 días como parámetro de regla, exclusiones de franjas diferibles.
+- Motor: `IAssignmentRule.Version/Obligatoria/Dependencias`; `AvailabilityRule` v2 (ocupación) y
+  `CriticalServicePriorityRule` v2 (marca del conductor); validador con obligatorias, dependencias y ciclos;
+  `AssignmentContext.EvaluadaEn` y `AssignmentDecisionLog.EvaluatedAt`; `RuleOutcome.RuleVersion`. Pruebas del motor
+  actualizadas a la nueva semántica.
+- Dominio `Asignaciones`: `ConfiguracionAsignacion`/`ReglaConfigurada`, `DecisionAsignacion` (+ evaluaciones y
+  resultados, snapshot JSON de la entrada), `AsignacionDominio` (candidatos y validación manual).
+- Aplicación: Asignar, Cola, AsignarManual, Reasignar, DevolverACola, AbandonarTurno, configuración (crear/activar/
+  consultar), decisiones y asignaciones (lectura); `IBandejaSalida` y `ConflictoConcurrenciaExcepcion`.
+- Infraestructura: migración `MotorYOutbox` (tablas `motor.*` y `notif.outbox_mensaje`, siembra v1, exclusiones
+  diferibles, una sola configuración activa, triggers solo INSERT del decision log), `WorkerColaAsignacion`, `UnidadTrabajoEf`
+  traduce conflictos. API: `/api/solicitudes/{id}/asignar|decisiones|asignacion-manual|devolver-a-cola`,
+  `/api/asignaciones`, `/api/conductores/{id}/turnos/{turno}/abandonar`, `/api/motor/configuraciones`; política
+  `OperadorLogistico`.
+- Pruebas de integración: el PostgreSQL de Testcontainers se quedó sin conexiones (`53300`) al crecer la suite → 
+  `max_connections=500` en `PostgresFixture`. La prueba de caché entre réplicas ahora usa TTL de 5 s (era frágil con 1 s).
+- Entorno local: `migrar-todos` aplicó `MotorYOutbox` a tenant-a/b; la API arranca con el worker (cola vacía, sin errores).
+- Gates al cierre: build sin advertencias, formato OK, 361 unitarias (94,4 % / 87,5 %), 16 arquitectura, 107 integración;
+  Spike 2 en verde 5 veces seguidas.
 - **Pendiente:** OK del usuario para commit + PR.
 
 ## Próximos pasos
-1. **Esperar el OK del usuario** sobre la Fase 4; luego commit (`feat(solicitudes): …`) y PR de
-   `feature/RF-09-solicitudes-itinerarios` hacia `develop`.
-2. Fase 5 (Asignación de punta a punta): caso de uso que toma la cola de Pendientes, ejecuta el motor, crea la
-   asignación con concurrencia optimista y Outbox (ADR-0007), decision log persistente y configuración del motor
-   versionada (RF-10 a RF-13, RF-21). Spike 2: 0 dobles asignaciones.
+1. **Esperar el OK del usuario** sobre la Fase 5; luego commit (`feat(asignacion): …`) y PR de `feature/RF-10-asignacion`
+   hacia `develop`.
+2. Fase 6 (Viajes y calificación): `Viaje`, `Parada`, `Incidente` y `Calificacion` (aceptar/rechazar asignación, iniciar y
+   finalizar viaje, incidentes, calificación RF-54); completar RF-31 con los viajes.
 3. Panel Web: sigue en la Fase 11. Opción conversada el 2026-10-17: adelantar un panel básico después de la Fase 5 si hay una entrega o demostración intermedia (el usuario aún no lo decidió).
 4. RF-23: probar "Olvidé mi contraseña" con la pantalla de login cuando exista el Panel Web (Fase 11).
 5. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).

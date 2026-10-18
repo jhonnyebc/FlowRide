@@ -19,8 +19,8 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 1 | Tenancy y persistencia Silo | Tenancy, Persistencia | 0002, 0004, 0010, 0014 | ✅ PR #4 fusionada |
 | 2 | Identidad, usuarios y auditoría | Identidad, Auditoria | 0003, 0011 | ✅ PR #5 fusionada |
 | 3 | Recursos operativos y parámetros | Operacion, Parametros | 0006, 0013, 0014, 0016 | ✅ PR #6 fusionada |
-| 4 | Solicitudes e itinerarios | Solicitudes | 0001, 0004, 0007 | ✅ rama `feature/RF-09-solicitudes-itinerarios` (pendiente de PR) |
-| 5 | Asignación de punta a punta | Asignacion | 0007, 0009, 0016 | ⬜ |
+| 4 | Solicitudes e itinerarios | Solicitudes | 0001, 0004, 0007 | ✅ PR #7 fusionada |
+| 5 | Asignación de punta a punta | Asignacion | 0007, 0009, 0016 | ✅ rama `feature/RF-10-asignacion` (pendiente de PR) |
 | 6 | Viajes y calificación | Viajes, Calificacion | 0007, 0011 | ⬜ |
 | 7 | Canal WhatsApp | Mensajeria | 0003, 0008, 0012 | ⬜ |
 | 8 | Notificaciones y alertas | Notificaciones | 0007, 0015, 0016 | ⬜ |
@@ -87,13 +87,17 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 - RF cubiertos: RF-08, RF-09, RF-29, RF-30, RF-32; RF-31 parcial (los viajes se agregan en la Fase 6).
 
 ### Fase 5 — Asignación de punta a punta
-- [ ] Caso de uso `AssignPendingRequestHandler` con transacción, concurrencia optimista y Outbox (ADR-0007).
-- [ ] Brechas del motor frente al ADR-0009:
-  - el validador debe detectar reglas obligatorias deshabilitadas, precedencias, dependencias y ciclos;
-  - al decision log le faltan `Timestamp` (vía `IClock`) y `RuleVersion`;
-  - falta el atributo "compatible con servicio crítico".
-- [ ] Configuración del motor versionada con rollback (RF-21) y decision log persistente.
-- [ ] Spike 2: 0 dobles asignaciones bajo concurrencia.
+- [x] Caso de uso `AsignarSolicitudCasoUso` (el `AssignPendingRequestHandler` del plan): una transacción con decision log, asignación (o sin candidatos) y evento en la Outbox `notif.outbox_mensaje` (ADR-0007); concurrencia optimista y exclusiones de franjas diferibles; los conflictos salen como `ConflictoConcurrenciaExcepcion` (409 en la API).
+- [x] Disparo: worker de la cola cada 15 s (urgentes primero, RF-13) y `POST /api/solicitudes/{id}/asignar`. Candidatos: vehículo habitual del conductor o, si no tiene, cada vehículo activo libre; la ocupación la descarta la regla de disponibilidad con su motivo.
+- [x] Brechas del motor frente al ADR-0009:
+  - el validador detecta reglas obligatorias deshabilitadas, precedencias (orden > 0 y único por tipo), dependencias deshabilitadas y ciclos;
+  - el decision log tiene `EvaluatedAt` (del reloj del caso de uso) y la versión de cada regla (`RuleVersion`);
+  - "compatible con servicio crítico" es una marca del conductor (`AptoServicioCritico`) que usa `CriticalServicePriorityRule` v2.
+- [x] Configuración del motor versionada (RF-21): borrador → activa → archivada, validada antes de crearla y de activarla; rollback = activar una versión anterior; v1 sembrada por migración. Decision log persistente (`motor.decision_asignacion`, `evaluacion_candidato`, `resultado_regla`, solo INSERT) y consultable.
+- [x] RF-12 (Operador logístico): reasignar, asignar a mano una sin candidatos o devolverla a la cola, con motivo y auditoría; el candidato manual pasa por el motor. Abandonar un turno cancela sus asignaciones no iniciadas y devuelve las solicitudes a la cola.
+- [x] Spike 2: dos réplicas del worker compitiendo por 12 solicitudes y 3 conductores en la misma franja → 0 asignaciones solapadas (5 corridas seguidas).
+- Pruebas: 361 unitarias (94,4 % líneas / 87,5 % ramas), 16 de arquitectura, 107 de integración.
+- RF cubiertos: RF-10, RF-11, RF-12, RF-13, RF-21, RF-38 (asignaciones).
 
 ### Fase 6 — Viajes y calificación
 - [ ] `Viaje`, `Parada`, `Incidente` y `Calificacion`; trazabilidad por viaje.
@@ -134,10 +138,10 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-07 | Consulta de disponibilidad de conductores | 3 | ✅ |
 | RF-08 | Registro de itinerarios | 4 | ✅ |
 | RF-09 | Recepción de solicitudes de transporte | 4 | ✅ |
-| RF-10 | Asignación automática de conductores | 5 | 🟡 motor listo, falta el caso de uso |
-| RF-11 | Aplicación de reglas de negocio | 5 | 🟡 7 reglas implementadas |
-| RF-12 | Reasignación manual | 5 | ⬜ |
-| RF-13 | Priorización de solicitudes urgentes | 5 | 🟡 regla implementada |
+| RF-10 | Asignación automática de conductores | 5 | ✅ |
+| RF-11 | Aplicación de reglas de negocio | 5 | ✅ |
+| RF-12 | Reasignación manual | 5 | ✅ |
+| RF-13 | Priorización de solicitudes urgentes | 5 | ✅ |
 | RF-14 | Recepción de mensajes de WhatsApp | 7 | ⬜ |
 | RF-15 | Procesamiento conversacional de solicitudes | 7 | ⬜ |
 | RF-16 | Confirmaciones al pasajero | 8 | ⬜ |
@@ -145,7 +149,7 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-18 | Actualización de estado del viaje por WhatsApp | 7 | ⬜ |
 | RF-19 | Aislamiento físico entre tenants | 1 | ✅ Spike 3 |
 | RF-20 | Configuración separada por tenant | 1 | 🟡 BD y secretos por operador |
-| RF-21 | Configuración avanzada de reglas | 5 | ⬜ |
+| RF-21 | Configuración avanzada de reglas | 5 | ✅ |
 | RF-22 | Cierre de sesión | 2 | ⬜ |
 | RF-23 | Recuperación de credenciales | 2 | 🟡 |
 | RF-24 | Actualización de información de usuarios | 2 | ⬜ |
@@ -162,7 +166,7 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-35 | Recordatorios automáticos | 8 | ⬜ |
 | RF-36 | Vista centralizada de solicitudes y viajes | 9 | ⬜ |
 | RF-37 | Monitoreo de servicios en curso | 6 | ⬜ |
-| RF-38 | Consulta de usuarios, conductores y asignaciones | 3 | 🟡 usuarios, conductores, pasajeros y vehículos; asignaciones en la Fase 5 |
+| RF-38 | Consulta de usuarios, conductores y asignaciones | 3-5 | ✅ |
 | RF-39 | Intervención manual en la operación | 5 | ⬜ |
 | RF-40 | Trazabilidad de cada viaje | 6 | ⬜ |
 | RF-41 | Búsqueda y filtrado | 3 | ✅ |
@@ -201,3 +205,5 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 2026-10-17 | En local, todos los buckets comparten la cuenta de desarrollo de Azurite; en Azure la credencial de cada operador debe limitarse a su contenedor (Fase 12). |
 | 2026-10-17 | Fase 4 (decisiones del usuario): la ventana de cancelación aplica al pasajero y a quien registra por él, y el Operador logístico puede cancelar fuera de ella con motivo; solo se modifican solicitudes sin asignar; no se permiten solicitudes activas solapadas del mismo pasajero; los itinerarios recurrentes se registran por rango de fechas y días (uno por fecha). |
 | 2026-10-17 | La hora de los itinerarios es local del operador: configuración `FlowRide:ZonaHoraria` del stack, por defecto `America/Bogota` (V1 opera en Colombia, es-CO). |
+| 2026-10-18 | Fase 5 (decisiones del usuario): worker de la cola cada 15 s más "asignar ya"; candidatos con el vehículo habitual o, si no tiene, cada vehículo activo libre; "compatible con servicio crítico" es una marca del conductor; RF-12 completa (reasignar, asignar a mano, devolver a la cola y abandono de turno). |
+| 2026-10-18 | La configuración del motor vive en las tablas `motor.*` del modelo ER (no en `ops.parametro`), con la v1 sembrada por migración; la ventana del balance de carga (7 días) es un parámetro de la regla. Las exclusiones de franjas pasan a diferibles para poder reemplazar una asignación en una transacción. |

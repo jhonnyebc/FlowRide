@@ -100,7 +100,8 @@ public sealed class Asignacion
     /// Reasignación manual del Operador logístico (RF-12, RF-39): esta asignación queda Reemplazada y
     /// se crea una nueva, manual, para la misma solicitud y franja.
     /// </summary>
-    public Asignacion Reemplazar(Guid nuevaAsignacionId, Guid conductorId, Guid vehiculoId, string motivo, DateTimeOffset ahora)
+    public Asignacion Reemplazar(
+        Guid nuevaAsignacionId, Guid conductorId, Guid vehiculoId, string motivo, DateTimeOffset ahora, Guid? decisionId = null)
     {
         if (Estado is not (EstadoAsignacion.Asignada or EstadoAsignacion.Aceptada))
             throw Guardas.TransicionInvalida("reemplazar", "la asignación", Estado);
@@ -109,7 +110,7 @@ public sealed class Asignacion
 
         Cerrar(EstadoAsignacion.Reemplazada, motivo);
         return new Asignacion(nuevaAsignacionId, SolicitudId, conductorId, vehiculoId, Franja,
-            OrigenAsignacion.Manual, ahora, decisionId: null, asignacionReemplazadaId: Id);
+            OrigenAsignacion.Manual, ahora, decisionId, asignacionReemplazadaId: Id);
     }
 
     private void Exigir(EstadoAsignacion esperado, string accion)

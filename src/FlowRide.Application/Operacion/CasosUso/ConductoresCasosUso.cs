@@ -41,7 +41,7 @@ public sealed class RegistrarConductorCasoUso(
         var ahora = reloj.GetUtcNow();
         var conductor = new Conductor(Guid.CreateVersion7(ahora), datos.Nombre, datos.TelefonoWhatsApp,
             RolesSistema.ConductorId, ahora, datos.NumeroLicencia, datos.CategoriaLicencia, datos.VencimientoLicencia,
-            datos.Correo);
+            datos.Correo, aptoServicioCritico: datos.AptoServicioCritico);
         await conductores.CrearAsync(conductor, ct);
         await auditoria.CrearAsync(Auditar.Exito(datos.ActorId, AccionesAuditoria.RecursoConductor,
             AccionesAuditoria.Crear, conductor.Id, ahora, despues: Auditar.Valores(("estado", conductor.Estado))), ct);
@@ -73,6 +73,7 @@ public sealed class ActualizarConductorCasoUso(
 
         conductor.ActualizarDatos(datos.Nombre, datos.TelefonoWhatsApp, datos.Correo);
         conductor.ActualizarLicencia(datos.NumeroLicencia, datos.CategoriaLicencia, datos.VencimientoLicencia);
+        conductor.CambiarAptitudServicioCritico(datos.AptoServicioCritico);
         await conductores.ModificarAsync(conductor.Id, conductor, ct);
         await auditoria.CrearAsync(Auditar.Exito(datos.ActorId, AccionesAuditoria.RecursoConductor,
             AccionesAuditoria.Actualizar, conductor.Id, reloj.GetUtcNow()), ct);

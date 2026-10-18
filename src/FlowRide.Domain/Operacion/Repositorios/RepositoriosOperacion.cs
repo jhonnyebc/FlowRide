@@ -64,4 +64,18 @@ public interface IAsignacionRepositorio
 
     /// <summary>Asignación vigente de la solicitud (rastreada, para cambiarla), o null si no tiene.</summary>
     Task<Asignacion?> ConsultarVigentePorSolicitudAsync(Guid solicitudId, CancellationToken ct);
+
+    Task CrearAsync(Asignacion asignacion, CancellationToken ct);
+
+    /// <summary>La asignación, rastreada para cambiarla.</summary>
+    Task<Asignacion?> ConsultarPorIdAsync(Guid asignacionId, CancellationToken ct);
+
+    /// <summary>Vehículos con una asignación vigente que se solapa con la franja.</summary>
+    Task<IReadOnlySet<Guid>> ConsultarVehiculosOcupadosAsync(FranjaHoraria franja, CancellationToken ct);
+
+    /// <summary>Asignaciones (no rechazadas, canceladas ni reemplazadas) de cada conductor desde la fecha (balance de carga).</summary>
+    Task<IReadOnlyDictionary<Guid, int>> ContarRecientesAsync(IReadOnlyCollection<Guid> conductorIds, DateTimeOffset desde, CancellationToken ct);
+
+    /// <summary>Asignaciones vigentes del conductor que se solapan con la franja, rastreadas (abandono de turno).</summary>
+    Task<IReadOnlyList<Asignacion>> ConsultarVigentesDelConductorAsync(Guid conductorId, FranjaHoraria franja, CancellationToken ct);
 }

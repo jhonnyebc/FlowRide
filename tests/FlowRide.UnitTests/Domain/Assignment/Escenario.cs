@@ -36,13 +36,16 @@ internal static class Escenario
         DateTimeOffset? inicioTurno = null,
         DateTimeOffset? finTurno = null,
         int asignacionesRecientes = 0,
-        DateTimeOffset? ultimaAsignacion = null)
+        DateTimeOffset? ultimaAsignacion = null,
+        bool aptoCritico = false,
+        bool conductorOcupado = false,
+        bool vehiculoOcupado = false)
     {
         var conductorId = Id(conductor);
         return new Candidato(
             new Conductor(conductorId, $"Conductor {conductor}", $"+57300000{conductor:D4}", RolConductor,
                 HoraServicio.AddYears(-1), $"LIC-{conductor}", "C1", vencimientoLicencia ?? FechaVigente,
-                estado: estadoConductor, fechaUltimaAsignacion: ultimaAsignacion),
+                estado: estadoConductor, fechaUltimaAsignacion: ultimaAsignacion, aptoServicioCritico: aptoCritico),
             new Vehiculo(Id(100 + conductor), $"ABC{conductor:D3}", "Toyota", "Hiace", capacidad, FechaVigente,
                 vencimientoSoat ?? FechaVigente, vehiculoActivo),
             new Turno(
@@ -51,7 +54,9 @@ internal static class Escenario
                 inicioTurno ?? HoraServicio.AddHours(-2),
                 finTurno ?? HoraServicio.AddHours(6),
                 estadoTurno),
-            asignacionesRecientes);
+            asignacionesRecientes,
+            conductorOcupado,
+            vehiculoOcupado);
     }
 
     public static IEnumerable<RuleSetting> Eliminatorias() =>
