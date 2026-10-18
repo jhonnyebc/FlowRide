@@ -1,5 +1,6 @@
 using FlowRide.Application.Asignaciones.Entrada.Puertos;
 using FlowRide.Application.Comun.Salida.Puertos;
+using FlowRide.Application.Viajes.Entrada.Puertos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,8 +18,9 @@ public sealed class WorkerAsignacionOptions
 }
 
 /// <summary>
-/// Adaptador de entrada en segundo plano (RF-10): cada intervalo toma la cola en el orden en que se atiende (urgentes
-/// primero) y asigna cada solicitud en su propio alcance y transacción. Si otra réplica ya la tomó, el conflicto se
+/// Adaptador de entrada en segundo plano (RF-10): cada intervalo primero vence las asignaciones que el conductor no
+/// respondió en el plazo (Fase 6: vuelven a la cola sin ese conductor) y luego toma la cola en el orden en que se atiende
+/// (urgentes primero), cada solicitud en su propio alcance y transacción. Si otra réplica ya la tomó, el conflicto se
 /// registra y la solicitud se reintenta en la siguiente vuelta; un error en una no detiene las demás.
 /// </summary>
 public sealed partial class WorkerColaAsignacion(
@@ -50,6 +52,8 @@ public sealed partial class WorkerColaAsignacion(
     /// <summary>Una vuelta de la cola. Devuelve cuántas solicitudes procesó (asignadas o sin candidatos).</summary>
     public async Task<int> ProcesarAsync(CancellationToken ct)
     {
+        await VencerSinRespuestaAsync(ct);
+
         IReadOnlyList<Guid> pendientes;
         await using (var alcance = alcances.CreateAsyncScope())
             pendientes = await alcance.ServiceProvider.GetRequiredService<IAsignacionesPuertoEntrada>().PendientesAsync(opciones.LoteMaximo, ct);
@@ -76,6 +80,36 @@ public sealed partial class WorkerColaAsignacion(
         return procesadas;
     }
 
+    /// <summary>Vence las asignaciones sin respuesta. Devuelve cuántas venció.</summary>
+    public async Task<int> VencerSinRespuestaAsync(CancellationToken ct)
+    {
+        IReadOnlyList<Guid> sinRespuesta;
+        await using (var alcance = alcances.CreateAsyncScope())
+            sinRespuesta = await alcance.ServiceProvider.GetRequiredService<IViajesPuertoEntrada>().SinRespuestaAsync(opciones.LoteMaximo, ct);
+
+        var vencidas = 0;
+        foreach (var asignacionId in sinRespuesta)
+        {
+            await using var alcance = alcances.CreateAsyncScope();
+            try
+            {
+                if (!await alcance.ServiceProvider.GetRequiredService<IViajesPuertoEntrada>().VencerAsignacionAsync(asignacionId, ct))
+                    continue;
+                AsignacionVencida(logger, asignacionId);
+                vencidas++;
+            }
+            catch (ConflictoConcurrenciaExcepcion)
+            {
+                AsignacionEnConflicto(logger, asignacionId);
+            }
+            catch (Exception error) when (error is not OperationCanceledException)
+            {
+                VencimientoFallido(logger, asignacionId, error);
+            }
+        }
+        return vencidas;
+    }
+
     [LoggerMessage(EventId = 5001, Level = LogLevel.Information, Message = "Cola de asignación: solicitud {SolicitudId} → {Resultado}.")]
     private static partial void SolicitudProcesada(ILogger logger, Guid solicitudId, string resultado);
 
@@ -88,4 +122,15 @@ public sealed partial class WorkerColaAsignacion(
 
     [LoggerMessage(EventId = 5004, Level = LogLevel.Error, Message = "Cola de asignación: la vuelta falló.")]
     private static partial void VueltaFallida(ILogger logger, Exception error);
+
+    [LoggerMessage(EventId = 5005, Level = LogLevel.Information,
+        Message = "Cola de asignación: la asignación {AsignacionId} venció sin respuesta del conductor; la solicitud vuelve a la cola.")]
+    private static partial void AsignacionVencida(ILogger logger, Guid asignacionId);
+
+    [LoggerMessage(EventId = 5006, Level = LogLevel.Information,
+        Message = "Cola de asignación: la asignación {AsignacionId} cambió mientras vencía; se revisará en la siguiente vuelta.")]
+    private static partial void AsignacionEnConflicto(ILogger logger, Guid asignacionId);
+
+    [LoggerMessage(EventId = 5007, Level = LogLevel.Error, Message = "Cola de asignación: no se pudo vencer la asignación {AsignacionId}.")]
+    private static partial void VencimientoFallido(ILogger logger, Guid asignacionId, Exception error);
 }

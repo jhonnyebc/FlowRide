@@ -95,8 +95,8 @@ public class ConductorTests
         var propia = Asignacion();
         var ajena = new Asignacion(Id(41), Id(30), Id(99), Id(50), Franja(4, 5), OrigenAsignacion.Manual, Ahora);
 
-        conductor.AceptarAsignacion(propia);
-        Assert.Equal(EstadoAsignacion.Aceptada, propia.Estado);
+        var viaje = conductor.AceptarAsignacion(propia, Id(70));
+        Assert.Equal((EstadoAsignacion.Aceptada, propia.Id), (propia.Estado, viaje.AsignacionId));
         Assert.Throws<InvalidOperationException>(() => conductor.RechazarAsignacion(ajena, "No"));
 
         var otra = Asignacion();

@@ -105,18 +105,20 @@ public class AsignacionTests
             OrigenAsignacion.Automatica, Ahora));
 
     [Fact]
-    public void CicloAceptarIniciarFinalizar_CreaElViaje()
+    public void CicloAceptarIniciarFinalizar_ElViajeNaceAlAceptar()
     {
         var asignacion = Asignacion();
         Assert.True(asignacion.EstaVigente);
 
-        asignacion.Aceptar();
-        var viaje = asignacion.Iniciar(Id(70), Ahora.AddHours(4));
-        Assert.Equal((EstadoAsignacion.EnCurso, EstadoViaje.EnCurso, asignacion.Id),
+        var viaje = asignacion.Aceptar(Id(70));
+        Assert.Equal((EstadoAsignacion.Aceptada, EstadoViaje.Programado, asignacion.Id),
             (asignacion.Estado, viaje.Estado, viaje.AsignacionId));
 
-        asignacion.Finalizar();
-        Assert.Equal(EstadoAsignacion.Finalizada, asignacion.Estado);
+        asignacion.Iniciar(viaje, Ahora.AddHours(4));
+        Assert.Equal((EstadoAsignacion.EnCurso, EstadoViaje.EnCurso), (asignacion.Estado, viaje.Estado));
+
+        asignacion.Finalizar(viaje, Ahora.AddHours(5));
+        Assert.Equal((EstadoAsignacion.Finalizada, EstadoViaje.Finalizado), (asignacion.Estado, viaje.Estado));
         Assert.False(asignacion.EstaVigente);
     }
 
@@ -128,17 +130,17 @@ public class AsignacionTests
         Assert.Equal((EstadoAsignacion.Rechazada, "Sin combustible"), (rechazada.Estado, rechazada.MotivoCierre));
 
         var cancelada = Asignacion();
-        cancelada.Aceptar();
+        cancelada.Aceptar(Id(70));
         cancelada.Cancelar("Solicitud cancelada");
         Assert.Equal(EstadoAsignacion.Cancelada, cancelada.Estado);
-        Assert.Throws<InvalidOperationException>(() => cancelada.Aceptar());
+        Assert.Throws<InvalidOperationException>(() => cancelada.Aceptar(Id(71)));
     }
 
     [Fact]
     public void Reemplazar_CreaAsignacionManualEncadenada()
     {
         var original = Asignacion();
-        original.Aceptar();
+        original.Aceptar(Id(70));
 
         var nueva = original.Reemplazar(Id(42), Id(21), Id(51), "El conductor abandonó el turno", Ahora.AddMinutes(30));
 
@@ -161,8 +163,7 @@ public class AsignacionTests
     public void NoSePuedeReemplazarNiCancelarUnaAsignacionEnCurso()
     {
         var asignacion = Asignacion();
-        asignacion.Aceptar();
-        asignacion.Iniciar(Id(70), Ahora.AddHours(4));
+        asignacion.Iniciar(asignacion.Aceptar(Id(70)), Ahora.AddHours(4));
 
         Assert.Throws<InvalidOperationException>(() => asignacion.Reemplazar(Id(42), Id(21), Id(51), "x", Ahora));
         Assert.Throws<InvalidOperationException>(() => asignacion.Cancelar("x"));

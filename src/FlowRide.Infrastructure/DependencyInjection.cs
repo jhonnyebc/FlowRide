@@ -32,6 +32,10 @@ using FlowRide.Application.Tenancy.CasosUso;
 using FlowRide.Application.Tenancy.Entrada.Adaptadores;
 using FlowRide.Application.Tenancy.Entrada.Puertos;
 using FlowRide.Application.Tenancy.Salida.Puertos;
+using FlowRide.Application.Viajes.CasosUso;
+using FlowRide.Application.Viajes.Entrada.Adaptadores;
+using FlowRide.Application.Viajes.Entrada.Puertos;
+using FlowRide.Application.Viajes.Salida.Puertos;
 using FlowRide.Domain.Asignaciones;
 using FlowRide.Domain.Asignaciones.GestionAsignaciones;
 using FlowRide.Domain.Asignaciones.Repositorios;
@@ -56,6 +60,9 @@ using FlowRide.Domain.Plataforma.Repositorios;
 using FlowRide.Domain.Solicitudes;
 using FlowRide.Domain.Solicitudes.GestionSolicitudes;
 using FlowRide.Domain.Solicitudes.Repositorios;
+using FlowRide.Domain.Viajes;
+using FlowRide.Domain.Viajes.GestionViajes;
+using FlowRide.Domain.Viajes.Repositorios;
 using FlowRide.Infrastructure.Asignaciones;
 using FlowRide.Infrastructure.Auditoria;
 using FlowRide.Infrastructure.Identidad;
@@ -68,6 +75,7 @@ using FlowRide.Infrastructure.Plataforma;
 using FlowRide.Infrastructure.Seguridad;
 using FlowRide.Infrastructure.Solicitudes;
 using FlowRide.Infrastructure.Tenancy;
+using FlowRide.Infrastructure.Viajes;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -392,6 +400,39 @@ public static class DependencyInjection
         if (worker.Habilitado)
             services.AddHostedService(proveedor => proveedor.GetRequiredService<WorkerColaAsignacion>());
 
+        return services;
+    }
+
+    /// <summary>
+    /// Viajes y calificación (Fase 6): aceptar o rechazar asignaciones, ciclo del viaje, paradas, incidentes, calificación y
+    /// las consultas de historial, monitoreo y trazabilidad. El vencimiento de asignaciones lo dispara el worker de la cola.
+    /// </summary>
+    public static IServiceCollection AddViajes(this IServiceCollection services)
+    {
+        // Adaptadores de salida.
+        services.AddScoped<IViajeRepositorio, ViajeRepositorioAdaptador>();
+        services.AddScoped<ICalificacionRepositorio, CalificacionRepositorioAdaptador>();
+        services.AddScoped<IConsultasViajes, ConsultasViajesEf>();
+
+        // Servicios de dominio, casos de uso y adaptador de entrada.
+        services.TryAddScoped<ParametrosDominio>();
+        services.AddScoped<ViajeDominio>();
+        services.AddScoped<DevolucionPorRechazo>();
+        services.AddScoped<ICasoUsoConRetorno<AceptarAsignacionDominio, Viaje>, AceptarAsignacionCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<RechazarAsignacionDominio, Asignacion>, RechazarAsignacionCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarSinRespuestaDominio, IReadOnlyList<Guid>>, ConsultarSinRespuestaCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<VencerAsignacionDominio, bool>, VencerAsignacionCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<IniciarViajeDominio, Viaje>, IniciarViajeCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<FinalizarViajeDominio, Viaje>, FinalizarViajeCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<RegistrarParadaDominio, Parada>, RegistrarParadaCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<RegistrarLlegadaDominio, Parada>, RegistrarLlegadaCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ReportarIncidenteDominio, Incidente>, ReportarIncidenteCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<CalificarViajeDominio, Calificacion>, CalificarViajeCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<BuscarViajesDominio, PaginaResultado<ViajeLectura>>, BuscarViajesCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarViajeDominio, ViajeDetalleLectura>, ConsultarViajeCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<MonitorearViajesDominio, IReadOnlyList<MonitoreoViajeLectura>>, MonitorearViajesCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<TrazabilidadSolicitudDominio, TrazabilidadLectura>, TrazabilidadSolicitudCasoUso>();
+        services.AddScoped<IViajesPuertoEntrada, ViajesAdaptadorEntrada>();
         return services;
     }
 

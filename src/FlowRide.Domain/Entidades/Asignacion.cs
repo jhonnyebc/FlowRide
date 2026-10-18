@@ -61,10 +61,15 @@ public sealed class Asignacion
 
     public bool EstaVigente => Estado is EstadoAsignacion.Asignada or EstadoAsignacion.Aceptada or EstadoAsignacion.EnCurso;
 
-    public void Aceptar()
+    /// <summary>
+    /// El conductor acepta (RF-34): nace el viaje en estado Programado, para registrar paradas o novedades (un retraso)
+    /// antes de que empiece.
+    /// </summary>
+    public Viaje Aceptar(Guid viajeId)
     {
         Exigir(EstadoAsignacion.Asignada, "aceptar");
         Estado = EstadoAsignacion.Aceptada;
+        return new Viaje(viajeId, Id);
     }
 
     public void Rechazar(string motivo)
@@ -73,19 +78,21 @@ public sealed class Asignacion
         Cerrar(EstadoAsignacion.Rechazada, motivo);
     }
 
-    /// <summary>El conductor inicia el servicio: la asignación pasa a EnCurso y nace el viaje.</summary>
-    public Viaje Iniciar(Guid viajeId, DateTimeOffset ahora)
+    /// <summary>El conductor inicia el servicio: la asignación y su viaje pasan a EnCurso.</summary>
+    public void Iniciar(Viaje viaje, DateTimeOffset ahora)
     {
+        ExigirPropio(viaje);
         Exigir(EstadoAsignacion.Aceptada, "iniciar");
-        var viaje = new Viaje(viajeId, Id);
         viaje.Iniciar(ahora);
         Estado = EstadoAsignacion.EnCurso;
-        return viaje;
     }
 
-    public void Finalizar()
+    /// <summary>El conductor termina el servicio: el viaje queda Finalizado y la asignación, Finalizada.</summary>
+    public void Finalizar(Viaje viaje, DateTimeOffset ahora)
     {
+        ExigirPropio(viaje);
         Exigir(EstadoAsignacion.EnCurso, "finalizar");
+        viaje.Finalizar(ahora);
         Estado = EstadoAsignacion.Finalizada;
     }
 
@@ -111,6 +118,13 @@ public sealed class Asignacion
         Cerrar(EstadoAsignacion.Reemplazada, motivo);
         return new Asignacion(nuevaAsignacionId, SolicitudId, conductorId, vehiculoId, Franja,
             OrigenAsignacion.Manual, ahora, decisionId, asignacionReemplazadaId: Id);
+    }
+
+    private void ExigirPropio(Viaje viaje)
+    {
+        ArgumentNullException.ThrowIfNull(viaje);
+        if (viaje.AsignacionId != Id)
+            throw new InvalidOperationException("El viaje no corresponde a esta asignación.");
     }
 
     private void Exigir(EstadoAsignacion esperado, string accion)

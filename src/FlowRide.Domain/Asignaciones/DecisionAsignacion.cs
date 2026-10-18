@@ -113,7 +113,8 @@ public sealed class DecisionAsignacion
                 asignacionesRecientes = c.AsignacionesRecientes,
                 ultimaAsignacion = c.UltimaAsignacion,
                 conductorOcupado = c.ConductorOcupado,
-                vehiculoOcupado = c.VehiculoOcupado
+                vehiculoOcupado = c.VehiculoOcupado,
+                rechazoLaSolicitud = c.RechazoLaSolicitud
             })
         });
     }

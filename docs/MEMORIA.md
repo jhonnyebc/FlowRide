@@ -2,17 +2,16 @@
 
 > **Léela al empezar cada sesión y actualízala al terminar.** Complementa a `docs/ROADMAP-V1.md` (qué falta por fase)
 > con lo que no está en el código: estado actual, decisiones, problemas del entorno y bitácora.
-> Última actualización: 2026-10-17.
+> Última actualización: 2026-10-18.
 
 ## Estado actual
-- **Rama de trabajo:** `feature/RF-10-asignacion` (Fase 5 completa, todos los gates en verde), **sin commit todavía**,
+- **Rama de trabajo:** `feature/RF-14-viajes` (Fase 6 completa, todos los gates en verde), **sin commit todavía**,
   pendiente del OK del usuario para el commit y el PR hacia `develop`.
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
-  Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6) y Fase 4
-  Solicitudes e itinerarios (PR #7).
-- **Fase actual:** Fase 5 (Asignación de punta a punta) terminada en la rama; la siguiente es la Fase 6 (Viajes y
-  calificación).
-- **Tests:** 361 unitarios (94,4 % líneas / 87,5 % ramas en Domain + Application), 16 de arquitectura, 107 de integración
+  Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6), Fase 4
+  Solicitudes e itinerarios (PR #7) y Fase 5 Asignación de punta a punta (PR #8).
+- **Fase actual:** Fase 6 (Viajes y calificación) terminada en la rama; la siguiente es la Fase 7 (Canal WhatsApp).
+- **Tests:** 400 unitarios (94,7 % líneas / 86,8 % ramas en Domain + Application), 16 de arquitectura, 111 de integración
   (Keycloak, Mailpit y Azurite reales con Testcontainers).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
   Azurite (10000). `tenant-a` y `tenant-b` tienen Silo (migración `ParametrosYCamposCifrados` aplicada), realm, bucket
@@ -119,6 +118,11 @@
 - **`sed` con `xargs` sobre `grep -rl` incluye binarios** (`bin/`, `obj/`): limitar con `--include=*.cs` o hacer
   `dotnet clean` después.
 - **Minimal APIs y `IFormFile`:** exigen antiforgery; con autenticación solo por bearer se desactiva por endpoint.
+- **Fin de línea:** `dotnet format` marca un archivo que mezcla CRLF y LF. Al editar con `sed`/`perl` un archivo CRLF,
+  dejarlo entero en un solo formato (`perl -pi -e "s/?
+/
+/"`).
+- **Docker Desktop cerrado:** las pruebas de integración fallan al conectar; iniciarlo y esperar a que `docker info` responda.
 
 ## Bitácora de sesiones
 | Fecha | Qué se hizo |
@@ -130,6 +134,7 @@
 | 2026-10-17 | Fase 3 completa en `feature/RF-04-recursos-parametros`: empresas cliente, pasajeros, conductores, turnos, documentos (Azurite), vehículos, disponibilidad (RF-07), búsqueda paginada, parámetros versionados con caché ≤ 60 s y cifrado determinista de teléfono y licencia. 293 + 16 + 92 pruebas en verde. |
 | 2026-10-17 | Fase 4 completa en `feature/RF-09-solicitudes-itinerarios`: solicitudes desde el panel con validación, ventana de cancelación, modificación sin asignar, cancelación con motivo (y de su asignación), visibilidad de personales, CQRS ligero e itinerarios recurrentes. 329 + 16 + 99 pruebas en verde. |
 | 2026-10-18 | Fase 5 completa en `feature/RF-10-asignacion`: asignación automática transaccional con Outbox y worker de la cola, brechas del motor cerradas, configuración versionada con rollback, decision log persistente, reasignación manual completa y Spike 2 (0 dobles asignaciones). 361 + 16 + 107 pruebas en verde. |
+| 2026-10-18 | Fase 5 cerrada (PR #8). Fase 6 completa en `feature/RF-14-viajes`: aceptar crea el viaje programado, rechazo y vencimiento devuelven a la cola sin ese conductor, ciclo iniciar/finalizar, paradas, incidentes, calificación con plazo, historial, monitoreo y trazabilidad. 400 + 16 + 111 pruebas en verde. |
 
 ## Sesión 2026-10-16 (continuación): estilo del profesor
 - `Viaje.EtaProgramada` **eliminada** (decisión del usuario) + migración `QuitarEtaProgramada`, ya aplicada a tenant-a/b locales.
@@ -219,14 +224,34 @@
 - Entorno local: `migrar-todos` aplicó `MotorYOutbox` a tenant-a/b; la API arranca con el worker (cola vacía, sin errores).
 - Gates al cierre: build sin advertencias, formato OK, 361 unitarias (94,4 % / 87,5 %), 16 arquitectura, 107 integración;
   Spike 2 en verde 5 veces seguidas.
+- Commit `3e76e89` → PR #8 fusionada en `develop` el 2026-10-18 (merge `68153c7`) con el CI en verde. **Fase 5 cerrada.**
+
+## Sesión 2026-10-18 (continuación): Fase 6 (Viajes y calificación)
+- Rama `feature/RF-14-viajes` (llevó también la documentación que cerraba la Fase 5).
+- Decisiones del usuario (roadmap 2026-10-18): el Operador logístico actúa desde el panel en nombre del conductor y del
+  pasajero hasta la Fase 7; rechazo → cola sin ese conductor; vencimiento por parámetro (15 min); calificación con plazo
+  configurable (7 días). Decisiones propias anotadas: el viaje nace al aceptar; el candidato manual no se descarta por un
+  rechazo previo; monitoreo con horizonte de 2 h.
+- Dominio: `Asignacion.Aceptar(viajeId)` devuelve el viaje; `Iniciar/Finalizar(viaje, ahora)`; `Viaje.RegistrarLlegada`;
+  `Candidato.RechazoLaSolicitud` y `AvailabilityRule` v3; módulo `Viajes` (`ViajeDominio`, `ReglasViaje`,
+  `IViajeRepositorio`, `ICalificacionRepositorio`); parámetros `asignacion.plazo_respuesta_minutos` y `calificacion.plazo_dias`.
+- Aplicación: Aceptar, Rechazar, ConsultarSinRespuesta, Vencer, Iniciar, Finalizar, RegistrarParada, RegistrarLlegada,
+  ReportarIncidente, Calificar; Buscar, Consultar, Monitorear y Trazabilidad (`IConsultasViajes`). Reasignar, abandonar
+  turno y cancelar solicitud ahora cancelan el viaje programado.
+- Infraestructura: `ConsultasViajesEf` (filtra sobre filas con inicializadores y arma el registro al final), worker vence
+  antes de cada vuelta. API: `/api/asignaciones/{id}/aceptar|rechazar`, `/api/viajes`, `/api/viajes/monitoreo`,
+  `/api/viajes/{id}` y sus acciones, `/api/solicitudes/{id}/trazabilidad`. Sin migración.
+- Entorno local: la API arranca como `tenant-a` y el worker corre el vencimiento y la cola sin errores.
+- Gates al cierre: build sin advertencias, formato OK, 400 unitarias (94,7 % / 86,8 %), 16 arquitectura, 111 integración;
+  Spike 2 en verde 5 veces seguidas.
 - **Pendiente:** OK del usuario para commit + PR.
 
 ## Próximos pasos
-1. **Esperar el OK del usuario** sobre la Fase 5; luego commit (`feat(asignacion): …`) y PR de `feature/RF-10-asignacion`
-   hacia `develop`.
-2. Fase 6 (Viajes y calificación): `Viaje`, `Parada`, `Incidente` y `Calificacion` (aceptar/rechazar asignación, iniciar y
-   finalizar viaje, incidentes, calificación RF-54); completar RF-31 con los viajes.
-3. Panel Web: sigue en la Fase 11. Opción conversada el 2026-10-17: adelantar un panel básico después de la Fase 5 si hay una entrega o demostración intermedia (el usuario aún no lo decidió).
+1. **Esperar el OK del usuario** sobre la Fase 6; luego commit (`feat(viajes): …`) y PR de `feature/RF-14-viajes` hacia
+   `develop`.
+2. Fase 7 (Canal WhatsApp): `IWhatsAppGateway`, adaptador sandbox de Meta y simulado, webhook con firma e idempotencia,
+   máquina de estados conversacional que llame a los casos de uso de solicitudes y viajes (PoC 4).
+3. Panel Web: sigue en la Fase 11. El usuario decidió (2026-10-18) desarrollarlo completo más adelante, no adelantar un panel básico.
 4. RF-23: probar "Olvidé mi contraseña" con la pantalla de login cuando exista el Panel Web (Fase 11).
 5. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).
 6. Opcional: SonarCloud (crear el proyecto y el secreto `SONAR_TOKEN`).

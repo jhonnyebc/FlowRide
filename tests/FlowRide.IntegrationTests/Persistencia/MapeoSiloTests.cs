@@ -158,8 +158,8 @@ public class MapeoSiloTests(PostgresFixture postgres) : IAsyncLifetime
         var solicitud = await CrearSolicitudAsync(datos);
         var asignacion = new Asignacion(Guid.NewGuid(), solicitud.Id, datos.Conductor.Id, datos.Vehiculo.Id,
             solicitud.Franja(), OrigenAsignacion.Manual, Ahora);
-        datos.Conductor.AceptarAsignacion(asignacion);
-        var viaje = asignacion.Iniciar(Guid.NewGuid(), solicitud.FechaHoraServicio);
+        var viaje = datos.Conductor.AceptarAsignacion(asignacion, Guid.NewGuid());
+        asignacion.Iniciar(viaje, solicitud.FechaHoraServicio);
         viaje.RegistrarParada(Guid.NewGuid(), "Recogida", 1, solicitud.FechaHoraServicio);
         viaje.RegistrarIncidente(Guid.NewGuid(), TipoIncidente.Retraso, "Trancón", datos.Conductor.Id, solicitud.FechaHoraServicio);
         viaje.Finalizar(solicitud.FechaHoraServicio.AddMinutes(50));

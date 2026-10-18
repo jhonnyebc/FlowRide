@@ -153,7 +153,7 @@ public class AsignacionApiTests(PostgresFixture postgres) : PruebasAsignacionBas
         Assert.Contains(resultado.ConductorId, new Guid?[] { primero.ConductorId, segundo.ConductorId });
         var decision = Assert.Single(decisiones!);
         Assert.Equal((1, "Assigned", 2), (decision.VersionConfiguracion, decision.Resultado, decision.Evaluaciones.Count));
-        Assert.All(decision.Evaluaciones, e => Assert.Contains(e.Resultados, r => r.CodigoRegla == "AvailabilityRule" && r.VersionRegla == 2));
+        Assert.All(decision.Evaluaciones, e => Assert.Contains(e.Resultados, r => r.CodigoRegla == "AvailabilityRule" && r.VersionRegla == 3));
         Assert.Equal(resultado.AsignacionId, Assert.Single(asignaciones!.Elementos).Id);
         Assert.Equal("Asignada", detalle!.Solicitud.Estado);
         Assert.Equal(1L, await EjecutarEnSiloAsync<long>("SELECT count(*) FROM notif.outbox_mensaje WHERE tipo_evento = 'asignacion.creada'"));
