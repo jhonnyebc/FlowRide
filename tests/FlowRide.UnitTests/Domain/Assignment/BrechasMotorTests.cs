@@ -65,7 +65,7 @@ public class BrechasMotorTests
 
         Assert.Equal(evaluadaEn, resultado.DecisionLog.EvaluatedAt);
         var resultados = resultado.DecisionLog.Evaluations.Single().RuleOutcomes;
-        Assert.Equal(2, resultados.Single(r => r.RuleName == AvailabilityRule.RuleName).RuleVersion);
+        Assert.Equal(3, resultados.Single(r => r.RuleName == AvailabilityRule.RuleName).RuleVersion);
         Assert.Equal(2, resultados.Single(r => r.RuleName == CriticalServicePriorityRule.RuleName).RuleVersion);
         Assert.Equal(1, resultados.Single(r => r.RuleName == ServiceCapabilityRule.RuleName).RuleVersion);
         Assert.Equal(HoraServicio.AddDays(-1), new AssignmentContext(Solicitud(), [], Configuracion()).EvaluadaEn);

@@ -252,3 +252,63 @@ Authorization: Bearer {{token}}
 ### RF-21 — Activar una versión (activar una anterior es el rollback; solo Administrador)
 POST {{FlowRide.API_HostAddress}}/api/motor/configuraciones/1/activar
 Authorization: Bearer {{token}}
+
+### RF-34 — El conductor acepta la asignación (en la Fase 6 lo hace el Operador logístico en su nombre): nace el viaje programado
+POST {{FlowRide.API_HostAddress}}/api/asignaciones/00000000-0000-0000-0000-000000000000/aceptar
+Authorization: Bearer {{token}}
+
+### RF-34 — El conductor rechaza: la solicitud vuelve a la cola y el motor no se la vuelve a proponer
+POST {{FlowRide.API_HostAddress}}/api/asignaciones/00000000-0000-0000-0000-000000000000/rechazar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "motivo": "Vehículo en taller" }
+
+### Viaje — Parada intermedia (programado o en curso)
+POST {{FlowRide.API_HostAddress}}/api/viajes/00000000-0000-0000-0000-000000000000/paradas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "direccion": "Portería norte", "orden": 1, "horaEstimada": "2026-10-20T14:20:00Z" }
+
+### Viaje — Novedad: Retraso, FallaMecanica, AbandonoTurno, Accidente u Otro (sale como alerta en la Fase 8)
+POST {{FlowRide.API_HostAddress}}/api/viajes/00000000-0000-0000-0000-000000000000/incidentes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "tipo": "Retraso", "descripcion": "Vía cerrada por derrumbe" }
+
+### Viaje — Iniciar y finalizar (la solicitud pasa a EnCurso y a Completada)
+POST {{FlowRide.API_HostAddress}}/api/viajes/00000000-0000-0000-0000-000000000000/iniciar
+Authorization: Bearer {{token}}
+
+###
+POST {{FlowRide.API_HostAddress}}/api/viajes/00000000-0000-0000-0000-000000000000/finalizar
+Authorization: Bearer {{token}}
+
+### Viaje — Llegada a una parada (con el viaje en curso)
+POST {{FlowRide.API_HostAddress}}/api/viajes/00000000-0000-0000-0000-000000000000/paradas/00000000-0000-0000-0000-000000000000/llegada
+Authorization: Bearer {{token}}
+
+### RF-54 — Calificación del pasajero (1 a 5, una por viaje, dentro del plazo calificacion.plazo_dias)
+POST {{FlowRide.API_HostAddress}}/api/viajes/00000000-0000-0000-0000-000000000000/calificacion
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "puntaje": 5, "comentario": "Muy puntual" }
+
+### RF-31 — Historial de viajes por estado, conductor, pasajero, empresa o fechas
+GET {{FlowRide.API_HostAddress}}/api/viajes?estado=Finalizado
+Authorization: Bearer {{token}}
+
+### RF-37 — Monitoreo: viajes en curso y programados de las próximas 2 horas (retrasados marcados)
+GET {{FlowRide.API_HostAddress}}/api/viajes/monitoreo
+Authorization: Bearer {{token}}
+
+### Viaje — Detalle con paradas, incidentes y calificación
+GET {{FlowRide.API_HostAddress}}/api/viajes/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{token}}
+
+### RF-40 — Trazabilidad del servicio de punta a punta
+GET {{FlowRide.API_HostAddress}}/api/solicitudes/00000000-0000-0000-0000-000000000000/trazabilidad
+Authorization: Bearer {{token}}

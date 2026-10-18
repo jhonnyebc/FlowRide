@@ -56,7 +56,7 @@ public interface IVehiculoRepositorio
     Task<PaginaResultado<Vehiculo>> BuscarAsync(FiltroRecursos filtro, Paginacion paginacion, CancellationToken ct);
 }
 
-/// <summary>Asignaciones vistas desde la operación. La Fase 5 (motor de punta a punta) agrega lo que necesite.</summary>
+/// <summary>Asignaciones vistas desde la operación (Fases 5 y 6).</summary>
 public interface IAsignacionRepositorio
 {
     /// <summary>Conductores con una asignación vigente (asignada, aceptada o en curso) que se solapa con la franja.</summary>
@@ -78,4 +78,10 @@ public interface IAsignacionRepositorio
 
     /// <summary>Asignaciones vigentes del conductor que se solapan con la franja, rastreadas (abandono de turno).</summary>
     Task<IReadOnlyList<Asignacion>> ConsultarVigentesDelConductorAsync(Guid conductorId, FranjaHoraria franja, CancellationToken ct);
+
+    /// <summary>Conductores que rechazaron la solicitud (o la dejaron vencer): el motor no se la vuelve a proponer.</summary>
+    Task<IReadOnlySet<Guid>> ConsultarConductoresQueRechazaronAsync(Guid solicitudId, CancellationToken ct);
+
+    /// <summary>Asignaciones que siguen esperando respuesta del conductor y se crearon antes de la fecha, las más viejas primero.</summary>
+    Task<IReadOnlyList<Guid>> ConsultarSinRespuestaAsync(DateTimeOffset asignadasAntesDe, int maximo, CancellationToken ct);
 }

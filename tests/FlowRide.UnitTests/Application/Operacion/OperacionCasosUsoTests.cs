@@ -29,6 +29,7 @@ public abstract class CasosUsoOperacionBase
     internal ConductoresEnMemoria Conductores { get; } = new();
     internal VehiculosEnMemoria Vehiculos { get; } = new();
     internal AsignacionesEnMemoria Asignaciones { get; } = new();
+    internal ViajesEnMemoria Viajes { get; } = new();
     internal AlmacenEnMemoria Almacen { get; } = new();
     internal AuditoriaEnMemoria Auditoria { get; } = new();
     internal UnidadTrabajoEnMemoria UnidadTrabajo { get; }

@@ -16,6 +16,8 @@ using FlowRide.Domain.Solicitudes.GestionSolicitudes;
 using FlowRide.Domain.Solicitudes.Repositorios;
 using FlowRide.Domain.Transversal;
 using FlowRide.Domain.ValoresObjeto;
+using FlowRide.Domain.Viajes;
+using FlowRide.Domain.Viajes.Repositorios;
 
 namespace FlowRide.Application.Solicitudes.CasosUso;
 
@@ -116,6 +118,7 @@ public sealed class CancelarSolicitudCasoUso(
     SolicitudDominio solicitudDominio,
     ISolicitudRepositorio solicitudes,
     IAsignacionRepositorio asignaciones,
+    IViajeRepositorio viajes,
     IEventoAuditoriaRepositorio auditoria,
     IUnidadTrabajo unidadTrabajo,
     TimeProvider reloj) : ICasoUsoConRetorno<CancelarSolicitudDominio, SolicitudViaje>
@@ -138,6 +141,7 @@ public sealed class CancelarSolicitudCasoUso(
             && await asignaciones.ConsultarVigentePorSolicitudAsync(solicitud.Id, ct) is { } asignacion)
         {
             asignacion.Cancelar($"Solicitud cancelada: {datos.Motivo.Trim()}");
+            await viajes.CancelarProgramadoDeAsync(asignacion.Id, ct);
         }
 
         await solicitudes.ModificarAsync(solicitud.Id, solicitud, ct);

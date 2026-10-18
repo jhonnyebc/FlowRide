@@ -231,7 +231,7 @@ public class AsignacionCasosUsoTests : CasosUsoOperacionBase
         var solicitud = Solicitud();
         var inicial = await Asignar().EjecutarAsync(new AsignarSolicitudDominio(solicitud.Id), CancellationToken.None);
         var (otro, suVehiculo) = ConductorConVehiculo("2002");
-        var casoUso = new ReasignarCasoUso(Asignaciones, _solicitudes, Validador, Auditoria, _bandeja, UnidadTrabajo, Reloj);
+        var casoUso = new ReasignarCasoUso(Asignaciones, Viajes, _solicitudes, Validador, Auditoria, _bandeja, UnidadTrabajo, Reloj);
 
         var nueva = await casoUso.EjecutarAsync(new ReasignarDominio(inicial.AsignacionId!.Value, otro.Id, suVehiculo.Id, "Conductor enfermo", Actor),
             CancellationToken.None);
@@ -271,7 +271,7 @@ public class AsignacionCasosUsoTests : CasosUsoOperacionBase
         var (conductor, _) = ConductorConVehiculo();
         var solicitud = Solicitud();
         await Asignar().EjecutarAsync(new AsignarSolicitudDominio(solicitud.Id), CancellationToken.None);
-        var casoUso = new AbandonarTurnoCasoUso(ConductorDominio, Conductores, Asignaciones, _solicitudes, Auditoria, _bandeja, UnidadTrabajo, Reloj);
+        var casoUso = new AbandonarTurnoCasoUso(ConductorDominio, Conductores, Asignaciones, Viajes, _solicitudes, Auditoria, _bandeja, UnidadTrabajo, Reloj);
 
         var devueltas = await casoUso.EjecutarAsync(new AbandonarTurnoDominio(conductor.Id, conductor.Turnos[0].Id, "Emergencia familiar", Actor),
             CancellationToken.None);

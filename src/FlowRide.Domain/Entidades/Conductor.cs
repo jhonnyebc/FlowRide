@@ -94,10 +94,10 @@ public sealed class Conductor : Usuario
         return documento;
     }
 
-    public void AceptarAsignacion(Asignacion asignacion)
+    public Viaje AceptarAsignacion(Asignacion asignacion, Guid viajeId)
     {
         ValidarPropia(asignacion);
-        asignacion.Aceptar();
+        return asignacion.Aceptar(viajeId);
     }
 
     public void RechazarAsignacion(Asignacion asignacion, string motivo)

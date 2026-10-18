@@ -17,4 +17,9 @@ public static class EventosSalida
     public const string AsignacionCancelada = "asignacion.cancelada";
     public const string SolicitudSinCandidatos = "solicitud.sin_candidatos";
     public const string TurnoAbandonado = "turno.abandonado";
+    public const string AsignacionAceptada = "asignacion.aceptada";
+    public const string AsignacionRechazada = "asignacion.rechazada";
+    public const string ViajeIniciado = "viaje.iniciado";
+    public const string ViajeFinalizado = "viaje.finalizado";
+    public const string IncidenteReportado = "incidente.reportado";
 }
