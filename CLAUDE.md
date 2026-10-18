@@ -72,6 +72,13 @@ Las pruebas de `EstiloHexagonalTests` hacen cumplir los puntos 1, 2, 3 y 5.
 - Configuración del motor versionada (RF-21): `ConfiguracionAsignacion` (Borrador → Activa → Archivada; v1 sembrada por migración), rollback = activar una versión anterior. Parámetros por regla en `regla_configurada.parametros` (p. ej. `ventanaDias` del balance de carga).
 - RF-12 (solo Operador logístico): reasignar, asignar a mano o devolver a la cola, con motivo y auditoría; el candidato manual pasa por el mismo motor (decision log manual). Abandonar un turno devuelve sus solicitudes a la cola.
 
+## Viajes y calificación (Fase 6)
+- Módulo `Viajes`: el viaje nace al **aceptar** la asignación (`Asignacion.Aceptar(viajeId)` → `Viaje` Programado); `Iniciar`/`Finalizar` mueven viaje, asignación y solicitud juntos. Paradas e incidentes viven en el agregado `Viaje`; la calificación (RF-54) es una por viaje y pasajero, dentro de `calificacion.plazo_dias`.
+- Mientras no exista el canal WhatsApp (Fase 7), el Operador logístico ejecuta en nombre del conductor o del pasajero: aceptar/rechazar, iniciar/finalizar, paradas, incidentes y calificación. Los casos de uso ya están listos para que WhatsApp los llame.
+- Rechazo: la asignación queda Rechazada, la solicitud vuelve a la cola y `AvailabilityRule` v3 descarta a quien la rechazó (el candidato manual no). Sin respuesta en `asignacion.plazo_respuesta_minutos` = rechazo del sistema (`asignacion.vencer`); lo dispara `WorkerColaAsignacion` antes de cada vuelta de la cola.
+- Cancelar la solicitud, reasignar o abandonar el turno cancela también el viaje programado (`CancelarProgramadoDeAsync`).
+- Lectura (`IConsultasViajes`): historial (RF-31), monitoreo (RF-37, en curso + programados de las próximas 2 h, retrasados marcados, sin GPS) y trazabilidad (RF-40: historial de la solicitud + decision log + asignaciones + auditoría + paradas, incidentes y calificación, sin direcciones). Misma visibilidad de personales que las solicitudes.
+
 ## RF-10
 El sistema asigna automáticamente un conductor y un vehículo a cada solicitud pendiente, aplicando las reglas configurables del tenant.
 

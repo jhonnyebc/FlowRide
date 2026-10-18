@@ -10,7 +10,8 @@ namespace FlowRide.Domain.Asignaciones;
 public sealed record AgendaOperacion(
     IReadOnlySet<Guid> ConductoresOcupados,
     IReadOnlySet<Guid> VehiculosOcupados,
-    IReadOnlyDictionary<Guid, int> AsignacionesRecientes);
+    IReadOnlyDictionary<Guid, int> AsignacionesRecientes,
+    IReadOnlySet<Guid>? ConductoresQueRechazaron = null);
 
 /// <summary>Reglas de la asignación que no son del motor: cómo se arman los candidatos y cómo se valida uno manual.</summary>
 public static class AsignacionDominio
@@ -50,7 +51,7 @@ public static class AsignacionDominio
         ArgumentNullException.ThrowIfNull(conductor);
         var turno = TurnoQueCubre(conductor, solicitud.Franja())
                     ?? throw new FlowRideExcepcion("El conductor no tiene un turno vigente que cubra el horario de la solicitud.");
-        return Candidato(conductor, vehiculo, turno, agenda);
+        return Candidato(conductor, vehiculo, turno, agenda, esManual: true);
     }
 
     /// <summary>Un candidato manual debe pasar las reglas eliminatorias del motor; si no, se explica por qué.</summary>
@@ -68,7 +69,8 @@ public static class AsignacionDominio
         conductor.Turnos.Where(turno => turno.Cubre(franja)).OrderBy(turno => turno.Inicio).FirstOrDefault()
         ?? conductor.Turnos.Where(turno => turno.Cubre(franja.Inicio)).OrderBy(turno => turno.Inicio).FirstOrDefault();
 
-    private static Candidato Candidato(Conductor conductor, Vehiculo vehiculo, Turno turno, AgendaOperacion agenda) =>
+    private static Candidato Candidato(Conductor conductor, Vehiculo vehiculo, Turno turno, AgendaOperacion agenda, bool esManual = false) =>
         new(conductor, vehiculo, turno, agenda.AsignacionesRecientes.GetValueOrDefault(conductor.Id),
-            agenda.ConductoresOcupados.Contains(conductor.Id), agenda.VehiculosOcupados.Contains(vehiculo.Id));
+            agenda.ConductoresOcupados.Contains(conductor.Id), agenda.VehiculosOcupados.Contains(vehiculo.Id),
+            rechazoLaSolicitud: !esManual && agenda.ConductoresQueRechazaron?.Contains(conductor.Id) == true);
 }

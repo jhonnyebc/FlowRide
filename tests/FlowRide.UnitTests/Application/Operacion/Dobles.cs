@@ -4,10 +4,12 @@ using FlowRide.Application.Parametros.Salida.Puertos;
 using FlowRide.Application.Seguridad.Salida.Puertos;
 using FlowRide.Domain.Comun.Consultas;
 using FlowRide.Domain.Entidades;
+using FlowRide.Domain.Enumeraciones;
 using FlowRide.Domain.Operacion.Repositorios;
 using FlowRide.Domain.Parametros;
 using FlowRide.Domain.Parametros.Repositorios;
 using FlowRide.Domain.ValoresObjeto;
+using FlowRide.Domain.Viajes.Repositorios;
 
 namespace FlowRide.UnitTests.Application.Operacion;
 
@@ -96,7 +98,8 @@ internal sealed class AsignacionesEnMemoria : IAsignacionRepositorio
     public Dictionary<Guid, Asignacion> VigentesPorSolicitud { get; } = [];
 
     public Task<Asignacion?> ConsultarVigentePorSolicitudAsync(Guid solicitudId, CancellationToken ct) =>
-        Task.FromResult(VigentesPorSolicitud.GetValueOrDefault(solicitudId));
+        Task.FromResult(VigentesPorSolicitud.GetValueOrDefault(solicitudId)
+                        ?? Todas.Values.FirstOrDefault(a => a.SolicitudId == solicitudId && a.EstaVigente));
 
     public Dictionary<Guid, Asignacion> Todas { get; } = [];
     public HashSet<Guid> VehiculosOcupados { get; } = [];
@@ -122,6 +125,14 @@ internal sealed class AsignacionesEnMemoria : IAsignacionRepositorio
 
     public Task<IReadOnlySet<Guid>> ConsultarConductoresOcupadosAsync(FranjaHoraria franja, CancellationToken ct) =>
         Task.FromResult<IReadOnlySet<Guid>>(Ocupados);
+
+    public Task<IReadOnlySet<Guid>> ConsultarConductoresQueRechazaronAsync(Guid solicitudId, CancellationToken ct) =>
+        Task.FromResult<IReadOnlySet<Guid>>(Todas.Values.Where(a => a.SolicitudId == solicitudId && a.Estado == EstadoAsignacion.Rechazada)
+            .Select(a => a.ConductorId).ToHashSet());
+
+    public Task<IReadOnlyList<Guid>> ConsultarSinRespuestaAsync(DateTimeOffset asignadasAntesDe, int maximo, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<Guid>>(Todas.Values.Where(a => a.Estado == EstadoAsignacion.Asignada && a.AsignadaEn <= asignadasAntesDe)
+            .OrderBy(a => a.AsignadaEn).Select(a => a.Id).Take(maximo).ToList());
 }
 
 internal sealed class AlmacenEnMemoria : IAlmacenObjetos
@@ -173,4 +184,34 @@ internal sealed class ParametrosEnMemoria : IParametroRepositorio, ICacheParamet
 internal sealed class RecifradorEnMemoria(int reescritos) : IRecifradorCampos
 {
     public Task<int> RecifrarAsync(CancellationToken ct) => Task.FromResult(reescritos);
+}
+
+internal sealed class ViajesEnMemoria : IViajeRepositorio
+{
+    public Dictionary<Guid, Viaje> Todos { get; } = [];
+
+    public Task CrearAsync(Viaje entidad, CancellationToken ct)
+    {
+        Todos.Add(entidad.Id, entidad);
+        return Task.CompletedTask;
+    }
+
+    public Task<Viaje?> ConsultarPorIdAsync(Guid viajeId, CancellationToken ct) => Task.FromResult(Todos.GetValueOrDefault(viajeId));
+
+    public Task<Viaje?> ConsultarPorAsignacionAsync(Guid asignacionId, CancellationToken ct) =>
+        Task.FromResult(Todos.Values.SingleOrDefault(v => v.AsignacionId == asignacionId));
+}
+
+internal sealed class CalificacionesEnMemoria : ICalificacionRepositorio
+{
+    public List<Calificacion> Todas { get; } = [];
+
+    public Task CrearAsync(Calificacion entidad, CancellationToken ct)
+    {
+        Todas.Add(entidad);
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> ExisteAsync(Guid viajeId, Guid pasajeroId, CancellationToken ct) =>
+        Task.FromResult(Todas.Any(c => c.ViajeId == viajeId && c.PasajeroId == pasajeroId));
 }

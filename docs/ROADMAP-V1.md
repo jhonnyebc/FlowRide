@@ -20,8 +20,8 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 2 | Identidad, usuarios y auditoría | Identidad, Auditoria | 0003, 0011 | ✅ PR #5 fusionada |
 | 3 | Recursos operativos y parámetros | Operacion, Parametros | 0006, 0013, 0014, 0016 | ✅ PR #6 fusionada |
 | 4 | Solicitudes e itinerarios | Solicitudes | 0001, 0004, 0007 | ✅ PR #7 fusionada |
-| 5 | Asignación de punta a punta | Asignacion | 0007, 0009, 0016 | ✅ rama `feature/RF-10-asignacion` (pendiente de PR) |
-| 6 | Viajes y calificación | Viajes, Calificacion | 0007, 0011 | ⬜ |
+| 5 | Asignación de punta a punta | Asignacion | 0007, 0009, 0016 | ✅ PR #8 fusionada |
+| 6 | Viajes y calificación | Viajes, Calificacion | 0007, 0011 | ✅ rama `feature/RF-14-viajes` (pendiente de PR) |
 | 7 | Canal WhatsApp | Mensajeria | 0003, 0008, 0012 | ⬜ |
 | 8 | Notificaciones y alertas | Notificaciones | 0007, 0015, 0016 | ⬜ |
 | 9 | Reportes y vista operacional | Reportes | 0006, 0013 | ⬜ |
@@ -100,7 +100,14 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 - RF cubiertos: RF-10, RF-11, RF-12, RF-13, RF-21, RF-38 (asignaciones).
 
 ### Fase 6 — Viajes y calificación
-- [ ] `Viaje`, `Parada`, `Incidente` y `Calificacion`; trazabilidad por viaje.
+- [x] Aceptar la asignación crea el viaje Programado; iniciar y finalizar mueven viaje, asignación y solicitud (EnCurso → Completada). Paradas (con llegada) e incidentes en el agregado `Viaje`; los incidentes salen a la Outbox para las alertas de la Fase 8.
+- [x] Rechazo: la solicitud vuelve a la cola y el motor no se la propone otra vez a ese conductor (`AvailabilityRule` v3). Sin respuesta dentro de `asignacion.plazo_respuesta_minutos` (15) = rechazo del sistema, revisado por el worker de la cola.
+- [x] Cancelar la solicitud, reasignar o abandonar el turno cancela también el viaje programado.
+- [x] Calificación (RF-54): una por viaje y pasajero, de 1 a 5, dentro de `calificacion.plazo_dias` (7).
+- [x] Consultas: historial de viajes (RF-31), monitoreo de viajes en curso y próximos con retrasados marcados (RF-37) y trazabilidad del servicio de punta a punta (RF-40).
+- [x] Hasta la Fase 7, las acciones del conductor y del pasajero las ejecuta el Operador logístico desde la API del panel, con auditoría.
+- Pruebas: 400 unitarias (94,7 % líneas / 86,8 % ramas), 16 de arquitectura, 111 de integración; Spike 2 en verde 5 veces seguidas.
+- RF cubiertos: RF-31 (completo), RF-33, RF-34, RF-37, RF-39, RF-40, RF-54. Sin migración: las tablas `viaje`, `parada`, `incidente` y `calificacion` ya existían.
 
 ### Fase 7 — Canal WhatsApp
 - [ ] `IWhatsAppGateway`, `WhatsAppSandboxAdapter` (número de prueba de Meta) y adapter simulado.
@@ -159,16 +166,16 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-28 | Activación e inactivación de conductores | 3 | ✅ |
 | RF-29 | Validación de datos mínimos de solicitud | 4 | ✅ |
 | RF-30 | Consulta del estado de solicitudes | 4 | ✅ |
-| RF-31 | Historial de solicitudes y viajes | 4 | 🟡 solicitudes por pasajero, empresa, estado y fechas; viajes en la Fase 6 |
+| RF-31 | Historial de solicitudes y viajes | 4-6 | ✅ solicitudes (Fase 4) y viajes (Fase 6) |
 | RF-32 | Modificación o cancelación de solicitudes | 4 | ✅ |
-| RF-33 | Visualización de asignaciones generadas | 5 | ⬜ |
-| RF-34 | Actualización del estado de asignación | 5 | ⬜ |
+| RF-33 | Visualización de asignaciones generadas | 5 | ✅ |
+| RF-34 | Actualización del estado de asignación | 5-6 | ✅ aceptar, rechazar y vencimiento |
 | RF-35 | Recordatorios automáticos | 8 | ⬜ |
 | RF-36 | Vista centralizada de solicitudes y viajes | 9 | ⬜ |
-| RF-37 | Monitoreo de servicios en curso | 6 | ⬜ |
+| RF-37 | Monitoreo de servicios en curso | 6 | ✅ sin GPS (ADR-0005 fuera de alcance) |
 | RF-38 | Consulta de usuarios, conductores y asignaciones | 3-5 | ✅ |
-| RF-39 | Intervención manual en la operación | 5 | ⬜ |
-| RF-40 | Trazabilidad de cada viaje | 6 | ⬜ |
+| RF-39 | Intervención manual en la operación | 5 | ✅ con RF-12 |
+| RF-40 | Trazabilidad de cada viaje | 6 | ✅ |
 | RF-41 | Búsqueda y filtrado | 3 | ✅ |
 | RF-42 | Indicadores básicos | 9 | ⬜ |
 | RF-43 | Notificación de cambios de estado | 8 | ⬜ |
@@ -182,7 +189,7 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-51 | Registro de errores y excepciones | 0 | 🟡 ProblemDetails + log con traceId |
 | RF-52 | Auditoría de acciones administrativas | 2 | ⬜ |
 | RF-53 | Monitoreo técnico de disponibilidad | 0 | 🟡 health checks + métricas OTel |
-| RF-54 | Calificación del servicio | 6 | ⬜ |
+| RF-54 | Calificación del servicio | 6 | ✅ |
 | RF-55 | Ingesta de telemetría GPS | — | ⛔ |
 | RF-56 | Detección de desviación de ETA | — | ⛔ |
 
@@ -207,3 +214,5 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 2026-10-17 | La hora de los itinerarios es local del operador: configuración `FlowRide:ZonaHoraria` del stack, por defecto `America/Bogota` (V1 opera en Colombia, es-CO). |
 | 2026-10-18 | Fase 5 (decisiones del usuario): worker de la cola cada 15 s más "asignar ya"; candidatos con el vehículo habitual o, si no tiene, cada vehículo activo libre; "compatible con servicio crítico" es una marca del conductor; RF-12 completa (reasignar, asignar a mano, devolver a la cola y abandono de turno). |
 | 2026-10-18 | La configuración del motor vive en las tablas `motor.*` del modelo ER (no en `ops.parametro`), con la v1 sembrada por migración; la ventana del balance de carga (7 días) es un parámetro de la regla. Las exclusiones de franjas pasan a diferibles para poder reemplazar una asignación en una transacción. |
+| 2026-10-18 | Fase 6 (decisiones del usuario): hasta el canal WhatsApp, el Operador logístico ejecuta desde el panel las acciones del conductor y del pasajero; un rechazo devuelve la solicitud a la cola sin volver a proponer a ese conductor; una asignación sin respuesta vence (parámetro, 15 min) y cuenta como rechazo; la calificación tiene plazo configurable (7 días). |
+| 2026-10-18 | El viaje nace al aceptar la asignación (estado Programado) para poder registrar paradas y novedades antes de empezar; el candidato manual del Operador logístico no se descarta por un rechazo previo; el monitoreo muestra los programados de las próximas 2 horas. |

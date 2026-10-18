@@ -15,6 +15,8 @@ using FlowRide.Domain.Operacion;
 using FlowRide.Domain.Operacion.Repositorios;
 using FlowRide.Domain.Solicitudes.Repositorios;
 using FlowRide.Domain.Transversal;
+using FlowRide.Domain.Viajes;
+using FlowRide.Domain.Viajes.Repositorios;
 
 namespace FlowRide.Application.Asignaciones.CasosUso;
 
@@ -51,7 +53,8 @@ public sealed class PreparadorDecision(IConductorRepositorio conductores, IVehic
         }
 
         var recientes = await asignaciones.ContarRecientesAsync(conductorIds, ahora.AddDays(-ventanaDias), ct);
-        return new AgendaOperacion(conductoresOcupados, vehiculosOcupados, recientes);
+        var rechazaron = await asignaciones.ConsultarConductoresQueRechazaronAsync(solicitud.Id, ct);
+        return new AgendaOperacion(conductoresOcupados, vehiculosOcupados, recientes, rechazaron);
     }
 
     public Task<IReadOnlyList<Conductor>> ConductoresConTurnoAsync(SolicitudViaje solicitud, CancellationToken ct) =>
@@ -206,6 +209,7 @@ public sealed class ValidadorCandidatoManual(
 /// </summary>
 public sealed class ReasignarCasoUso(
     IAsignacionRepositorio asignaciones,
+    IViajeRepositorio viajes,
     ISolicitudRepositorio solicitudes,
     ValidadorCandidatoManual validador,
     IEventoAuditoriaRepositorio auditoria,
@@ -230,6 +234,7 @@ public sealed class ReasignarCasoUso(
         var (conductor, decision) = await validador.ValidarAsync(solicitud, datos.ConductorId, datos.VehiculoId, actual.Id, ahora, ct);
 
         var nueva = actual.Reemplazar(Guid.CreateVersion7(ahora), datos.ConductorId, datos.VehiculoId, datos.Motivo, ahora, decision.Id);
+        await viajes.CancelarProgramadoDeAsync(actual.Id, ct);
         await asignaciones.CrearAsync(nueva, ct);
         conductor.RegistrarAsignacion(ahora);
         await auditoria.CrearAsync(new EventoAuditoria(datos.ActorId,
@@ -317,12 +322,13 @@ public sealed class DevolverAColaCasoUso(
 
 /// <summary>
 /// Un conductor abandona su turno (contingencia del caso ancla, RF-12): el turno queda Abandonado y sus asignaciones aún
-/// no iniciadas se cancelan y sus solicitudes vuelven a la cola para que el motor las redistribuya.
+/// no iniciadas se cancelan (con su viaje programado, si ya la habían aceptado) y sus solicitudes vuelven a la cola para que el motor las redistribuya.
 /// </summary>
 public sealed class AbandonarTurnoCasoUso(
     ConductorDominio conductorDominio,
     IConductorRepositorio conductores,
     IAsignacionRepositorio asignaciones,
+    IViajeRepositorio viajes,
     ISolicitudRepositorio solicitudes,
     IEventoAuditoriaRepositorio auditoria,
     IBandejaSalida bandeja,
@@ -353,6 +359,7 @@ public sealed class AbandonarTurnoCasoUso(
                 continue; // Un viaje en curso no se interrumpe.
 
             asignacion.Cancelar($"Turno abandonado: {datos.Motivo.Trim()}");
+            await viajes.CancelarProgramadoDeAsync(asignacion.Id, ct);
             if (await solicitudes.ConsultarPorIdAsync(asignacion.SolicitudId, ct) is { Estado: EstadoSolicitud.Asignada } solicitud)
             {
                 solicitud.VolverAPendiente($"Turno del conductor abandonado: {datos.Motivo.Trim()}", datos.ActorId, ahora);
