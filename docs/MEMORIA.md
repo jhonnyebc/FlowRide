@@ -5,13 +5,13 @@
 > Última actualización: 2026-10-17.
 
 ## Estado actual
-- **Rama de trabajo:** `feature/RF-04-recursos-parametros` (Fase 3 completa, todos los gates en verde), **sin commit
+- **Rama de trabajo:** `feature/RF-09-solicitudes-itinerarios` (Fase 4 completa, todos los gates en verde), **sin commit
   todavía**, pendiente del OK del usuario para el commit y el PR hacia `develop`.
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
-  Fase 1 Tenancy/Silo (PR #4) y Fase 2 Identidad y auditoría (PR #5).
-- **Fase actual:** Fase 3 (Recursos operativos y parámetros) terminada en la rama; la siguiente es la Fase 4
-  (Solicitudes e itinerarios).
-- **Tests:** 293 unitarios (95,3 % líneas / 87,7 % ramas en Domain + Application), 16 de arquitectura, 92 de integración
+  Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5) y Fase 3 Recursos y parámetros (PR #6).
+- **Fase actual:** Fase 4 (Solicitudes e itinerarios) terminada en la rama; la siguiente es la Fase 5 (Asignación de
+  punta a punta).
+- **Tests:** 329 unitarios (95,6 % líneas / 87,5 % ramas en Domain + Application), 16 de arquitectura, 99 de integración
   (Keycloak, Mailpit y Azurite reales con Testcontainers).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
   Azurite (10000). `tenant-a` y `tenant-b` tienen Silo (migración `ParametrosYCamposCifrados` aplicada), realm, bucket
@@ -127,6 +127,7 @@
 | 2026-10-16 | Fase 1 completa en `feature/RF-03-tenancy-silo`: catálogo de plataforma, `FlowRideDbContext` con las 17 entidades y migración inicial, caso de uso `AprovisionarOperador` + `MigrarSilos`, CLI de aprovisionamiento, almacén local de secretos por operador, Spike 3 superado. 30 pruebas unitarias, 34 de integración y 1 regla de arquitectura nuevas. Probado de punta a punta en el entorno local del usuario. |
 | 2026-10-17 | Fase 2 completa en `feature/RF-02-identidad-auditoria`: Keycloak con un realm por operador desde una plantilla versionada, primer administrador desde la CLI con correo de contraseña (Mailpit), autenticación OIDC + `tenant_id` + usuario interno por petición, RBAC, revocación inmediata y auditoría con cadena de hashes. 235 + 16 + 78 pruebas en verde. |
 | 2026-10-17 | Fase 3 completa en `feature/RF-04-recursos-parametros`: empresas cliente, pasajeros, conductores, turnos, documentos (Azurite), vehículos, disponibilidad (RF-07), búsqueda paginada, parámetros versionados con caché ≤ 60 s y cifrado determinista de teléfono y licencia. 293 + 16 + 92 pruebas en verde. |
+| 2026-10-17 | Fase 4 completa en `feature/RF-09-solicitudes-itinerarios`: solicitudes desde el panel con validación, ventana de cancelación, modificación sin asignar, cancelación con motivo (y de su asignación), visibilidad de personales, CQRS ligero e itinerarios recurrentes. 329 + 16 + 99 pruebas en verde. |
 
 ## Sesión 2026-10-16 (continuación): estilo del profesor
 - `Viaje.EtaProgramada` **eliminada** (decisión del usuario) + migración `QuitarEtaProgramada`, ya aplicada a tenant-a/b locales.
@@ -176,13 +177,30 @@
   `ParametrosYCamposCifrados`. Azurite en docker-compose; la CLI lee `ConnectionStrings:ServidorObjetos` de su
   appsettings (`UseDevelopmentStorage=true`, no es secreto).
 - Gates al cierre: build sin advertencias, formato OK, 293 unitarias (95,3 % / 87,7 %), 16 arquitectura, 92 integración.
+- Commit `676e28c` → PR #6 fusionada en `develop` el 2026-10-17 con el CI en verde. **Fase 3 cerrada.**
+
+## Sesión 2026-10-17 (continuación): Fase 4 (Solicitudes e itinerarios)
+- Rama `feature/RF-09-solicitudes-itinerarios` (llevó también los cambios de documentación que cerraban la Fase 3).
+- Decisiones del usuario (roadmap 2026-10-17): ventana para el pasajero y quien registra por él, el Operador logístico
+  cancela fuera de ella con motivo; modificar solo sin asignar; sin solicitudes activas solapadas; itinerarios por rango
+  de fechas y días. Decisión propia anotada: `FlowRide:ZonaHoraria` (por defecto America/Bogota).
+- Dominio: `SolicitudViaje.Modificar`/`EsModificable`/`EstaActiva` y `registradaPorId`; `Domain/Solicitudes`
+  (`SolicitudDominio`, `ItinerarioDominio`, `VisibilidadSolicitudes`, repositorios); `ParametrosDominio` (lectura tipada
+  de parámetros); `ZonaHorariaOperador`; `IAsignacionRepositorio.ConsultarVigentePorSolicitudAsync`.
+- Aplicación: casos de uso Registrar/Modificar/Cancelar/Consultar/Buscar solicitudes y Registrar/Buscar itinerarios;
+  lado de lectura `IConsultasSolicitudes` (CQRS ligero). API: `/api/solicitudes` y `/api/itinerarios` (Panel Web);
+  `ManejadorExcepciones` devuelve 409 ante `DbUpdateConcurrencyException`. Sin migración (solo setters privados).
+- Gates al cierre: build sin advertencias, formato OK, 329 unitarias (95,6 % / 87,5 %), 16 arquitectura, 99 integración.
+  Docker Desktop estaba cerrado al empezar: se inició y Testcontainers tardó unos segundos más en verlo.
 - **Pendiente:** OK del usuario para commit + PR.
 
 ## Próximos pasos
-1. **Esperar el OK del usuario** sobre la Fase 3; luego commit (`feat(operacion): …`) y PR de
-   `feature/RF-04-recursos-parametros` hacia `develop` (el CI descargará también la imagen de Azurite).
-2. Fase 4 (Solicitudes e itinerarios): RF-08, RF-09, RF-29 a RF-32 (`SolicitudViaje` con historial, ventana de
-   cancelación desde `CatalogoParametros`, visibilidad de solicitudes personales).
-3. RF-23: probar "Olvidé mi contraseña" con la pantalla de login cuando exista el Panel Web (Fase 11).
-4. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).
-5. Opcional: SonarCloud (crear el proyecto y el secreto `SONAR_TOKEN`).
+1. **Esperar el OK del usuario** sobre la Fase 4; luego commit (`feat(solicitudes): …`) y PR de
+   `feature/RF-09-solicitudes-itinerarios` hacia `develop`.
+2. Fase 5 (Asignación de punta a punta): caso de uso que toma la cola de Pendientes, ejecuta el motor, crea la
+   asignación con concurrencia optimista y Outbox (ADR-0007), decision log persistente y configuración del motor
+   versionada (RF-10 a RF-13, RF-21). Spike 2: 0 dobles asignaciones.
+3. Panel Web: sigue en la Fase 11. Opción conversada el 2026-10-17: adelantar un panel básico después de la Fase 5 si hay una entrega o demostración intermedia (el usuario aún no lo decidió).
+4. RF-23: probar "Olvidé mi contraseña" con la pantalla de login cuando exista el Panel Web (Fase 11).
+5. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).
+6. Opcional: SonarCloud (crear el proyecto y el secreto `SONAR_TOKEN`).

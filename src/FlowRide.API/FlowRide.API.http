@@ -143,3 +143,68 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "valor": 45 }
+
+# ---------------------------------------------------------------------------------------------------------------
+# Fase 4 — Solicitudes e itinerarios (RF-08, RF-09, RF-29 a RF-32). Administrador u Operador logístico.
+
+### RF-08 — Itinerario recurrente: un itinerario por fecha del rango que caiga en esos días
+POST {{FlowRide.API_HostAddress}}/api/itinerarios
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "empresaClienteId": "00000000-0000-0000-0000-000000000000",
+  "codigoServicio": "TURNO-A",
+  "origen": "Campamento",
+  "destino": "Mina",
+  "horaSalida": "05:30",
+  "horaLlegada": "06:15",
+  "fechaDesde": "2026-10-19",
+  "fechaHasta": "2026-10-30",
+  "dias": ["lunes", "martes", "miércoles", "jueves", "viernes"]
+}
+
+### RF-09 / RF-29 — Solicitud registrada desde el panel por un pasajero (sin itinerario: datos completos)
+POST {{FlowRide.API_HostAddress}}/api/solicitudes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "pasajeroId": "00000000-0000-0000-0000-000000000000",
+  "direccionOrigen": "Hotel Central",
+  "direccionDestino": "Aeropuerto",
+  "fechaHoraServicio": "2026-10-20T06:00:00-05:00",
+  "duracionMinutos": 45,
+  "cantidadPasajeros": 1,
+  "urgente": false,
+  "esPersonal": false
+}
+
+### Solicitud desde un itinerario (origen, destino y horario salen del itinerario)
+POST {{FlowRide.API_HostAddress}}/api/solicitudes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "pasajeroId": "00000000-0000-0000-0000-000000000000", "itinerarioId": "00000000-0000-0000-0000-000000000000", "cantidadPasajeros": 1 }
+
+### Cola de asignación (urgentes primero) y RF-31 historial por pasajero, empresa o fechas
+GET {{FlowRide.API_HostAddress}}/api/solicitudes?estado=Pendiente
+Authorization: Bearer {{token}}
+
+### RF-30 — Estado e historial de una solicitud
+GET {{FlowRide.API_HostAddress}}/api/solicitudes/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{token}}
+
+### RF-32 — Modificar (solo sin asignar y dentro del plazo)
+PUT {{FlowRide.API_HostAddress}}/api/solicitudes/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "direccionOrigen": "Hotel Central", "direccionDestino": "Terminal", "fechaHoraServicio": "2026-10-20T07:00:00-05:00", "duracionMinutos": 40, "cantidadPasajeros": 2 }
+
+### RF-32 — Cancelar con motivo (fuera del plazo, solo el Operador logístico)
+POST {{FlowRide.API_HostAddress}}/api/solicitudes/00000000-0000-0000-0000-000000000000/cancelar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "motivo": "El pasajero ya no viaja" }

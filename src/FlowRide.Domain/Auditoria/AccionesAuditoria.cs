@@ -17,6 +17,8 @@ public static class AccionesAuditoria
     public const string RecursoDocumentoConductor = "documento_conductor";
     public const string RecursoVehiculo = "vehiculo";
     public const string RecursoParametro = "parametro";
+    public const string RecursoSolicitud = "solicitud";
+    public const string RecursoItinerario = "itinerario";
 
     public const string Crear = "crear";
     public const string Actualizar = "actualizar";
@@ -26,6 +28,8 @@ public static class AccionesAuditoria
     public const string Programar = "programar";
     public const string Eliminar = "eliminar";
     public const string AsignarConductorHabitual = "asignar_conductor_habitual";
+    public const string Modificar = "modificar";
+    public const string Cancelar = "cancelar";
 
     /// <summary>Acción con el formato <c>recurso.accion</c>.</summary>
     public static string De(string recurso, string accion) => $"{recurso}.{accion}";
