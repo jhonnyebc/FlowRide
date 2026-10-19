@@ -320,7 +320,7 @@ public class ViajesCasosUsoTests : CasosUsoOperacionBase
         var (solicitud, asignacion, viaje) = await AceptadaAsync();
 
         await new CancelarSolicitudCasoUso(new SolicitudDominio(_solicitudes, new ParametrosDominio(_parametros)), _solicitudes, Asignaciones, Viajes,
-                Auditoria, UnidadTrabajo, Reloj)
+                Auditoria, _bandeja, UnidadTrabajo, Reloj)
             .EjecutarAsync(new CancelarSolicitudDominio(solicitud.Id, "Vuelo cancelado", Actor, true), CancellationToken.None);
 
         Assert.Equal((EstadoAsignacion.Cancelada, EstadoViaje.Cancelado), (asignacion.Estado, viaje.Estado));

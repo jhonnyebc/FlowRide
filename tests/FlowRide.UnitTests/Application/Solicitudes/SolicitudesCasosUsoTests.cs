@@ -118,7 +118,9 @@ public class SolicitudesCasosUsoTests : CasosUsoOperacionBase
             itinerarioId is null ? servicio ?? Servicio : null, itinerarioId is null ? TimeSpan.FromMinutes(45) : null, 2, false, personal,
             CanalSolicitud.PanelWeb, Actor);
 
-    private CancelarSolicitudCasoUso Cancelar() => new(SolicitudDominio, _solicitudes, Asignaciones, Viajes, Auditoria, UnidadTrabajo, Reloj);
+    internal FlowRide.UnitTests.Application.Asignaciones.BandejaEnMemoria Bandeja { get; } = new();
+
+    private CancelarSolicitudCasoUso Cancelar() => new(SolicitudDominio, _solicitudes, Asignaciones, Viajes, Auditoria, Bandeja, UnidadTrabajo, Reloj);
 
     [Fact]
     public async Task Registrar_QuedaPendienteEnLaCola_YSeAudita()

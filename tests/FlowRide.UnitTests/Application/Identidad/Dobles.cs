@@ -45,6 +45,9 @@ internal sealed class UsuariosEnMemoria : IUsuarioRepositorio
     public Task<Usuario?> ConsultarPorIdentidadExternaAsync(string identidadExternaId, CancellationToken ct) =>
         Task.FromResult(Usuarios.Values.FirstOrDefault(usuario => usuario.IdentidadExternaId == identidadExternaId));
 
+    public Task<IReadOnlyList<Usuario>> ConsultarActivosPorRolAsync(Guid rolId, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<Usuario>>(Usuarios.Values.Where(usuario => usuario.RolId == rolId && usuario.Activo).ToList());
+
     public Usuario Registrar(string nombre, string? correo, string telefono, Guid? rolId = null, bool activo = true)
     {
         var rol = rolId ?? RolesSistema.AdministradorId;

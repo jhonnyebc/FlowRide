@@ -3,6 +3,7 @@ using FlowRide.Application.Canal.CasosUso;
 using FlowRide.Application.Canal.Entrada.Adaptadores;
 using FlowRide.Application.Canal.Entrada.Dto;
 using FlowRide.Application.Canal.Salida.Puertos;
+using FlowRide.Application.Comun.Salida.Puertos;
 using FlowRide.Domain.Canal;
 using FlowRide.Domain.Canal.GestionCanal;
 using FlowRide.Domain.Canal.Repositorios;
@@ -56,6 +57,9 @@ internal sealed class CanalEnMemoria : IMensajeEntranteRepositorio, IMensajeSali
         Task.FromResult<IReadOnlyList<Guid>>(Salientes.Values.Where(m => m.ListoParaEnviar(ahora)).Select(m => m.Id).Take(maximo).ToList());
 
     public Task<Conversacion?> ConsultarPorTelefonoAsync(string telefono, CancellationToken ct) => Task.FromResult(Conversaciones.GetValueOrDefault(telefono));
+
+    public Task<DateTimeOffset?> UltimoRecibidoAsync(string telefono, CancellationToken ct) =>
+        Task.FromResult(Entrantes.Values.Where(m => m.Remitente == telefono).Select(m => (DateTimeOffset?)m.RecibidoEn).Max());
 }
 
 internal sealed class GatewayDePrueba : IWhatsAppGateway
@@ -76,6 +80,15 @@ internal sealed class GatewayDePrueba : IWhatsAppGateway
         Enviados.Add((telefono, texto));
         return Task.FromResult(Resultados.TryDequeue(out var resultado) ? resultado : ResultadoEnvio.Enviado($"wamid.{Enviados.Count}"));
     }
+
+    public List<(string Telefono, string Plantilla, string Idioma, IReadOnlyList<string> Parametros)> Plantillas { get; } = [];
+
+    public Task<ResultadoEnvio> EnviarPlantillaAsync(string telefono, string plantilla, string idioma, IReadOnlyList<string> parametros,
+        CancellationToken ct)
+    {
+        Plantillas.Add((telefono, plantilla, idioma, parametros));
+        return Task.FromResult(Resultados.TryDequeue(out var resultado) ? resultado : ResultadoEnvio.Enviado($"wamid.p{Plantillas.Count}"));
+    }
 }
 
 public class CanalCasosUsoTests
@@ -89,6 +102,7 @@ public class CanalCasosUsoTests
     private readonly UnidadTrabajoEnMemoria _unidadTrabajo;
     private readonly BotDePrueba _bot = new();
     private readonly GatewayDePrueba _gateway = new();
+    private readonly FlowRide.UnitTests.Application.Asignaciones.BandejaEnMemoria _bandeja = new();
     private readonly RelojFijo _reloj = new(Ahora);
 
     public CanalCasosUsoTests() => _unidadTrabajo = new UnidadTrabajoEnMemoria(_auditoria);
@@ -190,7 +204,7 @@ public class CanalCasosUsoTests
     [Fact]
     public async Task Enviar_GuardaLaCorrelacion_ReintentaLosTransitorios_YNoLosPermanentes()
     {
-        var casoUso = new EnviarMensajeSalienteCasoUso(_canal, _gateway, _unidadTrabajo, _reloj);
+        var casoUso = new EnviarMensajeSalienteCasoUso(_canal, _gateway, _bandeja, _unidadTrabajo, _reloj);
         MensajeSaliente Nuevo()
         {
             var m = new MensajeSaliente(Guid.NewGuid(), Telefono, "Hola", Ahora);
@@ -243,7 +257,7 @@ public class CanalCasosUsoTests
             new RecibirWebhookCasoUso(_gateway, new RegistroEntrantes(_canal, _reloj), _canal, _unidadTrabajo),
             new SimularMensajeCasoUso(new RegistroEntrantes(_canal, _reloj), _unidadTrabajo, _reloj),
             new ConsultarEntrantesPendientesCasoUso(_canal), Procesar(), new RegistrarFalloEntranteCasoUso(_canal, _unidadTrabajo),
-            new ConsultarSalientesPendientesCasoUso(_canal, _reloj), new EnviarMensajeSalienteCasoUso(_canal, _gateway, _unidadTrabajo, _reloj),
+            new ConsultarSalientesPendientesCasoUso(_canal, _reloj), new EnviarMensajeSalienteCasoUso(_canal, _gateway, _bandeja, _unidadTrabajo, _reloj),
             new ConsultarConversacionCanalCasoUso(consultas));
 
         Assert.True(adaptador.VerificarSuscripcion("subscribe", "secreto"));
@@ -270,5 +284,44 @@ public class CanalCasosUsoTests
             Telefono = telefono;
             return Task.FromResult<IReadOnlyList<MensajeCanalLectura>>([]);
         }
+    }
+}
+
+public class EnvioDePlantillasTests
+{
+    private static readonly DateTimeOffset Ahora = BotDePrueba.Ahora;
+    private readonly CanalEnMemoria _canal = new();
+    private readonly GatewayDePrueba _gateway = new();
+    private readonly FlowRide.UnitTests.Application.Asignaciones.BandejaEnMemoria _bandeja = new();
+    private readonly UnidadTrabajoEnMemoria _unidadTrabajo = new(new AuditoriaEnMemoria());
+
+    private EnviarMensajeSalienteCasoUso Enviar() => new(_canal, _gateway, _bandeja, _unidadTrabajo, new RelojFijo(Ahora));
+
+    [Fact]
+    public async Task ConPlantilla_EnviaLaPlantillaConSusParametros()
+    {
+        var mensaje = new MensajeSaliente(Guid.NewGuid(), "+573001112233", "Texto", Ahora)
+            .ConPlantilla("viaje_iniciado", "es_CO", "[\"Luis\",\"ABC123\"]");
+        _canal.Salientes[mensaje.Id] = mensaje;
+
+        Assert.Equal(TipoResultadoEnvio.Enviado, await Enviar().EjecutarAsync(new EnviarMensajeSalienteDominio(mensaje.Id), CancellationToken.None));
+
+        var plantilla = Assert.Single(_gateway.Plantillas);
+        Assert.Equal(("viaje_iniciado", "es_CO"), (plantilla.Plantilla, plantilla.Idioma));
+        Assert.Equal(["Luis", "ABC123"], plantilla.Parametros);
+        Assert.Empty(_gateway.Enviados);
+        Assert.Empty(_bandeja.Eventos);
+    }
+
+    [Fact]
+    public async Task UnFalloPermanente_DejaElEventoParaAlertarAlPanel()
+    {
+        var mensaje = new MensajeSaliente(Guid.NewGuid(), "+573001112233", "Texto", Ahora);
+        _canal.Salientes[mensaje.Id] = mensaje;
+        _gateway.Resultados.Enqueue(ResultadoEnvio.Permanente("HTTP 400"));
+
+        await Enviar().EjecutarAsync(new EnviarMensajeSalienteDominio(mensaje.Id), CancellationToken.None);
+
+        Assert.Equal(EventosSalida.EnvioWhatsAppFallido, Assert.Single(_bandeja.Eventos).Tipo);
     }
 }

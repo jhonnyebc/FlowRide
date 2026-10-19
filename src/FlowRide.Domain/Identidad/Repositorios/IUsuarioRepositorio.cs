@@ -15,4 +15,7 @@ public interface IUsuarioRepositorio
     Task<Usuario?> ConsultarPorTelefonoAsync(string telefonoWhatsApp, CancellationToken ct);
 
     Task<Usuario?> ConsultarPorIdentidadExternaAsync(string identidadExternaId, CancellationToken ct);
+
+    /// <summary>Usuarios activos con el rol (p. ej. los administradores que reciben las alertas críticas por correo).</summary>
+    Task<IReadOnlyList<Usuario>> ConsultarActivosPorRolAsync(Guid rolId, CancellationToken ct);
 }

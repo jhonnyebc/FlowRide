@@ -5,13 +5,13 @@
 > Última actualización: 2026-10-18.
 
 ## Estado actual
-- **Rama de trabajo:** `feature/RF-14-whatsapp` (Fase 7 completa, todos los gates en verde), **sin commit todavía**,
+- **Rama de trabajo:** `feature/RF-43-notificaciones` (Fase 8 completa, todos los gates en verde), **sin commit todavía**,
   pendiente del OK del usuario para el commit y el PR hacia `develop`.
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
   Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6), Fase 4
-  Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8) y Fase 6 Viajes y calificación (PR #9).
-- **Fase actual:** Fase 7 (Canal WhatsApp) terminada en la rama; la siguiente es la Fase 8 (Notificaciones y alertas).
-- **Tests:** 456 unitarios (91,9 % líneas / 82,6 % ramas en Domain + Application), 16 de arquitectura, 126 de integración
+  Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9) y Fase 7 Canal WhatsApp (PR #10).
+- **Fase actual:** Fase 8 (Notificaciones y alertas) terminada en la rama; la siguiente es la Fase 9 (Reportes y vista operacional).
+- **Tests:** 480 unitarios (91,9 % líneas / 81,8 % ramas en Domain + Application), 16 de arquitectura, 130 de integración
   (Keycloak, Mailpit y Azurite reales con Testcontainers).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
   Azurite (10000). Los secretos viven en el AppData **real** del usuario (`flowride-aprovisionamiento` y
@@ -143,6 +143,7 @@
 | 2026-10-18 | Fase 5 completa en `feature/RF-10-asignacion`: asignación automática transaccional con Outbox y worker de la cola, brechas del motor cerradas, configuración versionada con rollback, decision log persistente, reasignación manual completa y Spike 2 (0 dobles asignaciones). 361 + 16 + 107 pruebas en verde. |
 | 2026-10-18 | Fase 5 cerrada (PR #8). Fase 6 completa en `feature/RF-14-viajes`: aceptar crea el viaje programado, rechazo y vencimiento devuelven a la cola sin ese conductor, ciclo iniciar/finalizar, paradas, incidentes, calificación con plazo, historial, monitoreo y trazabilidad. 400 + 16 + 111 pruebas en verde. |
 | 2026-10-18 | Fase 6 cerrada (PR #9). Fase 7 completa en `feature/RF-14-whatsapp`: webhook firmado con bandeja de entrada idempotente, worker del canal con reintentos y correlación, bot de menú numerado para pasajero y conductor, adaptador del número de prueba de Meta y simulado, guía Meta + ngrok. 448 + 16 + 126 pruebas en verde. |
+| 2026-10-18 | Fase 7 cerrada (PR #10). Fase 8 completa en `feature/RF-43-notificaciones`: worker de la Outbox con SKIP LOCKED, gateway de notificaciones (WhatsApp con ventana de 24 h y plantillas, alertas del panel por SSE, correo para las críticas), recordatorios y catálogo es-CO. 480 + 16 + 130 pruebas en verde. |
 
 ## Sesión 2026-10-16 (continuación): estilo del profesor
 - `Viaje.EtaProgramada` **eliminada** (decisión del usuario) + migración `QuitarEtaProgramada`, ya aplicada a tenant-a/b locales.
@@ -281,14 +282,31 @@
 - `FlowRide.API.http`: la variable de host se llama `host` (Rider no admite puntos en los nombres) y el entorno `local`
   (`http-client.env.json`) inicia sesión en Keycloak con PKCE para obtener el token sin Panel Web.
 - Gates al cierre: build sin advertencias, formato OK, 456 unitarias (91,9 % / 82,6 %), 16 arquitectura, 126 integración.
+- Commit `9ff280f` → PR #10 fusionada en `develop` el 2026-10-18 (merge `7a7bc80`) con el CI en verde. **Fase 7 cerrada.**
+
+## Sesión 2026-10-18 (continuación): Fase 8 (Notificaciones y alertas)
+- Rama `feature/RF-43-notificaciones` (llevó también la documentación que cerraba la Fase 7).
+- Decisiones del usuario (roadmap 2026-10-18): todos los avisos de la matriz; correo para urgente sin candidatos, accidente
+  o falla mecánica, turno abandonado y WhatsApp fallido; plantilla aprobada o error con alerta fuera de la ventana; alertas
+  guardadas + SSE.
+- Dominio `Notificaciones`: `Alerta` (secuencia identity para el envío en vivo), `CorreoSaliente`, `PlantillaWhatsApp`,
+  `VentanaConversacion`; `MensajeSaliente` admite plantilla, clave del mensaje y evento de origen.
+- Aplicación: `CatalogoMensajes` (recurso embebido `mensajes.es-CO.json`, `WithCulture=false` para que no vaya a un
+  ensamblado satélite), `GatewayNotificaciones`, `ProcesarEventoCasoUso`, correos, alertas y plantillas.
+  `IBandejaSalida.ProgramarAsync`; nuevos eventos `solicitud.cancelada`, `asignacion.cancelada`, `canal.envio_fallido`.
+- Infraestructura: `WorkerNotificaciones` (SKIP LOCKED, misma transacción), `EnviadorCorreoSmtp`, `UnidadTrabajoEf` admite
+  transacción ya abierta, migración `Notificaciones` (siembra 11 plantillas Pendientes). API: `/api/alertas`
+  (lista, `/en-vivo` SSE, `/leida`) y `/api/notificaciones/plantillas`. `docker-compose`: Mailpit publica 1025.
+- Gates al cierre: build sin advertencias, formato OK, 480 unitarias (91,9 % / 81,8 %), 16 arquitectura, 130 integración.
+- **Pendiente en el entorno local (lo corre el usuario):** `docker compose up -d` (publica el SMTP de Mailpit) y
+  `dotnet run --project src/FlowRide.Aprovisionamiento -- migrar --id tenant-a` (migración `Notificaciones`).
 - **Pendiente:** OK del usuario para commit + PR.
 
 ## Próximos pasos
-1. **Esperar el OK del usuario** sobre la Fase 7; luego commit (`feat(canal): …`) y PR de `feature/RF-14-whatsapp` hacia
-   `develop`.
-2. Fase 8 (Notificaciones y alertas): worker de la Outbox con `SKIP LOCKED` que convierta los eventos (asignación creada,
-   rechazada, viaje iniciado, incidente…) en mensajes de WhatsApp, alertas del panel por SSE y correo; recordatorios;
-   catálogo de mensajes `es-CO` y plantillas de Meta para avisos fuera de la ventana de 24 h.
+1. **Esperar el OK del usuario** sobre la Fase 8; luego commit (`feat(notificaciones): …`) y PR de
+   `feature/RF-43-notificaciones` hacia `develop`.
+2. Fase 9 (Reportes y vista operacional): indicadores, reportes de viajes, solicitudes y conductores, histórico por
+   cliente empresarial, vista centralizada (RF-36, RF-42, RF-46 a RF-49) y exportes con URL firmada ≤ 15 min.
 3. Panel Web: sigue en la Fase 11. El usuario decidió (2026-10-18) desarrollarlo completo más adelante, no adelantar un panel básico.
 4. RF-23: probar "Olvidé mi contraseña" con la pantalla de login cuando exista el Panel Web (Fase 11).
 5. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).

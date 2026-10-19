@@ -48,7 +48,9 @@ public sealed class UnidadTrabajoEf(FlowRideDbContext contexto) : IUnidadTrabajo
             return;
         }
 
-        await using var transaccion = await contexto.Database.BeginTransactionAsync(ct);
+        // Dentro de una transacción ya abierta (el worker de notificaciones), el candado y el encadenamiento van en ella.
+        var propia = contexto.Database.CurrentTransaction is null;
+        await using var transaccion = propia ? await contexto.Database.BeginTransactionAsync(ct) : null;
         await contexto.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock({CandadoAuditoria})", ct);
 
         var hashAnterior = await contexto.EventosAuditoria
@@ -63,7 +65,8 @@ public sealed class UnidadTrabajoEf(FlowRideDbContext contexto) : IUnidadTrabajo
         }
 
         await contexto.SaveChangesAsync(ct);
-        await transaccion.CommitAsync(ct);
+        if (transaccion is not null)
+            await transaccion.CommitAsync(ct);
     }
 
     /// <summary>

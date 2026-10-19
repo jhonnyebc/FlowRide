@@ -163,19 +163,40 @@ public sealed class WhatsAppSandboxAdapter(WhatsAppOptions opciones, HttpClient 
 
     public WebhookTraducido Traducir(string cuerpo) => FormatoWebhookMeta.Traducir(opciones, cuerpo);
 
-    public async Task<ResultadoEnvio> EnviarTextoAsync(string telefono, string texto, CancellationToken ct)
+    public Task<ResultadoEnvio> EnviarTextoAsync(string telefono, string texto, CancellationToken ct) =>
+        EnviarAsync(new
+        {
+            messaging_product = "whatsapp",
+            recipient_type = "individual",
+            to = telefono.TrimStart('+'),
+            type = "text",
+            text = new { preview_url = false, body = texto }
+        }, ct);
+
+    public Task<ResultadoEnvio> EnviarPlantillaAsync(string telefono, string plantilla, string idioma, IReadOnlyList<string> parametros,
+        CancellationToken ct) =>
+        EnviarAsync(new
+        {
+            messaging_product = "whatsapp",
+            recipient_type = "individual",
+            to = telefono.TrimStart('+'),
+            type = "template",
+            template = new
+            {
+                name = plantilla,
+                language = new { code = idioma },
+                components = parametros.Count == 0
+                    ? []
+                    : new object[] { new { type = "body", parameters = parametros.Select(p => new { type = "text", text = p }).ToArray() } }
+            }
+        }, ct);
+
+    private async Task<ResultadoEnvio> EnviarAsync(object cuerpoPeticion, CancellationToken ct)
     {
         using var peticion = new HttpRequestMessage(HttpMethod.Post,
             $"{opciones.UrlGraph.TrimEnd('/')}/{opciones.VersionGraph}/{opciones.PhoneNumberId}/messages")
         {
-            Content = JsonContent.Create(new
-            {
-                messaging_product = "whatsapp",
-                recipient_type = "individual",
-                to = telefono.TrimStart('+'),
-                type = "text",
-                text = new { preview_url = false, body = texto }
-            })
+            Content = JsonContent.Create(cuerpoPeticion)
         };
         peticion.Headers.Authorization = new AuthenticationHeaderValue("Bearer", opciones.AccessToken);
 
@@ -264,6 +285,21 @@ public sealed class WhatsAppSimuladoAdapter(WhatsAppOptions opciones) : IWhatsAp
 
         var id = $"wamid.simulado.{Interlocked.Increment(ref _secuencia)}";
         Enviados.Enqueue((telefono, texto, id));
+        return Task.FromResult(ResultadoEnvio.Enviado(id));
+    }
+
+    /// <summary>Las plantillas "enviadas": se registran también en <see cref="Enviados"/> como <c>[plantilla] parámetros</c>.</summary>
+    public ConcurrentQueue<(string Telefono, string Plantilla, string Idioma, IReadOnlyList<string> Parametros)> Plantillas { get; } = new();
+
+    public Task<ResultadoEnvio> EnviarPlantillaAsync(string telefono, string plantilla, string idioma, IReadOnlyList<string> parametros,
+        CancellationToken ct)
+    {
+        if (FallarProximos.TryDequeue(out var fallo))
+            return Task.FromResult(fallo);
+
+        Plantillas.Enqueue((telefono, plantilla, idioma, parametros));
+        var id = $"wamid.simulado.{Interlocked.Increment(ref _secuencia)}";
+        Enviados.Enqueue((telefono, $"[{plantilla}] {string.Join(" | ", parametros)}", id));
         return Task.FromResult(ResultadoEnvio.Enviado(id));
     }
 }
