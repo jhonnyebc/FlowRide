@@ -27,7 +27,7 @@ public abstract class PruebasAsignacionBase(PostgresFixture postgres) : IAsyncLi
     protected FlowRideApiFactory Api { get; private set; } = null!;
     protected HttpClient Administrador { get; private set; } = null!;
     protected HttpClient Operador { get; private set; } = null!;
-    private Guid _empresaId;
+    protected Guid EmpresaId { get; private set; }
 
     public async Task InitializeAsync()
     {
@@ -36,7 +36,7 @@ public abstract class PruebasAsignacionBase(PostgresFixture postgres) : IAsyncLi
         Api = await ApiAsync();
         Administrador = await ClienteAsync(Api, RolesSistema.AdministradorId);
         Operador = await ClienteAsync(Api, RolesSistema.OperadorLogisticoId);
-        _empresaId = (await (await Administrador.PostAsJsonAsync("/api/empresas-cliente",
+        EmpresaId = (await (await Administrador.PostAsJsonAsync("/api/empresas-cliente",
                 new EmpresaClientePeticion { Nombre = "Minera", Nit = $"nit-{Guid.NewGuid():N}"[..14], CorreoContacto = "ops@minera.co" }))
             .Content.ReadFromJsonAsync<EmpresaClienteRespuesta>())!.Id;
     }
@@ -69,15 +69,16 @@ public abstract class PruebasAsignacionBase(PostgresFixture postgres) : IAsyncLi
         return cliente;
     }
 
-    private static string Telefono() => $"+57{Random.Shared.NextInt64(3_000_000_000, 3_999_999_999)}";
+    protected static string Telefono() => $"+57{Random.Shared.NextInt64(3_000_000_000, 3_999_999_999)}";
 
     /// <summary>Conductor con un turno que cubre el servicio y su vehículo habitual.</summary>
-    protected async Task<(Guid ConductorId, Guid VehiculoId, Guid TurnoId)> ConductorListoAsync(int capacidad = 10, bool aptoCritico = false)
+    protected async Task<(Guid ConductorId, Guid VehiculoId, Guid TurnoId)> ConductorListoAsync(int capacidad = 10, bool aptoCritico = false,
+        string? telefono = null)
     {
         var conductor = (await (await Administrador.PostAsJsonAsync("/api/conductores", new ConductorPeticion
         {
             Nombre = $"Conductor {Guid.NewGuid():N}"[..18],
-            TelefonoWhatsApp = Telefono(),
+            TelefonoWhatsApp = telefono ?? Telefono(),
             NumeroLicencia = Random.Shared.NextInt64(10_000_000, 99_999_999).ToString(System.Globalization.CultureInfo.InvariantCulture),
             CategoriaLicencia = "C2",
             VencimientoLicencia = Vigente,
@@ -104,7 +105,7 @@ public abstract class PruebasAsignacionBase(PostgresFixture postgres) : IAsyncLi
         {
             Nombre = "Pasajero",
             TelefonoWhatsApp = Telefono(),
-            EmpresaClienteId = _empresaId,
+            EmpresaClienteId = EmpresaId,
             CodigoInterno = $"E-{Guid.NewGuid():N}"[..12]
         })).Content.ReadFromJsonAsync<PasajeroRespuesta>())!;
         var respuesta = await Operador.PostAsJsonAsync("/api/solicitudes", new SolicitudPeticion

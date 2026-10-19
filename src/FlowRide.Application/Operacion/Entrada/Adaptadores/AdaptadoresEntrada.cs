@@ -6,6 +6,7 @@ using FlowRide.Application.Operacion.Entrada.Puertos;
 using FlowRide.Domain.Comun.Consultas;
 using FlowRide.Domain.Entidades;
 using FlowRide.Domain.Enumeraciones;
+using FlowRide.Domain.Identidad;
 using FlowRide.Domain.Operacion;
 using FlowRide.Domain.Operacion.GestionRecursos;
 using FlowRide.Domain.Operacion.Repositorios;
@@ -54,7 +55,7 @@ public sealed class PasajerosAdaptadorEntrada(
         Requeridos.Validar(peticion, "nombre, telefonoWhatsApp, empresaClienteId y codigoInterno son obligatorios.",
             peticion?.Nombre, peticion?.TelefonoWhatsApp, peticion?.EmpresaClienteId?.ToString(), peticion?.CodigoInterno);
         return Mapeo.Pasajero(await registrar.EjecutarAsync(new RegistrarPasajeroDominio(
-            peticion.Nombre!.Trim(), peticion.TelefonoWhatsApp!.Trim(), Requeridos.Texto(peticion.Correo),
+            peticion.Nombre!.Trim(), TelefonosWhatsApp.Normalizar(peticion.TelefonoWhatsApp), Requeridos.Texto(peticion.Correo),
             peticion.EmpresaClienteId!.Value, peticion.CodigoInterno!.Trim(), actorId), ct));
     }
 
@@ -62,7 +63,7 @@ public sealed class PasajerosAdaptadorEntrada(
     {
         Requeridos.Validar(peticion, "nombre y telefonoWhatsApp son obligatorios.", peticion?.Nombre, peticion?.TelefonoWhatsApp);
         return Mapeo.Pasajero(await actualizar.EjecutarAsync(new ActualizarPasajeroDominio(
-            pasajeroId, peticion.Nombre!.Trim(), peticion.TelefonoWhatsApp!.Trim(), Requeridos.Texto(peticion.Correo), actorId), ct));
+            pasajeroId, peticion.Nombre!.Trim(), TelefonosWhatsApp.Normalizar(peticion.TelefonoWhatsApp), Requeridos.Texto(peticion.Correo), actorId), ct));
     }
 
     public async Task<PaginaRespuesta<PasajeroRespuesta>> BuscarAsync(BusquedaPeticion peticion, CancellationToken ct)
@@ -90,7 +91,7 @@ public sealed class ConductoresAdaptadorEntrada(
     {
         ValidarConductor(peticion);
         return Mapeo.Conductor(await registrar.EjecutarAsync(new RegistrarConductorDominio(
-            peticion.Nombre!.Trim(), peticion.TelefonoWhatsApp!.Trim(), Requeridos.Texto(peticion.Correo),
+            peticion.Nombre!.Trim(), TelefonosWhatsApp.Normalizar(peticion.TelefonoWhatsApp), Requeridos.Texto(peticion.Correo),
             peticion.NumeroLicencia!.Trim(), peticion.CategoriaLicencia!.Trim(), peticion.VencimientoLicencia!.Value, actorId, peticion.AptoServicioCritico ?? false), ct));
     }
 
@@ -98,7 +99,7 @@ public sealed class ConductoresAdaptadorEntrada(
     {
         ValidarConductor(peticion);
         return Mapeo.Conductor(await actualizar.EjecutarAsync(new ActualizarConductorDominio(
-            conductorId, peticion.Nombre!.Trim(), peticion.TelefonoWhatsApp!.Trim(), Requeridos.Texto(peticion.Correo),
+            conductorId, peticion.Nombre!.Trim(), TelefonosWhatsApp.Normalizar(peticion.TelefonoWhatsApp), Requeridos.Texto(peticion.Correo),
             peticion.NumeroLicencia!.Trim(), peticion.CategoriaLicencia!.Trim(), peticion.VencimientoLicencia!.Value, actorId, peticion.AptoServicioCritico ?? false), ct));
     }
 

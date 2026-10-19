@@ -32,6 +32,12 @@ public sealed class FlowRideApiFactory(string? cadenaConexion, string? tenantId 
     /// <summary>Clave de cifrado de campos para las pruebas que no usan un operador aprovisionado.</summary>
     public const string ClaveCifradoDePrueba = "clave-de-cifrado-de-pruebas-de-flowride-0001";
 
+    /// <summary>Canal WhatsApp de prueba: proveedor simulado con el formato y la firma de Meta.</summary>
+    public const string SecretoAppWhatsApp = "secreto-de-la-app-de-meta-de-pruebas";
+
+    public const string TokenVerificacionWhatsApp = "token-de-verificacion-de-pruebas";
+    public const string NumeroWhatsApp = "1234567890";
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -43,8 +49,13 @@ public sealed class FlowRideApiFactory(string? cadenaConexion, string? tenantId 
         builder.UseSetting("FlowRide:Cifrado:Claves:v1", ClaveCifradoDePrueba);
         builder.UseSetting("FlowRide:Cifrado:Vigente", "v1");
         builder.UseSetting("ConnectionStrings:Objetos", "UseDevelopmentStorage=true");
-        // El worker de la cola se apaga en las pruebas: cada prueba asigna cuando lo necesita.
+        // Los workers de la cola y del canal se apagan en las pruebas: cada prueba los corre cuando lo necesita.
         builder.UseSetting("FlowRide:Asignacion:Worker:Habilitado", "false");
+        builder.UseSetting("FlowRide:WhatsApp:Worker:Habilitado", "false");
+        builder.UseSetting("FlowRide:WhatsApp:Proveedor", "Simulado");
+        builder.UseSetting("FlowRide:WhatsApp:PhoneNumberId", NumeroWhatsApp);
+        builder.UseSetting("FlowRide:WhatsApp:AppSecret", SecretoAppWhatsApp);
+        builder.UseSetting("FlowRide:WhatsApp:VerifyToken", TokenVerificacionWhatsApp);
         foreach (var (clave, valor) in Ajustes)
             if (valor is not null) builder.UseSetting(clave, valor);
 

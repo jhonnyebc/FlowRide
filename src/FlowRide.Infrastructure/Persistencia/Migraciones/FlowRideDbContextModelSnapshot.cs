@@ -472,6 +472,201 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                     b.ToTable("evento_auditoria", "audit");
                 });
 
+            modelBuilder.Entity("FlowRide.Domain.Canal.Conversacion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Datos")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("datos");
+
+                    b.Property<string>("Paso")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("paso");
+
+                    b.Property<string>("Telefono")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("telefono");
+
+                    b.Property<DateTimeOffset>("UltimaActividad")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ultima_actividad");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_conversacion");
+
+                    b.HasIndex("Telefono")
+                        .IsUnique()
+                        .HasDatabaseName("ix_conversacion_telefono");
+
+                    b.ToTable("conversacion", "canal");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Canal.MensajeEntrante", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Contenido")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("contenido");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("estado");
+
+                    b.Property<string>("IdExterno")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("id_externo");
+
+                    b.Property<int>("Intentos")
+                        .HasColumnType("integer")
+                        .HasColumnName("intentos");
+
+                    b.Property<DateTimeOffset?>("ProcesadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("procesado_en");
+
+                    b.Property<DateTimeOffset>("RecibidoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("recibido_en");
+
+                    b.Property<string>("Remitente")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("remitente");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("tipo");
+
+                    b.Property<string>("UltimoError")
+                        .HasColumnType("text")
+                        .HasColumnName("ultimo_error");
+
+                    b.Property<Guid?>("UsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("usuario_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_mensaje_entrante");
+
+                    b.HasIndex("IdExterno")
+                        .IsUnique()
+                        .HasDatabaseName("ix_mensaje_entrante_id_externo");
+
+                    b.HasIndex("Estado", "RecibidoEn")
+                        .HasDatabaseName("ix_mensaje_entrante_estado_recibido_en");
+
+                    b.ToTable("mensaje_entrante", "canal");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Canal.MensajeSaliente", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Contenido")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("contenido");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<string>("Destinatario")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("destinatario");
+
+                    b.Property<Guid?>("EnRespuestaA")
+                        .HasColumnType("uuid")
+                        .HasColumnName("en_respuesta_a");
+
+                    b.Property<DateTimeOffset?>("EnviadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("enviado_en");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("estado");
+
+                    b.Property<string>("EstadoExterno")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("estado_externo");
+
+                    b.Property<string>("IdExterno")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("id_externo");
+
+                    b.Property<int>("Intentos")
+                        .HasColumnType("integer")
+                        .HasColumnName("intentos");
+
+                    b.Property<DateTimeOffset>("ProximoIntento")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("proximo_intento");
+
+                    b.Property<string>("UltimoError")
+                        .HasColumnType("text")
+                        .HasColumnName("ultimo_error");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_mensaje_saliente");
+
+                    b.HasIndex("EnRespuestaA")
+                        .HasDatabaseName("ix_mensaje_saliente_en_respuesta_a");
+
+                    b.HasIndex("IdExterno")
+                        .HasDatabaseName("ix_mensaje_saliente_id_externo");
+
+                    b.HasIndex("Estado", "ProximoIntento")
+                        .HasDatabaseName("ix_mensaje_saliente_estado_proximo_intento");
+
+                    b.ToTable("mensaje_saliente", "canal");
+                });
+
             modelBuilder.Entity("FlowRide.Domain.Entidades.Asignacion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1474,6 +1669,15 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_resultado_regla_evaluacion_candidato_evaluacion_id");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Canal.MensajeSaliente", b =>
+                {
+                    b.HasOne("FlowRide.Domain.Canal.MensajeEntrante", null)
+                        .WithMany()
+                        .HasForeignKey("EnRespuestaA")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_mensaje_saliente_mensaje_entrante_en_respuesta_a");
                 });
 
             modelBuilder.Entity("FlowRide.Domain.Entidades.Asignacion", b =>
