@@ -2,6 +2,7 @@ using FlowRide.Domain.Asignaciones;
 using FlowRide.Domain.Auditoria;
 using FlowRide.Domain.Canal;
 using FlowRide.Domain.Entidades;
+using FlowRide.Domain.Notificaciones;
 using FlowRide.Domain.Parametros;
 using FlowRide.Infrastructure.Persistencia.Configuraciones;
 using FlowRide.Infrastructure.Persistencia.Outbox;
@@ -42,6 +43,9 @@ public sealed class FlowRideDbContext(DbContextOptions<FlowRideDbContext> option
     public DbSet<MensajeEntrante> MensajesEntrantes => Set<MensajeEntrante>();
     public DbSet<MensajeSaliente> MensajesSalientes => Set<MensajeSaliente>();
     public DbSet<Conversacion> Conversaciones => Set<Conversacion>();
+    public DbSet<Alerta> Alertas => Set<Alerta>();
+    public DbSet<CorreoSaliente> CorreosSalientes => Set<CorreoSaliente>();
+    public DbSet<PlantillaWhatsApp> PlantillasWhatsApp => Set<PlantillaWhatsApp>();
 
     /// <summary>
     /// Cifrador de los campos sensibles del operador (ADR-0014). Sin él (migraciones, diseño) las columnas se leen y
@@ -94,6 +98,9 @@ public sealed class FlowRideDbContext(DbContextOptions<FlowRideDbContext> option
         modelBuilder.ApplyConfiguration(new MensajeEntranteConfiguracion());
         modelBuilder.ApplyConfiguration(new MensajeSalienteConfiguracion());
         modelBuilder.ApplyConfiguration(new ConversacionConfiguracion());
+        modelBuilder.ApplyConfiguration(new AlertaConfiguracion());
+        modelBuilder.ApplyConfiguration(new CorreoSalienteConfiguracion());
+        modelBuilder.ApplyConfiguration(new PlantillaWhatsAppConfiguracion());
 
         if (Cifrador is { } cifradorCampos)
         {

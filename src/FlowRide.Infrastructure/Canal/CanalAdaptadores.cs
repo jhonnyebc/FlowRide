@@ -27,6 +27,10 @@ public sealed class MensajeEntranteRepositorioAdaptador(FlowRideDbContext contex
             .OrderBy(m => m.RecibidoEn).ThenBy(m => m.Id)
             .Select(m => m.Id).Take(maximo)
             .ToListAsync(ct);
+
+    public async Task<DateTimeOffset?> UltimoRecibidoAsync(string telefono, CancellationToken ct) =>
+        await contexto.MensajesEntrantes.AsNoTracking().Where(m => m.Remitente == telefono)
+            .MaxAsync(m => (DateTimeOffset?)m.RecibidoEn, ct);
 }
 
 public sealed class MensajeSalienteRepositorioAdaptador(FlowRideDbContext contexto) : IMensajeSalienteRepositorio

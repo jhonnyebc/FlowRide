@@ -125,6 +125,39 @@ public sealed class MensajeSaliente
 
     public string? UltimoError { get; private set; }
 
+    /// <summary>Clave del catálogo de mensajes con que se armó (ADR-0016); null en las respuestas del bot.</summary>
+    public string? ClaveMensaje { get; private set; }
+
+    /// <summary>Evento de la Outbox que originó la notificación (deduplicación, ADR-0015).</summary>
+    public Guid? EventId { get; private set; }
+
+    /// <summary>Plantilla aprobada con que se envía fuera de la ventana de 24 h; null si va como texto.</summary>
+    public string? Plantilla { get; private set; }
+
+    public string? IdiomaPlantilla { get; private set; }
+
+    /// <summary>Valores de las variables de la plantilla, en orden, como JSON.</summary>
+    public string? ParametrosPlantilla { get; private set; }
+
+    public bool EsPlantilla => Plantilla is not null;
+
+    /// <summary>Marca el mensaje como notificación del catálogo (clave y evento de origen).</summary>
+    public MensajeSaliente ComoNotificacion(string claveMensaje, Guid eventId)
+    {
+        ClaveMensaje = Guardas.Texto(claveMensaje, nameof(claveMensaje));
+        EventId = eventId;
+        return this;
+    }
+
+    /// <summary>Se enviará con la plantilla aprobada; <see cref="Contenido"/> queda como el texto equivalente (trazabilidad).</summary>
+    public MensajeSaliente ConPlantilla(string nombre, string idioma, string parametrosJson)
+    {
+        Plantilla = Guardas.Texto(nombre, nameof(nombre));
+        IdiomaPlantilla = Guardas.Texto(idioma, nameof(idioma));
+        ParametrosPlantilla = Guardas.Texto(parametrosJson, nameof(parametrosJson));
+        return this;
+    }
+
     public bool ListoParaEnviar(DateTimeOffset ahora) => Estado == EstadoMensajeSaliente.Pendiente && ProximoIntento <= ahora;
 
     public void MarcarEnviado(string idExterno, DateTimeOffset ahora)

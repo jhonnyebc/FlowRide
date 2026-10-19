@@ -595,6 +595,11 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("ClaveMensaje")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("clave_mensaje");
+
                     b.Property<string>("Contenido")
                         .IsRequired()
                         .HasColumnType("text")
@@ -629,14 +634,32 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                         .HasColumnType("character varying(20)")
                         .HasColumnName("estado_externo");
 
+                    b.Property<Guid?>("EventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_id");
+
                     b.Property<string>("IdExterno")
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)")
                         .HasColumnName("id_externo");
 
+                    b.Property<string>("IdiomaPlantilla")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("idioma_plantilla");
+
                     b.Property<int>("Intentos")
                         .HasColumnType("integer")
                         .HasColumnName("intentos");
+
+                    b.Property<string>("ParametrosPlantilla")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("parametros_plantilla");
+
+                    b.Property<string>("Plantilla")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("plantilla");
 
                     b.Property<DateTimeOffset>("ProximoIntento")
                         .HasColumnType("timestamp with time zone")
@@ -657,6 +680,9 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
 
                     b.HasIndex("EnRespuestaA")
                         .HasDatabaseName("ix_mensaje_saliente_en_respuesta_a");
+
+                    b.HasIndex("EventId")
+                        .HasDatabaseName("ix_mensaje_saliente_event_id");
 
                     b.HasIndex("IdExterno")
                         .HasDatabaseName("ix_mensaje_saliente_id_externo");
@@ -1455,6 +1481,288 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                     b.ToTable("viaje", "ops");
                 });
 
+            modelBuilder.Entity("FlowRide.Domain.Notificaciones.Alerta", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreadaEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creada_en");
+
+                    b.Property<string>("Detalle")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("detalle");
+
+                    b.Property<Guid?>("EventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_id");
+
+                    b.Property<DateTimeOffset?>("LeidaEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("leida_en");
+
+                    b.Property<Guid?>("LeidaPorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("leida_por_id");
+
+                    b.Property<Guid?>("ReferenciaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("referencia_id");
+
+                    b.Property<long>("Secuencia")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("secuencia");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Secuencia"));
+
+                    b.Property<string>("Severidad")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("severidad");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("tipo");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("titulo");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_alerta");
+
+                    b.HasIndex("CreadaEn")
+                        .HasDatabaseName("ix_alerta_creada_en")
+                        .HasFilter("leida_en IS NULL");
+
+                    b.HasIndex("Secuencia")
+                        .IsUnique()
+                        .HasDatabaseName("ix_alerta_secuencia");
+
+                    b.ToTable("alerta", "notif");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Notificaciones.CorreoSaliente", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AlertaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("alerta_id");
+
+                    b.Property<string>("Asunto")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)")
+                        .HasColumnName("asunto");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<string>("Cuerpo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("cuerpo");
+
+                    b.Property<string>("Destinatario")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("destinatario");
+
+                    b.Property<DateTimeOffset?>("EnviadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("enviado_en");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("estado");
+
+                    b.Property<int>("Intentos")
+                        .HasColumnType("integer")
+                        .HasColumnName("intentos");
+
+                    b.Property<DateTimeOffset>("ProximoIntento")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("proximo_intento");
+
+                    b.Property<string>("UltimoError")
+                        .HasColumnType("text")
+                        .HasColumnName("ultimo_error");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_correo_saliente");
+
+                    b.HasIndex("AlertaId")
+                        .HasDatabaseName("ix_correo_saliente_alerta_id");
+
+                    b.HasIndex("Estado", "ProximoIntento")
+                        .HasDatabaseName("ix_correo_saliente_estado_proximo_intento");
+
+                    b.ToTable("correo_saliente", "notif");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Notificaciones.PlantillaWhatsApp", b =>
+                {
+                    b.Property<string>("Clave")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("clave");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("estado");
+
+                    b.Property<string>("Idioma")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("idioma");
+
+                    b.Property<DateTimeOffset>("ModificadaEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modificada_en");
+
+                    b.Property<Guid?>("ModificadaPorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modificada_por_id");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("nombre");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Clave")
+                        .HasName("pk_plantilla_whatsapp");
+
+                    b.ToTable("plantilla_whatsapp", "notif");
+
+                    b.HasData(
+                        new
+                        {
+                            Clave = "asignacion.conductor.cancelada",
+                            Estado = "Pendiente",
+                            Idioma = "es_CO",
+                            ModificadaEn = new DateTimeOffset(new DateTime(2026, 10, 18, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Nombre = "asignacion_conductor_cancelada"
+                        },
+                        new
+                        {
+                            Clave = "asignacion.conductor.nueva",
+                            Estado = "Pendiente",
+                            Idioma = "es_CO",
+                            ModificadaEn = new DateTimeOffset(new DateTime(2026, 10, 18, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Nombre = "asignacion_conductor_nueva"
+                        },
+                        new
+                        {
+                            Clave = "asignacion.conductor.retirada",
+                            Estado = "Pendiente",
+                            Idioma = "es_CO",
+                            ModificadaEn = new DateTimeOffset(new DateTime(2026, 10, 18, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Nombre = "asignacion_conductor_retirada"
+                        },
+                        new
+                        {
+                            Clave = "recordatorio.conductor",
+                            Estado = "Pendiente",
+                            Idioma = "es_CO",
+                            ModificadaEn = new DateTimeOffset(new DateTime(2026, 10, 18, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Nombre = "recordatorio_conductor"
+                        },
+                        new
+                        {
+                            Clave = "recordatorio.pasajero",
+                            Estado = "Pendiente",
+                            Idioma = "es_CO",
+                            ModificadaEn = new DateTimeOffset(new DateTime(2026, 10, 18, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Nombre = "recordatorio_pasajero"
+                        },
+                        new
+                        {
+                            Clave = "solicitud.pasajero.cambio_conductor",
+                            Estado = "Pendiente",
+                            Idioma = "es_CO",
+                            ModificadaEn = new DateTimeOffset(new DateTime(2026, 10, 18, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Nombre = "solicitud_pasajero_cambio_conductor"
+                        },
+                        new
+                        {
+                            Clave = "solicitud.pasajero.cancelada",
+                            Estado = "Pendiente",
+                            Idioma = "es_CO",
+                            ModificadaEn = new DateTimeOffset(new DateTime(2026, 10, 18, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Nombre = "solicitud_pasajero_cancelada"
+                        },
+                        new
+                        {
+                            Clave = "solicitud.pasajero.conductor_asignado",
+                            Estado = "Pendiente",
+                            Idioma = "es_CO",
+                            ModificadaEn = new DateTimeOffset(new DateTime(2026, 10, 18, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Nombre = "solicitud_pasajero_conductor_asignado"
+                        },
+                        new
+                        {
+                            Clave = "viaje.pasajero.finalizado",
+                            Estado = "Pendiente",
+                            Idioma = "es_CO",
+                            ModificadaEn = new DateTimeOffset(new DateTime(2026, 10, 18, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Nombre = "viaje_pasajero_finalizado"
+                        },
+                        new
+                        {
+                            Clave = "viaje.pasajero.iniciado",
+                            Estado = "Pendiente",
+                            Idioma = "es_CO",
+                            ModificadaEn = new DateTimeOffset(new DateTime(2026, 10, 18, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Nombre = "viaje_pasajero_iniciado"
+                        },
+                        new
+                        {
+                            Clave = "viaje.pasajero.retraso",
+                            Estado = "Pendiente",
+                            Idioma = "es_CO",
+                            ModificadaEn = new DateTimeOffset(new DateTime(2026, 10, 18, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Nombre = "viaje_pasajero_retraso"
+                        });
+                });
+
             modelBuilder.Entity("FlowRide.Domain.Parametros.Parametro", b =>
                 {
                     b.Property<string>("Clave")
@@ -1866,6 +2174,15 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_viaje_asignacion_asignacion_id");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Notificaciones.CorreoSaliente", b =>
+                {
+                    b.HasOne("FlowRide.Domain.Notificaciones.Alerta", null)
+                        .WithMany()
+                        .HasForeignKey("AlertaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_correo_saliente_alerta_alerta_id");
                 });
 
             modelBuilder.Entity("FlowRide.Domain.Parametros.Parametro", b =>

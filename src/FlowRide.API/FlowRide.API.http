@@ -353,3 +353,30 @@ Authorization: Bearer {{$auth.token("panel")}}
 Content-Type: application/json
 
 { "nombre": "Pasajero de pruebas", "telefonoWhatsApp": "+573001112233", "empresaClienteId": "{{empresaId}}", "codigoInterno": "PRUEBA-1" }
+
+# ---------------------------------------------------------------------------------------------------------------
+# Fase 8 — Notificaciones y alertas (RF-16, RF-17, RF-35, RF-43 a RF-45; ADR-0015, ADR-0016).
+
+### RF-45 — Alertas del panel (solo las no leídas)
+GET {{host}}/api/alertas?soloNoLeidas=true
+Authorization: Bearer {{token}}
+
+### RF-45 — Alertas en vivo (Server-Sent Events; Rider muestra el flujo mientras la petición está abierta)
+GET {{host}}/api/alertas/en-vivo?desde=0
+Authorization: Bearer {{token}}
+Accept: text/event-stream
+
+### RF-45 — Marcar una alerta como leída
+POST {{host}}/api/alertas/00000000-0000-0000-0000-000000000000/leida
+Authorization: Bearer {{token}}
+
+### ADR-0016 — Plantillas de WhatsApp por clave del catálogo (para escribir fuera de la ventana de 24 h)
+GET {{host}}/api/notificaciones/plantillas
+Authorization: Bearer {{token}}
+
+### ADR-0016 — Registrar la plantilla que Meta aprobó para una clave (solo Administrador)
+PUT {{host}}/api/notificaciones/plantillas/solicitud.pasajero.conductor_asignado
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nombre": "conductor_asignado", "idioma": "es_CO", "estado": "Aprobada" }
