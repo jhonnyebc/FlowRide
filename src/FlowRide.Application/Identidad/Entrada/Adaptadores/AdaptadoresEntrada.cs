@@ -97,7 +97,7 @@ internal static class PeticionesUsuario
         return new CrearUsuarioDominio(
             peticion.Nombre.Trim(),
             peticion.Correo.Trim(),
-            peticion.TelefonoWhatsApp.Trim(),
+            TelefonosWhatsApp.Normalizar(peticion.TelefonoWhatsApp),
             exigirRol ? peticion.Rol!.Trim() : RolesSistema.Administrador,
             actorId);
     }

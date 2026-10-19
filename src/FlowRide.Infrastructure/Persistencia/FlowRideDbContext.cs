@@ -1,5 +1,6 @@
 using FlowRide.Domain.Asignaciones;
 using FlowRide.Domain.Auditoria;
+using FlowRide.Domain.Canal;
 using FlowRide.Domain.Entidades;
 using FlowRide.Domain.Parametros;
 using FlowRide.Infrastructure.Persistencia.Configuraciones;
@@ -38,6 +39,9 @@ public sealed class FlowRideDbContext(DbContextOptions<FlowRideDbContext> option
     public DbSet<ConfiguracionAsignacion> ConfiguracionesAsignacion => Set<ConfiguracionAsignacion>();
     public DbSet<DecisionAsignacion> DecisionesAsignacion => Set<DecisionAsignacion>();
     public DbSet<MensajeOutbox> MensajesOutbox => Set<MensajeOutbox>();
+    public DbSet<MensajeEntrante> MensajesEntrantes => Set<MensajeEntrante>();
+    public DbSet<MensajeSaliente> MensajesSalientes => Set<MensajeSaliente>();
+    public DbSet<Conversacion> Conversaciones => Set<Conversacion>();
 
     /// <summary>
     /// Cifrador de los campos sensibles del operador (ADR-0014). Sin él (migraciones, diseño) las columnas se leen y
@@ -87,6 +91,9 @@ public sealed class FlowRideDbContext(DbContextOptions<FlowRideDbContext> option
         modelBuilder.ApplyConfiguration(new EvaluacionCandidatoConfiguracion());
         modelBuilder.ApplyConfiguration(new ResultadoReglaConfiguracion());
         modelBuilder.ApplyConfiguration(new MensajeOutboxConfiguracion());
+        modelBuilder.ApplyConfiguration(new MensajeEntranteConfiguracion());
+        modelBuilder.ApplyConfiguration(new MensajeSalienteConfiguracion());
+        modelBuilder.ApplyConfiguration(new ConversacionConfiguracion());
 
         if (Cifrador is { } cifradorCampos)
         {
@@ -94,6 +101,9 @@ public sealed class FlowRideDbContext(DbContextOptions<FlowRideDbContext> option
                 valor => cifradorCampos.Cifrar(valor), valor => cifradorCampos.Descifrar(valor));
             modelBuilder.Entity<Usuario>().Property(usuario => usuario.TelefonoWhatsApp).HasConversion(conversion);
             modelBuilder.Entity<Conductor>().Property(conductor => conductor.NumeroLicencia).HasConversion(conversion);
+            modelBuilder.Entity<MensajeEntrante>().Property(mensaje => mensaje.Remitente).HasConversion(conversion);
+            modelBuilder.Entity<MensajeSaliente>().Property(mensaje => mensaje.Destinatario).HasConversion(conversion);
+            modelBuilder.Entity<Conversacion>().Property(conversacion => conversacion.Telefono).HasConversion(conversion);
         }
     }
 

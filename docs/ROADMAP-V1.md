@@ -21,8 +21,8 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 3 | Recursos operativos y parámetros | Operacion, Parametros | 0006, 0013, 0014, 0016 | ✅ PR #6 fusionada |
 | 4 | Solicitudes e itinerarios | Solicitudes | 0001, 0004, 0007 | ✅ PR #7 fusionada |
 | 5 | Asignación de punta a punta | Asignacion | 0007, 0009, 0016 | ✅ PR #8 fusionada |
-| 6 | Viajes y calificación | Viajes, Calificacion | 0007, 0011 | ✅ rama `feature/RF-14-viajes` (pendiente de PR) |
-| 7 | Canal WhatsApp | Mensajeria | 0003, 0008, 0012 | ⬜ |
+| 6 | Viajes y calificación | Viajes, Calificacion | 0007, 0011 | ✅ PR #9 fusionada |
+| 7 | Canal WhatsApp | Mensajeria | 0003, 0008, 0012 | ✅ rama `feature/RF-14-whatsapp` (pendiente de PR) |
 | 8 | Notificaciones y alertas | Notificaciones | 0007, 0015, 0016 | ⬜ |
 | 9 | Reportes y vista operacional | Reportes | 0006, 0013 | ⬜ |
 | 10 | Borde común | Plataforma | 0012, 0014 | ⬜ |
@@ -110,9 +110,13 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 - RF cubiertos: RF-31 (completo), RF-33, RF-34, RF-37, RF-39, RF-40, RF-54. Sin migración: las tablas `viaje`, `parada`, `incidente` y `calificacion` ya existían.
 
 ### Fase 7 — Canal WhatsApp
-- [ ] `IWhatsAppGateway`, `WhatsAppSandboxAdapter` (número de prueba de Meta) y adapter simulado.
-- [ ] Webhook con verificación de firma, idempotencia por `ExternalMessageId` y máquina de estados conversacional.
-- [ ] PoC 4: duplicados sin procesamiento duplicado.
+- [x] `IWhatsAppGateway` con `WhatsAppSandboxAdapter` (número de prueba de Meta Cloud API, Graph API) y `WhatsAppSimuladoAdapter` (por defecto); ambos leen el webhook con el formato y la firma de Meta. Guía para probar con el celular: `docs/GUIA-WHATSAPP-META.md` (Meta + ngrok, gratis).
+- [x] Webhook con verificación de suscripción y de firma `X-Hub-Signature-256`; guarda el mensaje (bandeja de entrada, único por id externo) y responde de inmediato; ignora los eventos de otro número.
+- [x] Worker del canal (cada 2 s): procesa en orden de llegada y envía la bandeja de salida con reintentos y espera creciente; errores transitorios vs. permanentes; correlación del id externo y del estado de entrega (sent, delivered, read, failed).
+- [x] Máquina de estados conversacional (menú numerado y pasos guiados): el pasajero pide transporte, consulta, cancela y califica; el conductor acepta o rechaza, inicia y finaliza viajes y reporta novedades. Identidad por el teléfono registrado (solo pasajeros y conductores activos).
+- [x] PoC 4: un mensaje repetido no se procesa dos veces (prueba de integración con el webhook firmado).
+- Pruebas: 456 unitarias (91,9 % líneas / 82,6 % ramas), 16 de arquitectura, 126 de integración. Migración `CanalWhatsApp` (esquema `canal`). Probado con WhatsApp real (número de prueba de Meta + ngrok): el bot respondió desde el celular.
+- RF cubiertos: RF-14, RF-15, RF-18; RF-16 parcial (el bot confirma al instante; las notificaciones por cambios llegan en la Fase 8).
 
 ### Fase 8 — Notificaciones y alertas
 - [ ] `INotificationGateway`: WhatsApp, alerta en el panel por SSE y correo (`IEmailSender`, smtp4dev en local).
@@ -149,11 +153,11 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-11 | Aplicación de reglas de negocio | 5 | ✅ |
 | RF-12 | Reasignación manual | 5 | ✅ |
 | RF-13 | Priorización de solicitudes urgentes | 5 | ✅ |
-| RF-14 | Recepción de mensajes de WhatsApp | 7 | ⬜ |
-| RF-15 | Procesamiento conversacional de solicitudes | 7 | ⬜ |
-| RF-16 | Confirmaciones al pasajero | 8 | ⬜ |
+| RF-14 | Recepción de mensajes de WhatsApp | 7 | ✅ |
+| RF-15 | Procesamiento conversacional de solicitudes | 7 | ✅ |
+| RF-16 | Confirmaciones al pasajero | 7-8 | 🟡 el bot confirma la solicitud al registrarla; los avisos de asignación llegan en la Fase 8 |
 | RF-17 | Notificación al conductor asignado | 8 | ⬜ |
-| RF-18 | Actualización de estado del viaje por WhatsApp | 7 | ⬜ |
+| RF-18 | Actualización de estado del viaje por WhatsApp | 7 | ✅ |
 | RF-19 | Aislamiento físico entre tenants | 1 | ✅ Spike 3 |
 | RF-20 | Configuración separada por tenant | 1 | 🟡 BD y secretos por operador |
 | RF-21 | Configuración avanzada de reglas | 5 | ✅ |
@@ -216,3 +220,6 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 2026-10-18 | La configuración del motor vive en las tablas `motor.*` del modelo ER (no en `ops.parametro`), con la v1 sembrada por migración; la ventana del balance de carga (7 días) es un parámetro de la regla. Las exclusiones de franjas pasan a diferibles para poder reemplazar una asignación en una transacción. |
 | 2026-10-18 | Fase 6 (decisiones del usuario): hasta el canal WhatsApp, el Operador logístico ejecuta desde el panel las acciones del conductor y del pasajero; un rechazo devuelve la solicitud a la cola sin volver a proponer a ese conductor; una asignación sin respuesta vence (parámetro, 15 min) y cuenta como rechazo; la calificación tiene plazo configurable (7 días). |
 | 2026-10-18 | El viaje nace al aceptar la asignación (estado Programado) para poder registrar paradas y novedades antes de empezar; el candidato manual del Operador logístico no se descarta por un rechazo previo; el monitoreo muestra los programados de las próximas 2 horas. |
+| 2026-10-18 | Fase 7 (decisiones del usuario): el webhook guarda en una bandeja de entrada y un worker procesa y responde con reintentos; bot con menú numerado y pasos guiados; los cuatro flujos (pasajero: pedir, consultar, cancelar y calificar; conductor: responder asignaciones, iniciar/finalizar y novedades). Para probar con el celular: número de prueba de Meta + ngrok (dominio estático gratis), con el simulado por defecto. |
+| 2026-10-18 | Una solicitud pedida por WhatsApp dura 60 min por defecto (el pasajero no la conoce); el número del remitente se normaliza a E.164 (`+57…`) para encontrar al usuario; la conversación vuelve al menú tras 30 min sin mensajes; los teléfonos del canal se cifran como los de `ops.usuario`. |
+| 2026-10-18 | Los teléfonos de WhatsApp se validan y normalizan a E.164 (`+57…`, sin espacios ni guiones) al crear o editar usuarios, pasajeros y conductores (también el primer administrador de la CLI): son la identidad en el canal. Se detectó al probar con Meta, porque la API aceptaba cualquier texto. |
