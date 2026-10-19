@@ -24,7 +24,7 @@ public class ComandoTests
     {
         var ok = Comando.TryParse(
             ["crear-operador", "--id", "tenant-c", "--razon-social", "C", "--nit", "900", "--correo", "c@c.co",
-                "--admin-nombre", "Ana", "--admin-correo", "ana@c.co", "--admin-telefono", "+57300"],
+                "--admin-nombre", "Ana", "--admin-correo", "ana@c.co", "--admin-telefono", "+573001112233"],
             out var comando, out var error);
 
         Assert.True(ok, error);

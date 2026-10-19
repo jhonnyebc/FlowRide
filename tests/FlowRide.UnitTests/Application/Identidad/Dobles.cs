@@ -91,6 +91,14 @@ internal sealed class UnidadTrabajoEnMemoria(AuditoriaEnMemoria auditoria) : IUn
         Confirmaciones++;
         return Task.CompletedTask;
     }
+
+    public int Descartes { get; private set; }
+
+    public void DescartarCambios()
+    {
+        auditoria.Pendientes.Clear();
+        Descartes++;
+    }
 }
 
 internal sealed class ProveedorEnMemoria : IProveedorIdentidad

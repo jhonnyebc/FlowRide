@@ -7,4 +7,7 @@ namespace FlowRide.Application.Comun.Salida.Puertos;
 public interface IUnidadTrabajo
 {
     Task GuardarCambiosAsync(CancellationToken ct);
+
+    /// <summary>Descarta los cambios pendientes sin guardarlos (p. ej. tras una regla de negocio que falló a mitad de un flujo).</summary>
+    void DescartarCambios();
 }

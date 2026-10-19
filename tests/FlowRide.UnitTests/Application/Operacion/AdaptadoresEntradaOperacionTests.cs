@@ -81,12 +81,12 @@ public class AdaptadoresEntradaOperacionTests
         var respuesta = await adaptador.RegistrarAsync(new PasajeroPeticion
         {
             Nombre = "Ana",
-            TelefonoWhatsApp = "+57300",
+            TelefonoWhatsApp = "+573001112233",
             Correo = " ",
             EmpresaClienteId = empresaId,
             CodigoInterno = " E-1 "
         }, Actor, default);
-        await adaptador.ActualizarAsync(pasajero.Id, new PasajeroPeticion { Nombre = "Ana", TelefonoWhatsApp = "+57300" }, Actor, default);
+        await adaptador.ActualizarAsync(pasajero.Id, new PasajeroPeticion { Nombre = "Ana", TelefonoWhatsApp = "+573001112233" }, Actor, default);
         await adaptador.BuscarAsync(new BusquedaPeticion { EmpresaClienteId = empresaId }, default);
 
         Assert.Null(Assert.Single(registrar.Recibidos).Correo);
@@ -94,7 +94,7 @@ public class AdaptadoresEntradaOperacionTests
         Assert.Equal(empresaId, respuesta.EmpresaClienteId);
         Assert.Equal(empresaId, Assert.Single(buscar.Recibidos).Filtro.EmpresaClienteId);
         await Assert.ThrowsAsync<FlowRideExcepcion>(() => adaptador.RegistrarAsync(
-            new PasajeroPeticion { Nombre = "Ana", TelefonoWhatsApp = "+57300", CodigoInterno = "E-1" }, Actor, default));
+            new PasajeroPeticion { Nombre = "Ana", TelefonoWhatsApp = "+573001112233", CodigoInterno = "E-1" }, Actor, default));
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class AdaptadoresEntradaOperacionTests
         var peticion = new ConductorPeticion
         {
             Nombre = "Luis",
-            TelefonoWhatsApp = "+57310",
+            TelefonoWhatsApp = "+573101112233",
             NumeroLicencia = " 1001 ",
             CategoriaLicencia = "C2",
             VencimientoLicencia = Vigente

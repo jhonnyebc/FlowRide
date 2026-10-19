@@ -33,6 +33,8 @@ public sealed class UnidadTrabajoEf(FlowRideDbContext contexto) : IUnidadTrabajo
         }
     }
 
+    public void DescartarCambios() => contexto.ChangeTracker.Clear();
+
     private async Task GuardarAsync(CancellationToken ct)
     {
         var eventos = contexto.ChangeTracker.Entries<EventoAuditoria>()

@@ -13,7 +13,10 @@ public sealed class RecifradorCamposSilo(NpgsqlDataSource fuente, CifradorCampos
     internal static readonly (string Tabla, string Columna)[] Campos =
     [
         ("ops.usuario", "telefono_whats_app"),
-        ("ops.conductor", "numero_licencia")
+        ("ops.conductor", "numero_licencia"),
+        ("canal.mensaje_entrante", "remitente"),
+        ("canal.mensaje_saliente", "destinatario"),
+        ("canal.conversacion", "telefono")
     ];
 
     public async Task<int> RecifrarAsync(CancellationToken ct)

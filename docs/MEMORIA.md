@@ -5,19 +5,22 @@
 > Última actualización: 2026-10-18.
 
 ## Estado actual
-- **Rama de trabajo:** `feature/RF-14-viajes` (Fase 6 completa, todos los gates en verde), **sin commit todavía**,
+- **Rama de trabajo:** `feature/RF-14-whatsapp` (Fase 7 completa, todos los gates en verde), **sin commit todavía**,
   pendiente del OK del usuario para el commit y el PR hacia `develop`.
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
   Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6), Fase 4
-  Solicitudes e itinerarios (PR #7) y Fase 5 Asignación de punta a punta (PR #8).
-- **Fase actual:** Fase 6 (Viajes y calificación) terminada en la rama; la siguiente es la Fase 7 (Canal WhatsApp).
-- **Tests:** 400 unitarios (94,7 % líneas / 86,8 % ramas en Domain + Application), 16 de arquitectura, 111 de integración
+  Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8) y Fase 6 Viajes y calificación (PR #9).
+- **Fase actual:** Fase 7 (Canal WhatsApp) terminada en la rama; la siguiente es la Fase 8 (Notificaciones y alertas).
+- **Tests:** 456 unitarios (91,9 % líneas / 82,6 % ramas en Domain + Application), 16 de arquitectura, 126 de integración
   (Keycloak, Mailpit y Azurite reales con Testcontainers).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
-  Azurite (10000). `tenant-a` y `tenant-b` tienen Silo (migración `ParametrosYCamposCifrados` aplicada), realm, bucket
-  `flowride-<tenant>`, clave de cifrado y primer administrador (`admin@tenant-a.local`, `admin@tenant-b.local`, datos de
-  prueba, todavía sin contraseña: correo "Actualiza tu cuenta" en Mailpit). Sus teléfonos ya están cifrados (`v1.`). La
-  API arranca como `tenant-a`: `/health/ready` 200 y `/api/*` 401 sin token.
+  Azurite (10000). Los secretos viven en el AppData **real** del usuario (`flowride-aprovisionamiento` y
+  `flowride-tenant-a`, configurados por él el 2026-10-18). `tenant-a` se recreó ese día (base nueva con todas las
+  migraciones, clave de cifrado nueva, admin `admin@tenant-a.local` con contraseña ya definida) y tiene una empresa de
+  pruebas y un pasajero con el celular del usuario. El canal de tenant-a está en `MetaSandbox` (número de prueba
+  +1 555 203 2563, token permanente de un usuario del sistema, webhook por ngrok `chummy-spree-clutter.ngrok-free.dev`).
+  `tenant-b` existe en la base pero sus secretos solo estaban en la copia aislada de los procesos de Claude: para usarlo
+  hay que recrearlo igual que tenant-a.
 
 ## Contexto de trabajo
 - El equipo del curso (Sebastián, Andrés y Jhonny) trabajó junto **hasta el parcial**: los ADR, el DAS y los diagramas
@@ -119,10 +122,14 @@
   `dotnet clean` después.
 - **Minimal APIs y `IFormFile`:** exigen antiforgery; con autenticación solo por bearer se desactiva por endpoint.
 - **Fin de línea:** `dotnet format` marca un archivo que mezcla CRLF y LF. Al editar con `sed`/`perl` un archivo CRLF,
-  dejarlo entero en un solo formato (`perl -pi -e "s/?
-/
-/"`).
+  dejarlo entero en un solo formato (con `perl -pi` cambiando cada salto de línea a CRLF).
 - **Docker Desktop cerrado:** las pruebas de integración fallan al conectar; iniciarlo y esperar a que `docker info` responda.
+  Testcontainers usa el pipe `docker_engine`, que a veces tarda más que `docker info` en aparecer.
+- **AppData aislado:** lo que escriben en `%APPDATA%` los procesos que lanza Claude (app de escritorio) queda en una copia
+  aislada (`AppData/Local/Packages/Claude_*/LocalCache`). Los `dotnet user-secrets set` y la CLI de aprovisionamiento los
+  corre el usuario en su terminal; Claude solo verifica nombres de claves.
+- **Meta Cloud API:** el token temporal vence en horas (usar uno de usuario del sistema); sin `subscribed_apps` el webhook
+  se verifica pero no llegan mensajes; ngrok gratis exige agente ≥ 3.20 (`ngrok update`).
 
 ## Bitácora de sesiones
 | Fecha | Qué se hizo |
@@ -135,6 +142,7 @@
 | 2026-10-17 | Fase 4 completa en `feature/RF-09-solicitudes-itinerarios`: solicitudes desde el panel con validación, ventana de cancelación, modificación sin asignar, cancelación con motivo (y de su asignación), visibilidad de personales, CQRS ligero e itinerarios recurrentes. 329 + 16 + 99 pruebas en verde. |
 | 2026-10-18 | Fase 5 completa en `feature/RF-10-asignacion`: asignación automática transaccional con Outbox y worker de la cola, brechas del motor cerradas, configuración versionada con rollback, decision log persistente, reasignación manual completa y Spike 2 (0 dobles asignaciones). 361 + 16 + 107 pruebas en verde. |
 | 2026-10-18 | Fase 5 cerrada (PR #8). Fase 6 completa en `feature/RF-14-viajes`: aceptar crea el viaje programado, rechazo y vencimiento devuelven a la cola sin ese conductor, ciclo iniciar/finalizar, paradas, incidentes, calificación con plazo, historial, monitoreo y trazabilidad. 400 + 16 + 111 pruebas en verde. |
+| 2026-10-18 | Fase 6 cerrada (PR #9). Fase 7 completa en `feature/RF-14-whatsapp`: webhook firmado con bandeja de entrada idempotente, worker del canal con reintentos y correlación, bot de menú numerado para pasajero y conductor, adaptador del número de prueba de Meta y simulado, guía Meta + ngrok. 448 + 16 + 126 pruebas en verde. |
 
 ## Sesión 2026-10-16 (continuación): estilo del profesor
 - `Viaje.EtaProgramada` **eliminada** (decisión del usuario) + migración `QuitarEtaProgramada`, ya aplicada a tenant-a/b locales.
@@ -244,13 +252,43 @@
 - Entorno local: la API arranca como `tenant-a` y el worker corre el vencimiento y la cola sin errores.
 - Gates al cierre: build sin advertencias, formato OK, 400 unitarias (94,7 % / 86,8 %), 16 arquitectura, 111 integración;
   Spike 2 en verde 5 veces seguidas.
+- Commit `71fd5e7` → PR #9 fusionada en `develop` el 2026-10-18 (merge `bc7d822`) con el CI en verde. **Fase 6 cerrada.**
+
+## Sesión 2026-10-18 (continuación): Fase 7 (Canal WhatsApp)
+- Rama `feature/RF-14-whatsapp` (llevó también la documentación que cerraba la Fase 6).
+- Decisiones del usuario (roadmap 2026-10-18): bandeja de entrada + worker; menú numerado con pasos guiados; los cuatro
+  flujos; para probar con el celular, número de prueba de Meta + ngrok (el usuario ya tiene cuenta de desarrollador de
+  Meta; la configuración real queda como paso opcional con `docs/GUIA-WHATSAPP-META.md`). Decisiones propias anotadas:
+  duración por defecto de 60 min, teléfono E.164, 30 min de inactividad, teléfonos del canal cifrados.
+- Dominio `Canal`: `MensajeEntrante`, `MensajeSaliente` (reintentos y correlación), `Conversacion` (paso + datos),
+  `EntradaConversacion` (opciones, fechas "hoy/mañana/dd/mm hh:mm", E.164), repositorios.
+- Aplicación: `IWhatsAppGateway`, `BotWhatsApp` (llama a los casos de uso de solicitudes y viajes), Recibir webhook,
+  Simular, Procesar entrante, Registrar fallo, Enviar saliente, Pendientes y Conversación. `IUnidadTrabajo.DescartarCambios`.
+- Infraestructura: `FormatoWebhookMeta`, `WhatsAppSandboxAdapter` (Graph API, errores transitorios/permanentes),
+  `WhatsAppSimuladoAdapter`, `WorkerCanalWhatsApp` (cada 2 s), migración `CanalWhatsApp`. API: `/api/whatsapp/webhook`
+  (GET verificación, POST con firma), `/api/whatsapp/conversaciones/{telefono}` y el simulador en Development.
+- Entorno local: `migrar-todos` aplicó `CanalWhatsApp` a tenant-a/b; con la API en Development, un mensaje simulado de un
+  número no registrado recibió el aviso (teléfono cifrado en la base). Los datos de esa prueba se borraron.
+- **Prueba real con WhatsApp (2026-10-18):** número de prueba de Meta + ngrok + webhook firmado; el bot respondió en el
+  celular del usuario. Hizo falta: actualizar ngrok (≥ 3.20), suscribir la cuenta de WhatsApp a la app
+  (`subscribed_apps`), un token permanente de usuario del sistema y reiniciar la API tras cambiar secretos. La guía
+  `docs/GUIA-WHATSAPP-META.md` quedó con esos pasos.
+- **Incidente:** los secretos que la CLI había creado desde los procesos de Claude estaban en una copia aislada del AppData
+  (virtualización de la app de escritorio); al borrarla se perdió la clave de cifrado de tenant-a y se recreó tenant-a con
+  la CLI corrida por el usuario. Desde entonces los secretos y el aprovisionamiento los corre el usuario.
+- Al probar se vio que la API aceptaba cualquier texto como teléfono: ahora se valida y normaliza a E.164
+  (`TelefonosWhatsApp.Normalizar` en los adaptadores de entrada de usuarios, pasajeros y conductores).
+- `FlowRide.API.http`: la variable de host se llama `host` (Rider no admite puntos en los nombres) y el entorno `local`
+  (`http-client.env.json`) inicia sesión en Keycloak con PKCE para obtener el token sin Panel Web.
+- Gates al cierre: build sin advertencias, formato OK, 456 unitarias (91,9 % / 82,6 %), 16 arquitectura, 126 integración.
 - **Pendiente:** OK del usuario para commit + PR.
 
 ## Próximos pasos
-1. **Esperar el OK del usuario** sobre la Fase 6; luego commit (`feat(viajes): …`) y PR de `feature/RF-14-viajes` hacia
+1. **Esperar el OK del usuario** sobre la Fase 7; luego commit (`feat(canal): …`) y PR de `feature/RF-14-whatsapp` hacia
    `develop`.
-2. Fase 7 (Canal WhatsApp): `IWhatsAppGateway`, adaptador sandbox de Meta y simulado, webhook con firma e idempotencia,
-   máquina de estados conversacional que llame a los casos de uso de solicitudes y viajes (PoC 4).
+2. Fase 8 (Notificaciones y alertas): worker de la Outbox con `SKIP LOCKED` que convierta los eventos (asignación creada,
+   rechazada, viaje iniciado, incidente…) en mensajes de WhatsApp, alertas del panel por SSE y correo; recordatorios;
+   catálogo de mensajes `es-CO` y plantillas de Meta para avisos fuera de la ventana de 24 h.
 3. Panel Web: sigue en la Fase 11. El usuario decidió (2026-10-18) desarrollarlo completo más adelante, no adelantar un panel básico.
 4. RF-23: probar "Olvidé mi contraseña" con la pantalla de login cuando exista el Panel Web (Fase 11).
 5. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).

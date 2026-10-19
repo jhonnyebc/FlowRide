@@ -193,7 +193,7 @@ public class AutorizacionApiTests(PostgresFixture postgres) : IAsyncLifetime
         {
             Nombre = "X",
             Correo = "x@ops.co",
-            TelefonoWhatsApp = "+57123",
+            TelefonoWhatsApp = "+573001234567",
             Rol = RolesSistema.Conductor
         });
         var aSiMismo = await cliente.PostAsync($"/api/usuarios/{administrador.Id}/desactivar", null);
