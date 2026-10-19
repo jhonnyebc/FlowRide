@@ -1,18 +1,18 @@
 # Pruebas manuales de la API del stack de un operador.
 # Requisitos: `docker compose up -d` y el operador aprovisionado con la herramienta (ver CLAUDE.md).
-@FlowRide.API_HostAddress = http://localhost:5237
+@host = http://localhost:5237
 
 ### RF-53 — Liveness: el proceso responde (no consulta la base)
-GET {{FlowRide.API_HostAddress}}/health/live
+GET {{host}}/health/live
 
 ### RF-53 — Readiness: la base del Silo del operador acepta conexiones
-GET {{FlowRide.API_HostAddress}}/health/ready
+GET {{host}}/health/ready
 
 ### RF-51 — Ruta inexistente: ProblemDetails (application/problem+json) con traceId
-GET {{FlowRide.API_HostAddress}}/no-existe
+GET {{host}}/no-existe
 
 ### Contrato OpenAPI (solo en Development)
-GET {{FlowRide.API_HostAddress}}/openapi/v1.json
+GET {{host}}/openapi/v1.json
 
 # ---------------------------------------------------------------------------------------------------------------
 # Fase 2 — Identidad, usuarios y auditoría (RF-01, RF-02, ADM-SEG-01).
@@ -22,18 +22,18 @@ GET {{FlowRide.API_HostAddress}}/openapi/v1.json
 @token = pega-aqui-un-token-del-realm
 
 ### RF-01 — Sin token: 401
-GET {{FlowRide.API_HostAddress}}/api/usuarios
+GET {{host}}/api/usuarios
 
 ### Perfil del usuario autenticado (Administrador u Operador logístico)
-GET {{FlowRide.API_HostAddress}}/api/usuarios/yo
+GET {{host}}/api/usuarios/yo
 Authorization: Bearer {{token}}
 
 ### RF-02 — Listar usuarios (solo Administrador); filtro opcional por rol
-GET {{FlowRide.API_HostAddress}}/api/usuarios?rol=OperadorLogistico
+GET {{host}}/api/usuarios?rol=OperadorLogistico
 Authorization: Bearer {{token}}
 
 ### RF-02 — Crear un Operador logístico: Keycloak le envía el correo para definir su contraseña (ver Mailpit)
-POST {{FlowRide.API_HostAddress}}/api/usuarios
+POST {{host}}/api/usuarios
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -45,22 +45,22 @@ Content-Type: application/json
 }
 
 ### ADM-SEG-01 — Desactivar: el siguiente request de ese usuario responde 401 aunque su token siga vigente
-POST {{FlowRide.API_HostAddress}}/api/usuarios/00000000-0000-0000-0000-000000000000/desactivar
+POST {{host}}/api/usuarios/00000000-0000-0000-0000-000000000000/desactivar
 Authorization: Bearer {{token}}
 
 ### Reactivar
-POST {{FlowRide.API_HostAddress}}/api/usuarios/00000000-0000-0000-0000-000000000000/activar
+POST {{host}}/api/usuarios/00000000-0000-0000-0000-000000000000/activar
 Authorization: Bearer {{token}}
 
 ### Cambiar el rol (aplica en la siguiente petición)
-PUT {{FlowRide.API_HostAddress}}/api/usuarios/00000000-0000-0000-0000-000000000000/rol
+PUT {{host}}/api/usuarios/00000000-0000-0000-0000-000000000000/rol
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "rol": "Administrador" }
 
 ### ADR-0011 — Verificar la cadena de hashes de la auditoría (solo Administrador)
-GET {{FlowRide.API_HostAddress}}/api/auditoria/verificacion
+GET {{host}}/api/auditoria/verificacion
 Authorization: Bearer {{token}}
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -68,50 +68,50 @@ Authorization: Bearer {{token}}
 # Consultas: Administrador u Operador logístico. Altas y cambios: Administrador (los turnos, también el Operador).
 
 ### Empresa cliente
-POST {{FlowRide.API_HostAddress}}/api/empresas-cliente
+POST {{host}}/api/empresas-cliente
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "nombre": "Aerolínea del Oriente", "nit": "900555666-7", "correoContacto": "ops@aerolinea.local" }
 
 ### Pasajero (usa el id de la empresa)
-POST {{FlowRide.API_HostAddress}}/api/pasajeros
+POST {{host}}/api/pasajeros
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "nombre": "Ana Gómez", "telefonoWhatsApp": "+573001112233", "empresaClienteId": "00000000-0000-0000-0000-000000000000", "codigoInterno": "E-100" }
 
 ### RF-26 — Conductor (teléfono y licencia se guardan cifrados)
-POST {{FlowRide.API_HostAddress}}/api/conductores
+POST {{host}}/api/conductores
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "nombre": "Luis Pérez", "telefonoWhatsApp": "+573104445566", "numeroLicencia": "79111222", "categoriaLicencia": "C2", "vencimientoLicencia": "2028-12-31" }
 
 ### RF-38 / RF-41 — Buscar conductores (por nombre, o licencia/teléfono exactos) y filtrar por estado
-GET {{FlowRide.API_HostAddress}}/api/conductores?texto=luis&estado=Activo&pagina=1&tamanoPagina=20
+GET {{host}}/api/conductores?texto=luis&estado=Activo&pagina=1&tamanoPagina=20
 Authorization: Bearer {{token}}
 
 ### RF-28 — Estado operativo (Activo, Suspendido, Inactivo)
-PUT {{FlowRide.API_HostAddress}}/api/conductores/00000000-0000-0000-0000-000000000000/estado
+PUT {{host}}/api/conductores/00000000-0000-0000-0000-000000000000/estado
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "estado": "Suspendido" }
 
 ### Turno del conductor
-POST {{FlowRide.API_HostAddress}}/api/conductores/00000000-0000-0000-0000-000000000000/turnos
+POST {{host}}/api/conductores/00000000-0000-0000-0000-000000000000/turnos
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "inicio": "2026-10-20T06:00:00-05:00", "fin": "2026-10-20T14:00:00-05:00" }
 
 ### RF-07 — Conductores disponibles en una franja
-GET {{FlowRide.API_HostAddress}}/api/conductores/disponibles?inicio=2026-10-20T08:00:00-05:00&fin=2026-10-20T09:00:00-05:00
+GET {{host}}/api/conductores/disponibles?inicio=2026-10-20T08:00:00-05:00&fin=2026-10-20T09:00:00-05:00
 Authorization: Bearer {{token}}
 
 ### Documento del conductor (PDF/PNG/JPG ≤ 5 MB) al bucket del operador
-POST {{FlowRide.API_HostAddress}}/api/conductores/00000000-0000-0000-0000-000000000000/documentos
+POST {{host}}/api/conductores/00000000-0000-0000-0000-000000000000/documentos
 Authorization: Bearer {{token}}
 Content-Type: multipart/form-data; boundary=limite
 
@@ -127,18 +127,18 @@ Content-Type: application/pdf
 --limite--
 
 ### Vehículo
-POST {{FlowRide.API_HostAddress}}/api/vehiculos
+POST {{host}}/api/vehiculos
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "placa": "ABC123", "marca": "Toyota", "modelo": "Hiace", "capacidad": 12, "vencimientoRtm": "2027-06-30", "vencimientoSoat": "2027-03-31" }
 
 ### ADR-0016 — Parámetros del operador (valor por defecto = versión 0)
-GET {{FlowRide.API_HostAddress}}/api/parametros
+GET {{host}}/api/parametros
 Authorization: Bearer {{token}}
 
 ### Cambiar un parámetro (solo Administrador; sube la versión y se audita)
-PUT {{FlowRide.API_HostAddress}}/api/parametros/solicitud.ventana_cancelacion_minutos
+PUT {{host}}/api/parametros/solicitud.ventana_cancelacion_minutos
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -148,7 +148,7 @@ Content-Type: application/json
 # Fase 4 — Solicitudes e itinerarios (RF-08, RF-09, RF-29 a RF-32). Administrador u Operador logístico.
 
 ### RF-08 — Itinerario recurrente: un itinerario por fecha del rango que caiga en esos días
-POST {{FlowRide.API_HostAddress}}/api/itinerarios
+POST {{host}}/api/itinerarios
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -165,7 +165,7 @@ Content-Type: application/json
 }
 
 ### RF-09 / RF-29 — Solicitud registrada desde el panel por un pasajero (sin itinerario: datos completos)
-POST {{FlowRide.API_HostAddress}}/api/solicitudes
+POST {{host}}/api/solicitudes
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -181,29 +181,29 @@ Content-Type: application/json
 }
 
 ### Solicitud desde un itinerario (origen, destino y horario salen del itinerario)
-POST {{FlowRide.API_HostAddress}}/api/solicitudes
+POST {{host}}/api/solicitudes
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "pasajeroId": "00000000-0000-0000-0000-000000000000", "itinerarioId": "00000000-0000-0000-0000-000000000000", "cantidadPasajeros": 1 }
 
 ### Cola de asignación (urgentes primero) y RF-31 historial por pasajero, empresa o fechas
-GET {{FlowRide.API_HostAddress}}/api/solicitudes?estado=Pendiente
+GET {{host}}/api/solicitudes?estado=Pendiente
 Authorization: Bearer {{token}}
 
 ### RF-30 — Estado e historial de una solicitud
-GET {{FlowRide.API_HostAddress}}/api/solicitudes/00000000-0000-0000-0000-000000000000
+GET {{host}}/api/solicitudes/00000000-0000-0000-0000-000000000000
 Authorization: Bearer {{token}}
 
 ### RF-32 — Modificar (solo sin asignar y dentro del plazo)
-PUT {{FlowRide.API_HostAddress}}/api/solicitudes/00000000-0000-0000-0000-000000000000
+PUT {{host}}/api/solicitudes/00000000-0000-0000-0000-000000000000
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "direccionOrigen": "Hotel Central", "direccionDestino": "Terminal", "fechaHoraServicio": "2026-10-20T07:00:00-05:00", "duracionMinutos": 40, "cantidadPasajeros": 2 }
 
 ### RF-32 — Cancelar con motivo (fuera del plazo, solo el Operador logístico)
-POST {{FlowRide.API_HostAddress}}/api/solicitudes/00000000-0000-0000-0000-000000000000/cancelar
+POST {{host}}/api/solicitudes/00000000-0000-0000-0000-000000000000/cancelar
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -213,102 +213,143 @@ Content-Type: application/json
 # Fase 5 — Asignación de punta a punta (RF-10 a RF-13, RF-21, RF-38). El worker asigna la cola cada 15 s.
 
 ### RF-10 — Asignar ya una solicitud pendiente con el motor
-POST {{FlowRide.API_HostAddress}}/api/solicitudes/00000000-0000-0000-0000-000000000000/asignar
+POST {{host}}/api/solicitudes/00000000-0000-0000-0000-000000000000/asignar
 Authorization: Bearer {{token}}
 
 ### ADR-0009 — Decision log: candidatos, resultado de cada regla (con su versión), puntajes y desempate
-GET {{FlowRide.API_HostAddress}}/api/solicitudes/00000000-0000-0000-0000-000000000000/decisiones
+GET {{host}}/api/solicitudes/00000000-0000-0000-0000-000000000000/decisiones
 Authorization: Bearer {{token}}
 
 ### RF-38 — Asignaciones por conductor, solicitud, estado o fechas
-GET {{FlowRide.API_HostAddress}}/api/asignaciones?estado=Asignada
+GET {{host}}/api/asignaciones?estado=Asignada
 Authorization: Bearer {{token}}
 
 ### RF-12 — Reasignar por contingencia (solo Operador logístico; el candidato debe pasar las eliminatorias)
-POST {{FlowRide.API_HostAddress}}/api/asignaciones/00000000-0000-0000-0000-000000000000/reasignar
+POST {{host}}/api/asignaciones/00000000-0000-0000-0000-000000000000/reasignar
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "conductorId": "00000000-0000-0000-0000-000000000000", "vehiculoId": "00000000-0000-0000-0000-000000000000", "motivo": "Conductor enfermo" }
 
 ### RF-12 — Asignar a mano una solicitud sin candidatos (o devolverla a la cola)
-POST {{FlowRide.API_HostAddress}}/api/solicitudes/00000000-0000-0000-0000-000000000000/asignacion-manual
+POST {{host}}/api/solicitudes/00000000-0000-0000-0000-000000000000/asignacion-manual
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "conductorId": "00000000-0000-0000-0000-000000000000", "vehiculoId": "00000000-0000-0000-0000-000000000000", "motivo": "Contingencia" }
 
 ### RF-12 — El conductor abandona su turno: sus solicitudes vuelven a la cola
-POST {{FlowRide.API_HostAddress}}/api/conductores/00000000-0000-0000-0000-000000000000/turnos/00000000-0000-0000-0000-000000000000/abandonar
+POST {{host}}/api/conductores/00000000-0000-0000-0000-000000000000/turnos/00000000-0000-0000-0000-000000000000/abandonar
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "motivo": "Emergencia familiar" }
 
 ### RF-21 — Versiones de la configuración del motor
-GET {{FlowRide.API_HostAddress}}/api/motor/configuraciones
+GET {{host}}/api/motor/configuraciones
 Authorization: Bearer {{token}}
 
 ### RF-21 — Activar una versión (activar una anterior es el rollback; solo Administrador)
-POST {{FlowRide.API_HostAddress}}/api/motor/configuraciones/1/activar
+POST {{host}}/api/motor/configuraciones/1/activar
 Authorization: Bearer {{token}}
 
 ### RF-34 — El conductor acepta la asignación (en la Fase 6 lo hace el Operador logístico en su nombre): nace el viaje programado
-POST {{FlowRide.API_HostAddress}}/api/asignaciones/00000000-0000-0000-0000-000000000000/aceptar
+POST {{host}}/api/asignaciones/00000000-0000-0000-0000-000000000000/aceptar
 Authorization: Bearer {{token}}
 
 ### RF-34 — El conductor rechaza: la solicitud vuelve a la cola y el motor no se la vuelve a proponer
-POST {{FlowRide.API_HostAddress}}/api/asignaciones/00000000-0000-0000-0000-000000000000/rechazar
+POST {{host}}/api/asignaciones/00000000-0000-0000-0000-000000000000/rechazar
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "motivo": "Vehículo en taller" }
 
 ### Viaje — Parada intermedia (programado o en curso)
-POST {{FlowRide.API_HostAddress}}/api/viajes/00000000-0000-0000-0000-000000000000/paradas
+POST {{host}}/api/viajes/00000000-0000-0000-0000-000000000000/paradas
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "direccion": "Portería norte", "orden": 1, "horaEstimada": "2026-10-20T14:20:00Z" }
 
 ### Viaje — Novedad: Retraso, FallaMecanica, AbandonoTurno, Accidente u Otro (sale como alerta en la Fase 8)
-POST {{FlowRide.API_HostAddress}}/api/viajes/00000000-0000-0000-0000-000000000000/incidentes
+POST {{host}}/api/viajes/00000000-0000-0000-0000-000000000000/incidentes
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "tipo": "Retraso", "descripcion": "Vía cerrada por derrumbe" }
 
 ### Viaje — Iniciar y finalizar (la solicitud pasa a EnCurso y a Completada)
-POST {{FlowRide.API_HostAddress}}/api/viajes/00000000-0000-0000-0000-000000000000/iniciar
+POST {{host}}/api/viajes/00000000-0000-0000-0000-000000000000/iniciar
 Authorization: Bearer {{token}}
 
 ###
-POST {{FlowRide.API_HostAddress}}/api/viajes/00000000-0000-0000-0000-000000000000/finalizar
+POST {{host}}/api/viajes/00000000-0000-0000-0000-000000000000/finalizar
 Authorization: Bearer {{token}}
 
 ### Viaje — Llegada a una parada (con el viaje en curso)
-POST {{FlowRide.API_HostAddress}}/api/viajes/00000000-0000-0000-0000-000000000000/paradas/00000000-0000-0000-0000-000000000000/llegada
+POST {{host}}/api/viajes/00000000-0000-0000-0000-000000000000/paradas/00000000-0000-0000-0000-000000000000/llegada
 Authorization: Bearer {{token}}
 
 ### RF-54 — Calificación del pasajero (1 a 5, una por viaje, dentro del plazo calificacion.plazo_dias)
-POST {{FlowRide.API_HostAddress}}/api/viajes/00000000-0000-0000-0000-000000000000/calificacion
+POST {{host}}/api/viajes/00000000-0000-0000-0000-000000000000/calificacion
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "puntaje": 5, "comentario": "Muy puntual" }
 
 ### RF-31 — Historial de viajes por estado, conductor, pasajero, empresa o fechas
-GET {{FlowRide.API_HostAddress}}/api/viajes?estado=Finalizado
+GET {{host}}/api/viajes?estado=Finalizado
 Authorization: Bearer {{token}}
 
 ### RF-37 — Monitoreo: viajes en curso y programados de las próximas 2 horas (retrasados marcados)
-GET {{FlowRide.API_HostAddress}}/api/viajes/monitoreo
+GET {{host}}/api/viajes/monitoreo
 Authorization: Bearer {{token}}
 
 ### Viaje — Detalle con paradas, incidentes y calificación
-GET {{FlowRide.API_HostAddress}}/api/viajes/00000000-0000-0000-0000-000000000000
+GET {{host}}/api/viajes/00000000-0000-0000-0000-000000000000
 Authorization: Bearer {{token}}
 
 ### RF-40 — Trazabilidad del servicio de punta a punta
-GET {{FlowRide.API_HostAddress}}/api/solicitudes/00000000-0000-0000-0000-000000000000/trazabilidad
+GET {{host}}/api/solicitudes/00000000-0000-0000-0000-000000000000/trazabilidad
 Authorization: Bearer {{token}}
+
+### RF-14/RF-15 — Escribirle al bot sin WhatsApp (solo en Development con el proveedor simulado; responde 202 y el worker contesta en ~2 s)
+POST {{host}}/api/whatsapp/simulado/mensajes
+Content-Type: application/json
+
+{ "telefono": "+573001112233", "texto": "hola" }
+
+### Canal WhatsApp — Conversación de un número con el bot (Panel Web)
+GET {{host}}/api/whatsapp/conversaciones/%2B573001112233
+Authorization: Bearer {{token}}
+
+### ADR-0008 — Verificación del webhook (la hace Meta al configurarlo; ver docs/GUIA-WHATSAPP-META.md)
+GET {{host}}/api/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=<token de verificación>&hub.challenge=12345
+
+# ---------------------------------------------------------------------------------------------------------------
+# Registrar tu número para probar el bot con WhatsApp real (docs/GUIA-WHATSAPP-META.md).
+# En Rider elige el entorno "local" (arriba del editor): la primera petición abre el inicio de sesión de Keycloak
+# (usuario admin@tenant-a.local, contraseña definida desde el correo de Mailpit) y Rider guarda el token.
+
+### Empresa cliente para tus pruebas (guarda su Id)
+POST {{host}}/api/empresas-cliente
+Authorization: Bearer {{$auth.token("panel")}}
+Content-Type: application/json
+
+{ "nombre": "Empresa de pruebas WhatsApp", "nit": "900999888-1", "correoContacto": "pruebas@tenant-a.local" }
+
+> {% client.global.set("empresaId", response.body.id); %}
+
+### Tu número como pasajero: cambia el teléfono por el tuyo, formato +57…
+POST {{host}}/api/pasajeros
+Authorization: Bearer {{$auth.token("panel")}}
+Content-Type: application/json
+
+{ "nombre": "Pasajero de pruebas", "telefonoWhatsApp": "+573001112233", "empresaClienteId": "{{empresaId}}", "codigoInterno": "PRUEBA-1" }
+
+### Corregir los datos de un pasajero (cambia el Id por el del pasajero)
+PUT {{host}}/api/pasajeros/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{$auth.token("panel")}}
+Content-Type: application/json
+
+{ "nombre": "Pasajero de pruebas", "telefonoWhatsApp": "+573001112233", "empresaClienteId": "{{empresaId}}", "codigoInterno": "PRUEBA-1" }

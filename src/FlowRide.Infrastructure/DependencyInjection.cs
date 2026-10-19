@@ -6,6 +6,11 @@ using FlowRide.Application.Asignaciones.Salida.Puertos;
 using FlowRide.Application.Auditoria.CasosUso;
 using FlowRide.Application.Auditoria.Entrada.Adaptadores;
 using FlowRide.Application.Auditoria.Entrada.Puertos;
+using FlowRide.Application.Canal.Bot;
+using FlowRide.Application.Canal.CasosUso;
+using FlowRide.Application.Canal.Entrada.Adaptadores;
+using FlowRide.Application.Canal.Entrada.Puertos;
+using FlowRide.Application.Canal.Salida.Puertos;
 using FlowRide.Application.Comun.CasosUso;
 using FlowRide.Application.Comun.Salida.Puertos;
 using FlowRide.Application.Identidad.CasosUso;
@@ -42,6 +47,8 @@ using FlowRide.Domain.Asignaciones.Repositorios;
 using FlowRide.Domain.Assignment;
 using FlowRide.Domain.Assignment.Rules;
 using FlowRide.Domain.Auditoria.Repositorios;
+using FlowRide.Domain.Canal.GestionCanal;
+using FlowRide.Domain.Canal.Repositorios;
 using FlowRide.Domain.Comun;
 using FlowRide.Domain.Comun.Consultas;
 using FlowRide.Domain.Entidades;
@@ -65,6 +72,7 @@ using FlowRide.Domain.Viajes.GestionViajes;
 using FlowRide.Domain.Viajes.Repositorios;
 using FlowRide.Infrastructure.Asignaciones;
 using FlowRide.Infrastructure.Auditoria;
+using FlowRide.Infrastructure.Canal;
 using FlowRide.Infrastructure.Identidad;
 using FlowRide.Infrastructure.Identidad.Keycloak;
 using FlowRide.Infrastructure.Operacion;
@@ -433,6 +441,70 @@ public static class DependencyInjection
         services.AddScoped<ICasoUsoConRetorno<MonitorearViajesDominio, IReadOnlyList<MonitoreoViajeLectura>>, MonitorearViajesCasoUso>();
         services.AddScoped<ICasoUsoConRetorno<TrazabilidadSolicitudDominio, TrazabilidadLectura>, TrazabilidadSolicitudCasoUso>();
         services.AddScoped<IViajesPuertoEntrada, ViajesAdaptadorEntrada>();
+        return services;
+    }
+
+    /// <summary>
+    /// Canal WhatsApp (Fase 7, ADR-0008): webhook con firma, bandejas de entrada y salida, bot conversacional y worker. El
+    /// proveedor sale de <c>FlowRide:WhatsApp:Proveedor</c>: <c>Simulado</c> (por defecto) o <c>MetaSandbox</c> (número de prueba).
+    /// Requiere <c>AddIdentidad</c>, <c>AddSolicitudes</c>, <c>AddAsignaciones</c> y <c>AddViajes</c>.
+    /// </summary>
+    public static IServiceCollection AddCanalWhatsApp(this IServiceCollection services, IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var opciones = configuration.GetSection(WhatsAppOptions.Seccion).Get<WhatsAppOptions>() ?? new WhatsAppOptions();
+        services.AddSingleton(opciones);
+        if (opciones.EsSimulado)
+        {
+            services.AddSingleton<WhatsAppSimuladoAdapter>();
+            services.AddSingleton<IWhatsAppGateway>(proveedor => proveedor.GetRequiredService<WhatsAppSimuladoAdapter>());
+        }
+        else if (string.Equals(opciones.Proveedor, WhatsAppOptions.ProveedorMetaSandbox, StringComparison.OrdinalIgnoreCase))
+        {
+            const string ayuda = "Es un secreto del operador (almacén local en desarrollo).";
+            ConfiguracionRequerida(configuration, $"{WhatsAppOptions.Seccion}:PhoneNumberId", "Es el id del número de prueba en Meta.");
+            ConfiguracionRequerida(configuration, $"{WhatsAppOptions.Seccion}:AccessToken", ayuda);
+            ConfiguracionRequerida(configuration, $"{WhatsAppOptions.Seccion}:AppSecret", ayuda);
+            ConfiguracionRequerida(configuration, $"{WhatsAppOptions.Seccion}:VerifyToken", ayuda);
+            var http = new HttpClient(new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(5) })
+            {
+                Timeout = TimeSpan.FromSeconds(10)
+            };
+            services.AddSingleton<IWhatsAppGateway>(new WhatsAppSandboxAdapter(opciones, http));
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                $"'{WhatsAppOptions.Seccion}:Proveedor' debe ser {WhatsAppOptions.ProveedorSimulado} o {WhatsAppOptions.ProveedorMetaSandbox}.");
+        }
+
+        // Adaptadores de salida.
+        services.AddScoped<IMensajeEntranteRepositorio, MensajeEntranteRepositorioAdaptador>();
+        services.AddScoped<IMensajeSalienteRepositorio, MensajeSalienteRepositorioAdaptador>();
+        services.AddScoped<IConversacionRepositorio, ConversacionRepositorioAdaptador>();
+        services.AddScoped<IConsultasCanal, ConsultasCanalEf>();
+
+        // Bot, casos de uso y adaptador de entrada.
+        services.AddScoped<BotWhatsApp>();
+        services.AddScoped<RegistroEntrantes>();
+        services.AddScoped<ICasoUsoConRetorno<RecibirWebhookDominio, ResultadoWebhook>, RecibirWebhookCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<SimularMensajeDominio, bool>, SimularMensajeCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarEntrantesPendientesDominio, IReadOnlyList<Guid>>, ConsultarEntrantesPendientesCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ProcesarMensajeEntranteDominio, bool>, ProcesarMensajeEntranteCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<RegistrarFalloEntranteDominio, bool>, RegistrarFalloEntranteCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarSalientesPendientesDominio, IReadOnlyList<Guid>>, ConsultarSalientesPendientesCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<EnviarMensajeSalienteDominio, TipoResultadoEnvio?>, EnviarMensajeSalienteCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarConversacionCanalDominio, IReadOnlyList<MensajeCanalLectura>>, ConsultarConversacionCanalCasoUso>();
+        services.AddScoped<ICanalWhatsAppPuertoEntrada, CanalWhatsAppAdaptadorEntrada>();
+
+        // Worker del canal; se apaga con FlowRide:WhatsApp:Worker:Habilitado=false.
+        var worker = configuration.GetSection(WorkerCanalOptions.Seccion).Get<WorkerCanalOptions>() ?? new WorkerCanalOptions();
+        services.AddSingleton(worker);
+        services.AddSingleton<WorkerCanalWhatsApp>();
+        if (worker.Habilitado)
+            services.AddHostedService(proveedor => proveedor.GetRequiredService<WorkerCanalWhatsApp>());
+
         return services;
     }
 

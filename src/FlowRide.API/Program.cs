@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using FlowRide.API.Asignaciones;
 using FlowRide.API.Auditoria;
+using FlowRide.API.Canal;
 using FlowRide.API.Identidad;
 using FlowRide.API.Operacion;
 using FlowRide.API.Parametros;
@@ -28,6 +29,7 @@ builder.Services.AddOperacion(builder.Configuration);
 builder.Services.AddSolicitudes(builder.Configuration);
 builder.Services.AddAsignaciones(builder.Configuration);
 builder.Services.AddViajes();
+builder.Services.AddCanalWhatsApp(builder.Configuration);
 builder.Services.AddAutenticacionFlowRide();
 builder.Services.AddOpenApi();
 builder.Services.AddExceptionHandler<ManejadorExcepciones>();
@@ -75,6 +77,11 @@ api.MapParametros();
 api.MapSolicitudes();
 api.MapAsignaciones();
 api.MapViajes();
+
+// El simulador del canal solo existe en desarrollo y con el proveedor simulado (ADR-0008).
+var proveedorWhatsApp = builder.Configuration["FlowRide:WhatsApp:Proveedor"];
+api.MapWhatsApp(app.Environment.IsDevelopment()
+                && (string.IsNullOrEmpty(proveedorWhatsApp) || string.Equals(proveedorWhatsApp, "Simulado", StringComparison.OrdinalIgnoreCase)));
 
 app.Run();
 

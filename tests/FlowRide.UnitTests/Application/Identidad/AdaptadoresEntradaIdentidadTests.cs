@@ -38,7 +38,7 @@ public class AdaptadoresEntradaIdentidadTests
     {
         Nombre = " Ana ",
         Correo = " ana@a.co ",
-        TelefonoWhatsApp = " +57300 ",
+        TelefonoWhatsApp = " +57 300 111-2233 ",
         Rol = " OperadorLogistico "
     };
 
@@ -49,7 +49,7 @@ public class AdaptadoresEntradaIdentidadTests
 
         var respuesta = await new CrearUsuarioAdaptadorEntrada(casoUso).CrearAsync(Peticion, Actor, CancellationToken.None);
 
-        Assert.Equal(new CrearUsuarioDominio("Ana", "ana@a.co", "+57300", "OperadorLogistico", Actor), Assert.Single(casoUso.Recibidos));
+        Assert.Equal(new CrearUsuarioDominio("Ana", "ana@a.co", "+573001112233", "OperadorLogistico", Actor), Assert.Single(casoUso.Recibidos));
         Assert.Equal("OperadorLogistico", respuesta.Rol);
         Assert.True(respuesta.Activo);
         Assert.Equal(Ahora, respuesta.CreadoEn);
