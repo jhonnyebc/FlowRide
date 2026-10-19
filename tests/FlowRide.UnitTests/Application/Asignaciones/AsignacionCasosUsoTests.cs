@@ -74,6 +74,14 @@ internal sealed class BandejaEnMemoria : IBandejaSalida
         Eventos.Add((tipoEvento, contenido));
         return Task.CompletedTask;
     }
+
+    public List<(string Tipo, object Contenido, DateTimeOffset Cuando)> Programados { get; } = [];
+
+    public Task ProgramarAsync(string tipoEvento, object contenido, DateTimeOffset cuando, CancellationToken ct)
+    {
+        Programados.Add((tipoEvento, contenido, cuando));
+        return Task.CompletedTask;
+    }
 }
 
 public class AsignacionCasosUsoTests : CasosUsoOperacionBase

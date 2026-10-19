@@ -52,6 +52,9 @@ public sealed class FlowRideApiFactory(string? cadenaConexion, string? tenantId 
         // Los workers de la cola y del canal se apagan en las pruebas: cada prueba los corre cuando lo necesita.
         builder.UseSetting("FlowRide:Asignacion:Worker:Habilitado", "false");
         builder.UseSetting("FlowRide:WhatsApp:Worker:Habilitado", "false");
+        builder.UseSetting("FlowRide:Notificaciones:Worker:Habilitado", "false");
+        // Sin servidor de correo real: las pruebas de correo usan su propio Mailpit (Ajustes).
+        builder.UseSetting("FlowRide:Correo:Host", "smtp.pruebas.invalid");
         builder.UseSetting("FlowRide:WhatsApp:Proveedor", "Simulado");
         builder.UseSetting("FlowRide:WhatsApp:PhoneNumberId", NumeroWhatsApp);
         builder.UseSetting("FlowRide:WhatsApp:AppSecret", SecretoAppWhatsApp);

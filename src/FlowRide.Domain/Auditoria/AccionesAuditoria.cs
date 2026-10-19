@@ -23,6 +23,7 @@ public static class AccionesAuditoria
     public const string RecursoConfiguracionMotor = "configuracion_motor";
     public const string RecursoViaje = "viaje";
     public const string RecursoCalificacion = "calificacion";
+    public const string RecursoPlantilla = "plantilla_whatsapp";
 
     public const string Crear = "crear";
     public const string Actualizar = "actualizar";

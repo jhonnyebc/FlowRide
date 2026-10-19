@@ -120,6 +120,7 @@ public sealed class CancelarSolicitudCasoUso(
     IAsignacionRepositorio asignaciones,
     IViajeRepositorio viajes,
     IEventoAuditoriaRepositorio auditoria,
+    IBandejaSalida bandeja,
     IUnidadTrabajo unidadTrabajo,
     TimeProvider reloj) : ICasoUsoConRetorno<CancelarSolicitudDominio, SolicitudViaje>
 {
@@ -142,8 +143,22 @@ public sealed class CancelarSolicitudCasoUso(
         {
             asignacion.Cancelar($"Solicitud cancelada: {datos.Motivo.Trim()}");
             await viajes.CancelarProgramadoDeAsync(asignacion.Id, ct);
+            await bandeja.AgregarAsync(EventosSalida.AsignacionCancelada, new
+            {
+                asignacionId = asignacion.Id,
+                solicitudId = solicitud.Id,
+                conductorId = asignacion.ConductorId,
+                motivo = datos.Motivo.Trim()
+            }, ct);
         }
 
+        await bandeja.AgregarAsync(EventosSalida.SolicitudCancelada, new
+        {
+            solicitudId = solicitud.Id,
+            pasajeroId = solicitud.PasajeroId,
+            motivo = datos.Motivo.Trim(),
+            porPasajero = datos.ActorId == solicitud.PasajeroId
+        }, ct);
         await solicitudes.ModificarAsync(solicitud.Id, solicitud, ct);
         await auditoria.CrearAsync(new EventoAuditoria(datos.ActorId,
             AccionesAuditoria.De(AccionesAuditoria.RecursoSolicitud, AccionesAuditoria.Cancelar), AccionesAuditoria.RecursoSolicitud,

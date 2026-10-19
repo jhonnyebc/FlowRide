@@ -19,6 +19,10 @@ public interface IWhatsAppGateway
     WebhookTraducido Traducir(string cuerpo);
 
     Task<ResultadoEnvio> EnviarTextoAsync(string telefono, string texto, CancellationToken ct);
+
+    /// <summary>Plantilla aprobada (fuera de la ventana de 24 h, ADR-0016), con los valores de sus variables en orden.</summary>
+    Task<ResultadoEnvio> EnviarPlantillaAsync(string telefono, string plantilla, string idioma, IReadOnlyList<string> parametros,
+        CancellationToken ct);
 }
 
 public enum TipoResultadoEnvio

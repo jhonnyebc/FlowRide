@@ -201,12 +201,14 @@ public sealed class RegistrarFalloEntranteCasoUso(IMensajeEntranteRepositorio en
 }
 
 /// <summary>
-/// Envía un mensaje de la bandeja de salida (RF-16): guarda el Id del proveedor (correlación); un error transitorio se
-/// reintenta con espera creciente y uno permanente queda registrado sin reintentos (ADR-0008).
+/// Envía un mensaje de la bandeja de salida (RF-16), como texto o con su plantilla aprobada: guarda el Id del proveedor
+/// (correlación); un error transitorio se reintenta con espera creciente y uno permanente queda registrado sin
+/// reintentos (ADR-0008) y avisa al panel.
 /// </summary>
 public sealed class EnviarMensajeSalienteCasoUso(
     IMensajeSalienteRepositorio salientes,
     IWhatsAppGateway gateway,
+    IBandejaSalida bandeja,
     IUnidadTrabajo unidadTrabajo,
     TimeProvider reloj) : ICasoUsoConRetorno<EnviarMensajeSalienteDominio, TipoResultadoEnvio?>
 {
@@ -217,7 +219,10 @@ public sealed class EnviarMensajeSalienteCasoUso(
         if (await salientes.ConsultarPorIdAsync(datos.MensajeId, ct) is not { } mensaje || !mensaje.ListoParaEnviar(ahora))
             return null;
 
-        var resultado = await gateway.EnviarTextoAsync(mensaje.Destinatario, mensaje.Contenido, ct);
+        var resultado = mensaje.EsPlantilla
+            ? await gateway.EnviarPlantillaAsync(mensaje.Destinatario, mensaje.Plantilla!, mensaje.IdiomaPlantilla!,
+                System.Text.Json.JsonSerializer.Deserialize<List<string>>(mensaje.ParametrosPlantilla!) ?? [], ct)
+            : await gateway.EnviarTextoAsync(mensaje.Destinatario, mensaje.Contenido, ct);
         switch (resultado.Tipo)
         {
             case TipoResultadoEnvio.Enviado:
@@ -230,6 +235,10 @@ public sealed class EnviarMensajeSalienteCasoUso(
                 mensaje.MarcarFallido(resultado.Error ?? "Error permanente del proveedor.");
                 break;
         }
+
+        // Si no se pudo entregar (error permanente o reintentos agotados), el panel recibe la alerta (Fase 8).
+        if (mensaje.Estado == EstadoMensajeSaliente.Fallido)
+            await bandeja.AgregarAsync(EventosSalida.EnvioWhatsAppFallido, new { mensajeId = mensaje.Id }, ct);
 
         await unidadTrabajo.GuardarCambiosAsync(ct);
         return resultado.Tipo;

@@ -45,10 +45,15 @@ internal sealed class MensajeSalienteConfiguracion : IEntityTypeConfiguration<Me
         entidad.Property(m => m.Estado).ComoTexto();
         entidad.Property(m => m.IdExterno).HasMaxLength(EsquemaCanal.LargoIdExterno);
         entidad.Property(m => m.EstadoExterno).HasMaxLength(Mapeo.LargoEnum);
+        entidad.Property(m => m.ClaveMensaje).HasMaxLength(80);
+        entidad.Property(m => m.Plantilla).HasMaxLength(512);
+        entidad.Property(m => m.IdiomaPlantilla).HasMaxLength(10);
+        entidad.Property(m => m.ParametrosPlantilla).HasColumnType("jsonb");
         entidad.ConVersion();
 
         entidad.HasIndex(m => new { m.Estado, m.ProximoIntento });
         entidad.HasIndex(m => m.IdExterno);
+        entidad.HasIndex(m => m.EventId);
         entidad.HasOne<MensajeEntrante>().WithMany().HasForeignKey(m => m.EnRespuestaA).OnDelete(DeleteBehavior.Restrict);
     }
 }
