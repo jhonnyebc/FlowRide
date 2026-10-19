@@ -43,4 +43,8 @@ public sealed class UsuarioRepositorioAdaptador(FlowRideDbContext contexto) : IU
 
     public Task<Usuario?> ConsultarPorIdentidadExternaAsync(string identidadExternaId, CancellationToken ct) =>
         contexto.Usuarios.AsNoTracking().SingleOrDefaultAsync(usuario => usuario.IdentidadExternaId == identidadExternaId, ct);
+
+    public async Task<IReadOnlyList<Usuario>> ConsultarActivosPorRolAsync(Guid rolId, CancellationToken ct) =>
+        await contexto.Usuarios.AsNoTracking().Where(usuario => usuario.RolId == rolId && usuario.Activo)
+            .OrderBy(usuario => usuario.Nombre).ThenBy(usuario => usuario.Id).ToListAsync(ct);
 }

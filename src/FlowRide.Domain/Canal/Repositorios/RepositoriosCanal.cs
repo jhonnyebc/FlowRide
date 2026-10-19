@@ -14,6 +14,9 @@ public interface IMensajeEntranteRepositorio : ICrearRepositorio<MensajeEntrante
 
     /// <summary>Pendientes en el orden en que llegaron.</summary>
     Task<IReadOnlyList<Guid>> ConsultarPendientesAsync(int maximo, CancellationToken ct);
+
+    /// <summary>Cuándo escribió por última vez el teléfono (ventana de 24 h de WhatsApp), o null si nunca.</summary>
+    Task<DateTimeOffset?> UltimoRecibidoAsync(string telefono, CancellationToken ct);
 }
 
 public interface IMensajeSalienteRepositorio : ICrearRepositorio<MensajeSaliente>

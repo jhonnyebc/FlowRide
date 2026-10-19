@@ -56,13 +56,15 @@ services:
     volumes:
       - flowride-azurite-data:/data
 
-  # Correos de Keycloak (definir o recuperar la contraseña) atrapados en local: http://localhost:8025
+  # Correos de Keycloak y de la API atrapados en local: http://localhost:8025 (SMTP en el puerto 1025)
   mailpit:
     image: axllent/mailpit:v1.27.7
     container_name: flowride-mailpit
     restart: unless-stopped
     ports:
       - "${MAILPIT_UI_PORT:-8025}:8025"
+      # SMTP para los correos de la API (alertas críticas, Fase 8); Keycloak lo usa por la red interna.
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
 
 volumes:
   flowride-pgdata:

@@ -17,6 +17,11 @@ using FlowRide.Application.Identidad.CasosUso;
 using FlowRide.Application.Identidad.Entrada.Adaptadores;
 using FlowRide.Application.Identidad.Entrada.Puertos;
 using FlowRide.Application.Identidad.Salida.Puertos;
+using FlowRide.Application.Notificaciones.CasosUso;
+using FlowRide.Application.Notificaciones.Catalogo;
+using FlowRide.Application.Notificaciones.Entrada.Adaptadores;
+using FlowRide.Application.Notificaciones.Entrada.Puertos;
+using FlowRide.Application.Notificaciones.Salida.Puertos;
 using FlowRide.Application.Operacion.CasosUso;
 using FlowRide.Application.Operacion.Entrada.Adaptadores;
 using FlowRide.Application.Operacion.Entrada.Puertos;
@@ -55,6 +60,9 @@ using FlowRide.Domain.Entidades;
 using FlowRide.Domain.Identidad;
 using FlowRide.Domain.Identidad.GestionUsuarios;
 using FlowRide.Domain.Identidad.Repositorios;
+using FlowRide.Domain.Notificaciones;
+using FlowRide.Domain.Notificaciones.GestionNotificaciones;
+using FlowRide.Domain.Notificaciones.Repositorios;
 using FlowRide.Domain.Operacion;
 using FlowRide.Domain.Operacion.GestionRecursos;
 using FlowRide.Domain.Operacion.Repositorios;
@@ -75,6 +83,7 @@ using FlowRide.Infrastructure.Auditoria;
 using FlowRide.Infrastructure.Canal;
 using FlowRide.Infrastructure.Identidad;
 using FlowRide.Infrastructure.Identidad.Keycloak;
+using FlowRide.Infrastructure.Notificaciones;
 using FlowRide.Infrastructure.Operacion;
 using FlowRide.Infrastructure.Parametros;
 using FlowRide.Infrastructure.Persistencia;
@@ -504,6 +513,49 @@ public static class DependencyInjection
         services.AddSingleton<WorkerCanalWhatsApp>();
         if (worker.Habilitado)
             services.AddHostedService(proveedor => proveedor.GetRequiredService<WorkerCanalWhatsApp>());
+
+        return services;
+    }
+
+    /// <summary>
+    /// Notificaciones (Fase 8, ADR-0015, ADR-0016): catálogo de mensajes es-CO, gateway (WhatsApp para pasajeros y
+    /// conductores, alertas del panel y correo para las críticas), worker de la Outbox y envío de correos por SMTP.
+    /// Requiere <c>AddCanalWhatsApp</c> (bandeja de salida de WhatsApp) y los módulos que emiten eventos.
+    /// </summary>
+    public static IServiceCollection AddNotificaciones(this IServiceCollection services, IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        services.AddSingleton(CatalogoMensajes.Cargar());
+        var correo = configuration.GetSection(CorreoOptions.Seccion).Get<CorreoOptions>() ?? new CorreoOptions();
+        services.AddSingleton(correo);
+        services.AddSingleton<IEnviadorCorreo, EnviadorCorreoSmtp>();
+
+        // Adaptadores de salida.
+        services.AddScoped<IAlertaRepositorio, AlertaRepositorioAdaptador>();
+        services.AddScoped<ICorreoSalienteRepositorio, CorreoSalienteRepositorioAdaptador>();
+        services.AddScoped<IPlantillaWhatsAppRepositorio, PlantillaWhatsAppRepositorioAdaptador>();
+        services.AddScoped<IConsultasAlertas, ConsultasAlertasEf>();
+
+        // Gateway, casos de uso y adaptador de entrada.
+        services.AddScoped<GatewayNotificaciones>();
+        services.AddScoped<ICasoUsoConRetorno<ProcesarEventoDominio, bool>, ProcesarEventoCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarCorreosPendientesDominio, IReadOnlyList<Guid>>, ConsultarCorreosPendientesCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<EnviarCorreoDominio, bool>, EnviarCorreoCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<BuscarAlertasDominio, PaginaResultado<AlertaLectura>>, BuscarAlertasCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<AlertasPosterioresDominio, IReadOnlyList<AlertaLectura>>, AlertasPosterioresCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<MarcarAlertaLeidaDominio, Alerta>, MarcarAlertaLeidaCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarPlantillasDominio, IReadOnlyList<PlantillaWhatsApp>>, ConsultarPlantillasCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ActualizarPlantillaDominio, PlantillaWhatsApp>, ActualizarPlantillaCasoUso>();
+        services.AddScoped<INotificacionesPuertoEntrada, NotificacionesAdaptadorEntrada>();
+
+        // Worker de la Outbox; se apaga con FlowRide:Notificaciones:Worker:Habilitado=false.
+        var worker = configuration.GetSection(WorkerNotificacionesOptions.Seccion).Get<WorkerNotificacionesOptions>()
+                     ?? new WorkerNotificacionesOptions();
+        services.AddSingleton(worker);
+        services.AddSingleton<WorkerNotificaciones>();
+        if (worker.Habilitado)
+            services.AddHostedService(proveedor => proveedor.GetRequiredService<WorkerNotificaciones>());
 
         return services;
     }

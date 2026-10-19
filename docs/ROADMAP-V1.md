@@ -22,8 +22,8 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 4 | Solicitudes e itinerarios | Solicitudes | 0001, 0004, 0007 | ✅ PR #7 fusionada |
 | 5 | Asignación de punta a punta | Asignacion | 0007, 0009, 0016 | ✅ PR #8 fusionada |
 | 6 | Viajes y calificación | Viajes, Calificacion | 0007, 0011 | ✅ PR #9 fusionada |
-| 7 | Canal WhatsApp | Mensajeria | 0003, 0008, 0012 | ✅ rama `feature/RF-14-whatsapp` (pendiente de PR) |
-| 8 | Notificaciones y alertas | Notificaciones | 0007, 0015, 0016 | ⬜ |
+| 7 | Canal WhatsApp | Mensajeria | 0003, 0008, 0012 | ✅ PR #10 fusionada |
+| 8 | Notificaciones y alertas | Notificaciones | 0007, 0015, 0016 | ✅ rama `feature/RF-43-notificaciones` (pendiente de PR) |
 | 9 | Reportes y vista operacional | Reportes | 0006, 0013 | ⬜ |
 | 10 | Borde común | Plataforma | 0012, 0014 | ⬜ |
 | 11 | Panel Web | Web | 0003, 0015, 0016, 0019 | ⬜ |
@@ -119,9 +119,12 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 - RF cubiertos: RF-14, RF-15, RF-18; RF-16 parcial (el bot confirma al instante; las notificaciones por cambios llegan en la Fase 8).
 
 ### Fase 8 — Notificaciones y alertas
-- [ ] `INotificationGateway`: WhatsApp, alerta en el panel por SSE y correo (`IEmailSender`, smtp4dev en local).
-- [ ] Worker de la Outbox con `SKIP LOCKED`, deduplicación por `EventId` y recordatorios como eventos futuros.
-- [ ] Catálogo de mensajes `es-CO` y registro de plantillas (ADR-0016).
+- [x] `GatewayNotificaciones` (el `INotificationGateway` del ADR-0015): pasajero y conductor por WhatsApp (texto en la ventana de 24 h; fuera de ella, la plantilla aprobada o alerta), alertas del panel guardadas y en vivo por SSE, y correo a los administradores para las críticas (`IEnviadorCorreo` por SMTP; Mailpit en local, puerto 1025).
+- [x] `WorkerNotificaciones`: Outbox con `FOR UPDATE SKIP LOCKED` y marcado en la misma transacción que las notificaciones (deduplicación por evento; dos réplicas no duplican); reintentos con espera creciente. Recordatorios como eventos futuros (`recordatorio.servicio`, N min antes según `recordatorio.anticipacion_minutos`).
+- [x] Matriz de avisos (decisión del 2026-10-18): conductor (asignación nueva, retirada, cancelada); pasajero (conductor asignado, cambio de conductor, inicio, fin, retraso, cancelación por el operador); panel (sin candidatos, urgente sin candidatos, incidente, turno abandonado, asignación vencida, WhatsApp fallido).
+- [x] Catálogo `es-CO` (`mensajes.es-CO.json`, recurso embebido) y registro de plantillas por operador (`notif.plantilla_whatsapp`, sembrado Pendiente; el Administrador registra la aprobada).
+- Pruebas: 480 unitarias (91,9 % líneas / 81,8 % ramas), 16 de arquitectura, 130 de integración. Migración `Notificaciones`.
+- RF cubiertos: RF-16, RF-17, RF-35, RF-43, RF-44, RF-45.
 
 ### Fase 9 — Reportes y vista operacional
 - [ ] Indicadores, reportes y exportes con URL firmada de 15 min o menos.
@@ -155,8 +158,8 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-13 | Priorización de solicitudes urgentes | 5 | ✅ |
 | RF-14 | Recepción de mensajes de WhatsApp | 7 | ✅ |
 | RF-15 | Procesamiento conversacional de solicitudes | 7 | ✅ |
-| RF-16 | Confirmaciones al pasajero | 7-8 | 🟡 el bot confirma la solicitud al registrarla; los avisos de asignación llegan en la Fase 8 |
-| RF-17 | Notificación al conductor asignado | 8 | ⬜ |
+| RF-16 | Confirmaciones al pasajero | 7-8 | ✅ confirmación del bot y avisos de conductor asignado, inicio y fin |
+| RF-17 | Notificación al conductor asignado | 8 | ✅ |
 | RF-18 | Actualización de estado del viaje por WhatsApp | 7 | ✅ |
 | RF-19 | Aislamiento físico entre tenants | 1 | ✅ Spike 3 |
 | RF-20 | Configuración separada por tenant | 1 | 🟡 BD y secretos por operador |
@@ -174,7 +177,7 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-32 | Modificación o cancelación de solicitudes | 4 | ✅ |
 | RF-33 | Visualización de asignaciones generadas | 5 | ✅ |
 | RF-34 | Actualización del estado de asignación | 5-6 | ✅ aceptar, rechazar y vencimiento |
-| RF-35 | Recordatorios automáticos | 8 | ⬜ |
+| RF-35 | Recordatorios automáticos | 8 | ✅ |
 | RF-36 | Vista centralizada de solicitudes y viajes | 9 | ⬜ |
 | RF-37 | Monitoreo de servicios en curso | 6 | ✅ sin GPS (ADR-0005 fuera de alcance) |
 | RF-38 | Consulta de usuarios, conductores y asignaciones | 3-5 | ✅ |
@@ -182,9 +185,9 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-40 | Trazabilidad de cada viaje | 6 | ✅ |
 | RF-41 | Búsqueda y filtrado | 3 | ✅ |
 | RF-42 | Indicadores básicos | 9 | ⬜ |
-| RF-43 | Notificación de cambios de estado | 8 | ⬜ |
-| RF-44 | Notificación de reasignación o novedades | 8 | ⬜ |
-| RF-45 | Alertas operativas | 8 | ⬜ |
+| RF-43 | Notificación de cambios de estado | 8 | ✅ |
+| RF-44 | Notificación de reasignación o novedades | 8 | ✅ |
+| RF-45 | Alertas operativas | 8 | ✅ panel (SSE) y correo para las críticas |
 | RF-46 | Reporte de viajes realizados | 9 | ⬜ |
 | RF-47 | Reporte de solicitudes atendidas y pendientes | 9 | ⬜ |
 | RF-48 | Reporte de conductores asignados | 9 | ⬜ |
@@ -223,3 +226,5 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 2026-10-18 | Fase 7 (decisiones del usuario): el webhook guarda en una bandeja de entrada y un worker procesa y responde con reintentos; bot con menú numerado y pasos guiados; los cuatro flujos (pasajero: pedir, consultar, cancelar y calificar; conductor: responder asignaciones, iniciar/finalizar y novedades). Para probar con el celular: número de prueba de Meta + ngrok (dominio estático gratis), con el simulado por defecto. |
 | 2026-10-18 | Una solicitud pedida por WhatsApp dura 60 min por defecto (el pasajero no la conoce); el número del remitente se normaliza a E.164 (`+57…`) para encontrar al usuario; la conversación vuelve al menú tras 30 min sin mensajes; los teléfonos del canal se cifran como los de `ops.usuario`. |
 | 2026-10-18 | Los teléfonos de WhatsApp se validan y normalizan a E.164 (`+57…`, sin espacios ni guiones) al crear o editar usuarios, pasajeros y conductores (también el primer administrador de la CLI): son la identidad en el canal. Se detectó al probar con Meta, porque la API aceptaba cualquier texto. |
+| 2026-10-18 | Fase 8 (decisiones del usuario): todos los avisos propuestos (conductor, pasajero, panel y recordatorios); por correo van las alertas de solicitud urgente sin candidatos, accidente o falla mecánica, turno abandonado y WhatsApp fallido; fuera de la ventana de 24 h, plantilla aprobada o error con alerta (ADR-0016); alertas guardadas y en vivo por SSE. |
+| 2026-10-18 | Se agregan los eventos `solicitud.cancelada` y `asignacion.cancelada` al cancelar una solicitud, y `canal.envio_fallido` cuando un WhatsApp no se entrega; el envío en vivo lee de la base cada 2 s (funciona con varias réplicas); Mailpit publica el SMTP 1025 en `docker-compose`. |

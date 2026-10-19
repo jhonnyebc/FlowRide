@@ -85,6 +85,12 @@ Las pruebas de `EstiloHexagonalTests` hacen cumplir los puntos 1, 2, 3 y 5.
 - Bot: menú numerado y pasos guiados (`Conversacion`, una por teléfono, vuelve al menú tras 30 min). Identifica al usuario por su teléfono E.164 (pasajero o conductor activo) y usa los mismos casos de uso del panel; si una regla falla, `IUnidadTrabajo.DescartarCambios` y responde el motivo. Los teléfonos del canal van cifrados como los de `ops.usuario`.
 - Configuración `FlowRide:WhatsApp` (`Proveedor`, `PhoneNumberId`) y secretos del operador (`AppSecret`, `VerifyToken`, `AccessToken`). Probar con el celular: `docs/GUIA-WHATSAPP-META.md`. En Development con el simulado existe `POST /api/whatsapp/simulado/mensajes`.
 
+## Notificaciones y alertas (Fase 8)
+- Módulo `Notificaciones` (ADR-0015, ADR-0016). `WorkerNotificaciones` toma cada evento de `notif.outbox_mensaje` con `FOR UPDATE SKIP LOCKED` y lo marca procesado en la misma transacción que guarda sus avisos (un reintento no duplica; varias réplicas no se pisan). Errores: reintento con espera creciente, 10 intentos.
+- `ProcesarEventoCasoUso` aplica la matriz del 2026-10-18: conductor (asignación nueva, retirada, cancelada), pasajero (conductor asignado, cambio, inicio, fin, retraso, cancelación por el operador), recordatorios (`recordatorio.servicio` programado N min antes con `IBandejaSalida.ProgramarAsync`) y alertas del panel.
+- `GatewayNotificaciones`: pasajero/conductor → WhatsApp (bandeja `canal.mensaje_saliente`); dentro de la ventana de 24 h, texto; fuera, la plantilla **aprobada** de la clave (`notif.plantilla_whatsapp`, sembrada Pendiente); si no hay, alerta crítica. Alertas → `notif.alerta` (+ correo a los administradores si es crítica, `notif.correo_saliente`, SMTP `FlowRide:Correo`, Mailpit 1025 en local).
+- Textos en `Application/Notificaciones/Catalogo/mensajes.es-CO.json` (recurso embebido; las alertas son `título|detalle`). Panel: `/api/alertas` (lista, `/en-vivo` por SSE, `/{id}/leida`) y `/api/notificaciones/plantillas`.
+
 ## RF-10
 El sistema asigna automáticamente un conductor y un vehículo a cada solicitud pendiente, aplicando las reglas configurables del tenant.
 
