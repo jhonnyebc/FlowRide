@@ -59,6 +59,9 @@ internal sealed class LecturasEnMemoria : IConsultasSolicitudes, IConsultasAsign
 
     public Task<IReadOnlyList<ViajeLectura>> ActivosAsync(DateTimeOffset programadosHasta, CancellationToken ct) => Task.FromResult<IReadOnlyList<ViajeLectura>>([]);
 
+    public Task<IReadOnlyList<ViajeLectura>> ListarAsync(FiltroViajes filtro, int maximo, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<ViajeLectura>>([]);
+
     public Task<TrazabilidadLectura?> TrazabilidadAsync(Guid solicitudId, CancellationToken ct) => Task.FromResult<TrazabilidadLectura?>(null);
 
     private static Task<PaginaResultado<T>> Pagina<T>(IEnumerable<T> elementos, Paginacion paginacion)

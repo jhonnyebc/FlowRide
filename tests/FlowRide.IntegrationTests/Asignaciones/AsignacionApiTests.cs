@@ -17,7 +17,7 @@ using Npgsql;
 namespace FlowRide.IntegrationTests.Asignaciones;
 
 /// <summary>Base de las pruebas de asignación: un Silo propio con conductores, vehículos y solicitudes creados por la API.</summary>
-public abstract class PruebasAsignacionBase(PostgresFixture postgres) : IAsyncLifetime
+public abstract class PruebasAsignacionBase(PostgresFixture postgres, AzuriteFixture? azurite = null) : IAsyncLifetime
 {
     protected static readonly DateTimeOffset Servicio = DateTimeOffset.UtcNow.Date.AddDays(3).ToUniversalTime().AddHours(14);
     protected static readonly DateOnly Vigente = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(3));
@@ -31,7 +31,7 @@ public abstract class PruebasAsignacionBase(PostgresFixture postgres) : IAsyncLi
 
     public async Task InitializeAsync()
     {
-        Entorno = await EntornoAprovisionamiento.CrearAsync(postgres);
+        Entorno = await EntornoAprovisionamiento.CrearAsync(postgres, azurite: azurite);
         await Entorno.AprovisionarAsync(Tenant);
         Api = await ApiAsync();
         Administrador = await ClienteAsync(Api, RolesSistema.AdministradorId);

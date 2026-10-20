@@ -2,16 +2,16 @@
 
 > **Léela al empezar cada sesión y actualízala al terminar.** Complementa a `docs/ROADMAP-V1.md` (qué falta por fase)
 > con lo que no está en el código: estado actual, decisiones, problemas del entorno y bitácora.
-> Última actualización: 2026-10-18.
+> Última actualización: 2026-10-19.
 
 ## Estado actual
-- **Rama de trabajo:** `feature/RF-43-notificaciones` (Fase 8 completa, todos los gates en verde), **sin commit todavía**,
-  pendiente del OK del usuario para el commit y el PR hacia `develop`.
+- **Rama de trabajo:** `feature/RF-46-reportes` (Fase 9, sale de `develop` en `6694d26`; falta commit y PR).
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
   Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6), Fase 4
-  Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9) y Fase 7 Canal WhatsApp (PR #10).
-- **Fase actual:** Fase 8 (Notificaciones y alertas) terminada en la rama; la siguiente es la Fase 9 (Reportes y vista operacional).
-- **Tests:** 480 unitarios (91,9 % líneas / 81,8 % ramas en Domain + Application), 16 de arquitectura, 130 de integración
+  Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9), Fase 7 Canal WhatsApp (PR #10) y Fase 8 Notificaciones y alertas (PR #11).
+- **Fase actual:** Fase 9 (Reportes y vista operacional) implementada en su rama, con los gates en verde; falta el commit
+  y la PR. La siguiente es la Fase 10 (Borde común).
+- **Tests:** 516 unitarios (93,9 % líneas / 83,0 % ramas en Domain + Application), 16 de arquitectura, 133 de integración
   (Keycloak, Mailpit y Azurite reales con Testcontainers).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
   Azurite (10000). Los secretos viven en el AppData **real** del usuario (`flowride-aprovisionamiento` y
@@ -55,6 +55,8 @@
 | 2026-10-17 | La API usa la cuenta de servicio de su realm (`flowride-api`, secreto `FlowRide:Identidad:SecretoCliente` en el almacén del operador); el admin de Keycloak de la plataforma solo lo usa la CLI (regla de arquitectura). |
 | 2026-10-17 | Autorización: `/api` exige token (grupo con `RequireAuthorization`), no una política *fallback*, para no convertir los 404 en 401. Roles fijos en `RolesSistema` (Id sembrados por migración). |
 | 2026-10-17 | Auditoría: repositorios del Silo sin `SaveChanges`; `IUnidadTrabajo` confirma cambio + evento en una transacción, con candado consultivo y la cadena SHA-256. Fecha truncada a microsegundos y JSON canónico para que el hash sobreviva a timestamptz y jsonb. |
+| 2026-10-19 | **Fase 9 (respuestas del usuario):** exportes en CSV; generación síncrona con periodo máximo de 93 días; reportes e indicadores para Administrador y Operador logístico; indicadores de volumen, cumplimiento, conductores y por cliente empresarial. |
+| 2026-10-19 | CSV para Excel en español: `;`, decimales con coma, UTF-8 con BOM, hora local del operador y apóstrofo delante de los textos que parecen fórmula. Una asignación "aceptada" es la que generó viaje; la vencida se detecta por el evento de auditoría `asignacion.vencer`. |
 
 ## Modelo de dominio (`src/FlowRide.Domain`)
 - **Entidades del Silo:** Usuario, Rol, Pasajero, Conductor, Turno, DocumentoConductor, Vehiculo, EmpresaCliente,
@@ -300,14 +302,27 @@
 - Gates al cierre: build sin advertencias, formato OK, 480 unitarias (91,9 % / 81,8 %), 16 arquitectura, 130 integración.
 - **Pendiente en el entorno local (lo corre el usuario):** `docker compose up -d` (publica el SMTP de Mailpit) y
   `dotnet run --project src/FlowRide.Aprovisionamiento -- migrar --id tenant-a` (migración `Notificaciones`).
-- **Pendiente:** OK del usuario para commit + PR.
+- Commit `dd22b39` → PR #11 fusionada en `develop` el 2026-10-18 (merge `6694d26`) con el CI en verde. **Fase 8 cerrada.**
+
+## Sesión 2026-10-19: Fase 9 (Reportes y vista operacional)
+- Rama `feature/RF-46-reportes` (lleva también la documentación que cerraba la Fase 8).
+- Decisiones del usuario: CSV, síncrono, Administrador y Operador logístico, los cuatro grupos de indicadores.
+- Dominio `Reportes`: `PeriodoReporte` (≤ 93 días), `ReglasReportes` (grupo de la solicitud, puntualidad, porcentajes,
+  semáforo de la vista centralizada, máximo 50 000 filas), datos de los casos de uso. Parámetro nuevo
+  `reporte.tolerancia_puntualidad_minutos` (10) y acción de auditoría `reporte.exportar`.
+- Aplicación: `IConsultasReportes`, `ICacheReportes`, `GeneradorReportes`, casos de uso de la vista, indicadores, los
+  cuatro reportes y el exporte (`ArchivoCsv`). `IConsultasViajes.ListarAsync` (sin paginar).
+- Infraestructura: `ConsultasReportesEf` (en dos pasos, sin subconsultas por fila), `CacheReportesMemoria`, `AddReportes`.
+  API: `/api/reportes/…` y `POST /api/reportes/{tipo}/exportar`. Sin migración.
+- Gates al cierre: build sin advertencias, formato OK, 516 unitarias (93,9 % / 83,0 %), 16 arquitectura, 133 integración
+  (la nueva `ReportesApiTests` usa PostgreSQL y Azurite reales y descarga el CSV con el enlace firmado).
 
 ## Próximos pasos
-1. **Esperar el OK del usuario** sobre la Fase 8; luego commit (`feat(notificaciones): …`) y PR de
-   `feature/RF-43-notificaciones` hacia `develop`.
-2. Fase 9 (Reportes y vista operacional): indicadores, reportes de viajes, solicitudes y conductores, histórico por
-   cliente empresarial, vista centralizada (RF-36, RF-42, RF-46 a RF-49) y exportes con URL firmada ≤ 15 min.
-3. Panel Web: sigue en la Fase 11. El usuario decidió (2026-10-18) desarrollarlo completo más adelante, no adelantar un panel básico.
-4. RF-23: probar "Olvidé mi contraseña" con la pantalla de login cuando exista el Panel Web (Fase 11).
-5. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).
-6. Opcional: SonarCloud (crear el proyecto y el secreto `SONAR_TOKEN`).
+1. Cerrar la Fase 9: commit, PR a `develop` y CI. Después, Fase 10 (Borde común: YARP, límites de tasa, cabeceras).
+   **Recordatorio (2026-10-18):** itinerarios en PDF o Word por WhatsApp quedan fuera de V1; el bot responde que solo
+   entiende texto y los itinerarios se registran desde el panel (RF-08). Opciones para después: recibir el archivo y
+   alertar al operador, o extracción automática (requeriría ADR nuevo).
+2. Panel Web: sigue en la Fase 11. El usuario decidió (2026-10-18) desarrollarlo completo más adelante, no adelantar un panel básico.
+3. RF-23: probar "Olvidé mi contraseña" con la pantalla de login cuando exista el Panel Web (Fase 11).
+4. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).
+5. Opcional: SonarCloud (crear el proyecto y el secreto `SONAR_TOKEN`).
