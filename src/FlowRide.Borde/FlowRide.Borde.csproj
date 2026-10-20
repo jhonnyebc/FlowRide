@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- Borde común de la plataforma (ADR-0012): reverse proxy YARP hacia el stack de cada operador y router de webhooks
+       de WhatsApp. Sin estado ni datos operacionales; se despliega con 2 réplicas compartidas por todos los operadores. -->
+  <PropertyGroup>
+    <!-- Secretos de la plataforma para el borde (catálogo y app de Meta), fuera del repositorio (ADR-0014). -->
+    <UserSecretsId>flowride-borde</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FlowRide.Application\FlowRide.Application.csproj" />
+    <ProjectReference Include="..\FlowRide.Infrastructure\FlowRide.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

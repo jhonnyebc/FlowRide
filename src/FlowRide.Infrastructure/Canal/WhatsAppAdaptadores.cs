@@ -111,6 +111,37 @@ public static class FormatoWebhookMeta
         }
     }
 
+    /// <summary>
+    /// Los <c>phone_number_id</c> de los cambios de mensajería del webhook (para que el borde elija el stack, ADR-0012).
+    /// Lanza <see cref="FormatException"/> si el cuerpo no es un webhook de WhatsApp Cloud API.
+    /// </summary>
+    public static IReadOnlyList<string> NumerosDestino(string cuerpo)
+    {
+        JsonDocument documento;
+        try
+        {
+            documento = JsonDocument.Parse(cuerpo);
+        }
+        catch (JsonException error)
+        {
+            throw new FormatException("El webhook no es un JSON válido.", error);
+        }
+
+        using (documento)
+        {
+            var raiz = documento.RootElement;
+            if (raiz.ValueKind != JsonValueKind.Object || !raiz.TryGetProperty("entry", out var entradas) || entradas.ValueKind != JsonValueKind.Array)
+                throw new FormatException("El webhook no tiene el formato de WhatsApp Cloud API.");
+
+            return entradas.EnumerateArray().SelectMany(e => Arreglo(e, "changes"))
+                .Where(cambio => Texto(cambio, "field") == "messages" && cambio.TryGetProperty("value", out _))
+                .Select(cambio => cambio.GetProperty("value").TryGetProperty("metadata", out var metadatos) ? Texto(metadatos, "phone_number_id") : null)
+                .OfType<string>()
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+        }
+    }
+
     private static MensajeRecibido Mensaje(JsonElement m)
     {
         var id = Texto(m, "id") ?? throw new FormatException("Mensaje sin id.");

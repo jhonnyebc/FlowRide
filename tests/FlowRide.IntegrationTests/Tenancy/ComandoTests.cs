@@ -64,4 +64,18 @@ public class ComandoTests
         Assert.False(Comando.TryParse(args, out _, out var error));
         Assert.Contains(mensaje, error, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void RegistrarRuta_TieneSubdominioYNumeroOpcionalesPorSeparado()
+    {
+        Assert.True(Comando.TryParse(["registrar-ruta", "--id", "tenant-a", "--url", "http://localhost:5237"], out var minimo, out var error), error);
+        Assert.True(Comando.TryParse(["registrar-ruta", "--id", "tenant-a", "--url", "http://localhost:5237", "--phone-number-id", "123456"],
+            out var conNumero, out error), error);
+        Assert.False(Comando.TryParse(["registrar-ruta", "--id", "tenant-a"], out _, out error));
+
+        Assert.Equal((Comando.RegistrarRuta, false, false), (minimo.Nombre, minimo.Tiene("subdominio"), minimo.Tiene("phone-number-id")));
+        Assert.Equal("123456", conNumero.Opcion("phone-number-id"));
+        Assert.Contains("Falta la opción --url", error, StringComparison.Ordinal);
+        Assert.True(Comando.TryParse(["listar-rutas"], out _, out _));
+    }
 }

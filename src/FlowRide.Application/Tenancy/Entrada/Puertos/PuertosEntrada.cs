@@ -19,3 +19,11 @@ public interface IConsultarOperadoresPuertoEntrada
 {
     Task<IReadOnlyList<OperadorRespuesta>> ConsultarAsync(CancellationToken ct);
 }
+
+/// <summary>Rutas del borde común (ADR-0012): subdominio, URL del stack y número de WhatsApp de cada operador.</summary>
+public interface IRutasOperadorPuertoEntrada
+{
+    Task<RutaOperadorRespuesta> RegistrarAsync(RegistrarRutaOperadorPeticion peticion, CancellationToken ct);
+
+    Task<IReadOnlyList<RutaOperadorRespuesta>> ConsultarAsync(CancellationToken ct);
+}

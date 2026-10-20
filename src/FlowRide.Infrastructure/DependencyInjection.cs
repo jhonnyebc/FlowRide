@@ -6,6 +6,10 @@ using FlowRide.Application.Asignaciones.Salida.Puertos;
 using FlowRide.Application.Auditoria.CasosUso;
 using FlowRide.Application.Auditoria.Entrada.Adaptadores;
 using FlowRide.Application.Auditoria.Entrada.Puertos;
+using FlowRide.Application.Borde.CasosUso;
+using FlowRide.Application.Borde.Entrada.Adaptadores;
+using FlowRide.Application.Borde.Entrada.Puertos;
+using FlowRide.Application.Borde.Salida.Puertos;
 using FlowRide.Application.Canal.Bot;
 using FlowRide.Application.Canal.CasosUso;
 using FlowRide.Application.Canal.Entrada.Adaptadores;
@@ -74,6 +78,7 @@ using FlowRide.Domain.Parametros;
 using FlowRide.Domain.Parametros.Repositorios;
 using FlowRide.Domain.Plataforma;
 using FlowRide.Domain.Plataforma.AprovisionarOperador;
+using FlowRide.Domain.Plataforma.Borde;
 using FlowRide.Domain.Plataforma.MigrarSilos;
 using FlowRide.Domain.Plataforma.Repositorios;
 using FlowRide.Domain.Reportes.GestionReportes;
@@ -85,6 +90,7 @@ using FlowRide.Domain.Viajes.GestionViajes;
 using FlowRide.Domain.Viajes.Repositorios;
 using FlowRide.Infrastructure.Asignaciones;
 using FlowRide.Infrastructure.Auditoria;
+using FlowRide.Infrastructure.Borde;
 using FlowRide.Infrastructure.Canal;
 using FlowRide.Infrastructure.Identidad;
 using FlowRide.Infrastructure.Identidad.Keycloak;
@@ -188,6 +194,7 @@ public static class DependencyInjection
         // Adaptadores de salida.
         services.AddDbContext<CatalogoDbContext>(opciones => CatalogoDbContext.Configurar(opciones, fuenteCatalogo));
         services.AddScoped<IOperadorRepositorio, OperadorRepositorioAdaptador>();
+        services.AddScoped<IRutaOperadorRepositorio, RutaOperadorRepositorioAdaptador>();
         services.AddSingleton<IServidorSilos>(new ServidorSilosPostgres(fuenteAdministracion));
         services.AddSingleton<IMigradorSilo, MigradorSiloEf>();
         services.AddSingleton<IAlmacenSecretos>(_ => new AlmacenSecretosLocal(raizSecretos));
@@ -216,7 +223,10 @@ public static class DependencyInjection
         services.AddScoped<ICasoUsoConRetorno<EstadoOperador?, IReadOnlyList<Operador>>, ConsultarOperadoresCasoUso>();
         services.AddScoped<IAprovisionarOperadorPuertoEntrada, AprovisionarOperadorAdaptadorEntrada>();
         services.AddScoped<IMigrarSilosPuertoEntrada, MigrarSilosAdaptadorEntrada>();
+        services.AddScoped<ICasoUsoConRetorno<RegistrarRutaOperadorDominio, RutaOperador>, RegistrarRutaOperadorCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<CargarTablaRutasDominio, IReadOnlyList<RutaOperador>>, ConsultarRutasOperadorCasoUso>();
         services.AddScoped<IConsultarOperadoresPuertoEntrada, ConsultarOperadoresAdaptadorEntrada>();
+        services.AddScoped<IRutasOperadorPuertoEntrada, RutasOperadorAdaptadorEntrada>();
 
         return services;
     }
@@ -596,6 +606,37 @@ public static class DependencyInjection
             ReporteEmpresasCasoUso>();
         services.AddScoped<ICasoUsoConRetorno<ExportarReporteDominio, ExporteReporte>, ExportarReporteCasoUso>();
         services.AddScoped<IReportesPuertoEntrada, ReportesAdaptadorEntrada>();
+        return services;
+    }
+
+    /// <summary>
+    /// Borde común de la plataforma (Fase 10, ADR-0012): lee la tabla de ruteo del catálogo (solo lectura de rutas y
+    /// estados) y valida los webhooks con la app de Meta de la plataforma. No toca ningún Silo. Exige
+    /// <c>ConnectionStrings:Catalogo</c>, <c>Borde:WhatsApp:AppSecret</c> y <c>Borde:WhatsApp:VerifyToken</c> en el
+    /// gestor de secretos de la plataforma.
+    /// </summary>
+    public static IServiceCollection AddBordeComun(this IServiceCollection services, IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var fuenteCatalogo = NpgsqlDataSource.Create(SecretoRequerido(configuration, CadenaConexionCatalogo,
+            "Es la cadena del catálogo de plataforma (flowride_catalogo), la misma de la herramienta de aprovisionamiento en local."));
+        const string ayuda = "Es un secreto de la app de Meta de la plataforma (user-secrets flowride-borde en local).";
+        var whatsapp = new BordeWhatsAppOptions
+        {
+            AppSecret = ConfiguracionRequerida(configuration, $"{BordeWhatsAppOptions.Seccion}:AppSecret", ayuda),
+            VerifyToken = ConfiguracionRequerida(configuration, $"{BordeWhatsAppOptions.Seccion}:VerifyToken", ayuda)
+        };
+
+        // Adaptadores de salida.
+        services.AddDbContext<CatalogoDbContext>(opciones => CatalogoDbContext.Configurar(opciones, fuenteCatalogo));
+        services.AddScoped<IRutaOperadorRepositorio, RutaOperadorRepositorioAdaptador>();
+        services.AddSingleton<IVerificadorWebhook>(new VerificadorWebhookMeta(whatsapp));
+
+        // Casos de uso y adaptador de entrada.
+        services.AddScoped<ICasoUsoConRetorno<CargarTablaRutasDominio, TablaRutas>, CargarTablaRutasCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<EnrutarWebhookDominio, ResultadoEnrutamientoWebhook>, EnrutarWebhookCasoUso>();
+        services.AddScoped<IBordePuertoEntrada, BordeAdaptadorEntrada>();
         return services;
     }
 
