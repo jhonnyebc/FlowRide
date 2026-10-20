@@ -67,6 +67,58 @@ namespace FlowRide.Infrastructure.Tenancy.Migraciones
 
                     b.ToTable("operador", "plataforma");
                 });
+
+            modelBuilder.Entity("FlowRide.Domain.Plataforma.RutaOperador", b =>
+                {
+                    b.Property<string>("OperadorId")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("operador_id");
+
+                    b.Property<DateTimeOffset>("ActualizadaEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("actualizada_en");
+
+                    b.Property<string>("PhoneNumberId")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("phone_number_id");
+
+                    b.Property<string>("Subdominio")
+                        .IsRequired()
+                        .HasMaxLength(63)
+                        .HasColumnType("character varying(63)")
+                        .HasColumnName("subdominio");
+
+                    b.Property<string>("UrlStack")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("url_stack");
+
+                    b.HasKey("OperadorId")
+                        .HasName("pk_ruta_operador");
+
+                    b.HasIndex("PhoneNumberId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_ruta_operador_phone_number_id");
+
+                    b.HasIndex("Subdominio")
+                        .IsUnique()
+                        .HasDatabaseName("ix_ruta_operador_subdominio");
+
+                    b.ToTable("ruta_operador", "plataforma");
+                });
+
+            modelBuilder.Entity("FlowRide.Domain.Plataforma.RutaOperador", b =>
+                {
+                    b.HasOne("FlowRide.Domain.Plataforma.Operador", null)
+                        .WithOne()
+                        .HasForeignKey("FlowRide.Domain.Plataforma.RutaOperador", "OperadorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_ruta_operador_operador_operador_id");
+                });
 #pragma warning restore 612, 618
         }
     }

@@ -415,3 +415,18 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "desde": "2026-10-01T00:00:00-05:00", "hasta": "2026-11-01T00:00:00-05:00" }
+
+# ---------------------------------------------------------------------------------------------------------------
+# Fase 10 — Borde común (ADR-0012). Levanta también el borde: dotnet run --project src/FlowRide.Borde --launch-profile https
+# El operador queda en su subdominio; el certificado de desarrollo de .NET cubre *.dev.localhost.
+@borde = https://tenant-a.dev.localhost:8443
+
+### Borde — la misma API del operador, a través de su subdominio (con cabeceras de seguridad y límites de tasa)
+GET {{borde}}/api/viajes/monitoreo
+Authorization: Bearer {{token}}
+
+### Borde — un subdominio sin operador no llega a ningún stack: 404
+GET https://otro.dev.localhost:8443/api/viajes
+
+### Borde — handshake del webhook de Meta (responde el reto si el token es el de Borde:WhatsApp:VerifyToken)
+GET https://localhost:8443/api/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=pega-aqui-tu-token&hub.challenge=reto-123

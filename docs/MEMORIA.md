@@ -5,13 +5,13 @@
 > Última actualización: 2026-10-19.
 
 ## Estado actual
-- **Rama de trabajo:** `feature/RF-46-reportes` (Fase 9, sale de `develop` en `6694d26`; falta commit y PR).
+- **Rama de trabajo:** `feature/RF-19-borde-comun` (Fase 10, sale de `develop` en `9e0c74e`; falta commit y PR).
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
   Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6), Fase 4
-  Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9), Fase 7 Canal WhatsApp (PR #10) y Fase 8 Notificaciones y alertas (PR #11).
-- **Fase actual:** Fase 9 (Reportes y vista operacional) implementada en su rama, con los gates en verde; falta el commit
-  y la PR. La siguiente es la Fase 10 (Borde común).
-- **Tests:** 516 unitarios (93,9 % líneas / 83,0 % ramas en Domain + Application), 16 de arquitectura, 133 de integración
+  Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9), Fase 7 Canal WhatsApp (PR #10), Fase 8 Notificaciones y alertas (PR #11) y Fase 9 Reportes y vista operacional (PR #12).
+- **Fase actual:** Fase 10 (Borde común) implementada en su rama, con los gates en verde; falta el commit y la PR. La
+  siguiente es la Fase 11 (Panel Web).
+- **Tests:** 532 unitarios (94,1 % líneas / 83,2 % ramas en Domain + Application), 17 de arquitectura, 139 de integración
   (Keycloak, Mailpit y Azurite reales con Testcontainers).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
   Azurite (10000). Los secretos viven en el AppData **real** del usuario (`flowride-aprovisionamiento` y
@@ -57,6 +57,8 @@
 | 2026-10-17 | Auditoría: repositorios del Silo sin `SaveChanges`; `IUnidadTrabajo` confirma cambio + evento en una transacción, con candado consultivo y la cadena SHA-256. Fecha truncada a microsegundos y JSON canónico para que el hash sobreviva a timestamptz y jsonb. |
 | 2026-10-19 | **Fase 9 (respuestas del usuario):** exportes en CSV; generación síncrona con periodo máximo de 93 días; reportes e indicadores para Administrador y Operador logístico; indicadores de volumen, cumplimiento, conductores y por cliente empresarial. |
 | 2026-10-19 | CSV para Excel en español: `;`, decimales con coma, UTF-8 con BOM, hora local del operador y apóstrofo delante de los textos que parecen fórmula. Una asignación "aceptada" es la que generó viaje; la vencida se detecta por el evento de auditoría `asignacion.vencer`. |
+| 2026-10-19 | **Fase 10 (respuestas del usuario):** rutas del borde en el catálogo (las registra la CLI); la firma de Meta la validan el borde y el stack; WAF gestionado en la Fase 12; HTTPS local con `*.dev.localhost`. |
+| 2026-10-19 | Una sola app de Meta para todos los operadores: el `AppSecret` y el `VerifyToken` del borde son los de esa app, y el `AppSecret` de cada stack es el mismo. El borde lee el catálogo con la cadena de `flowride_catalogo` (rol de solo lectura propio: Fase 12). |
 
 ## Modelo de dominio (`src/FlowRide.Domain`)
 - **Entidades del Silo:** Usuario, Rol, Pasajero, Conductor, Turno, DocumentoConductor, Vehiculo, EmpresaCliente,
@@ -316,9 +318,26 @@
   API: `/api/reportes/…` y `POST /api/reportes/{tipo}/exportar`. Sin migración.
 - Gates al cierre: build sin advertencias, formato OK, 516 unitarias (93,9 % / 83,0 %), 16 arquitectura, 133 integración
   (la nueva `ReportesApiTests` usa PostgreSQL y Azurite reales y descarga el CSV con el enlace firmado).
+- Commit `91cd691` → PR #12 fusionada en `develop` el 2026-10-19 (merge `9e0c74e`) con el CI en verde. **Fase 9 cerrada.**
+
+## Sesión 2026-10-19 (continuación): Fase 10 (Borde común)
+- Rama `feature/RF-19-borde-comun` (lleva la documentación que cerraba la Fase 9).
+- Decisiones del usuario: rutas en el catálogo, firma en borde y stack, WAF gestionado en la Fase 12, `*.dev.localhost` con HTTPS.
+- Dominio: `RutaOperador` y `TablaRutas` (Plataforma), datos `Borde`. Aplicación: `RegistrarRutaOperadorCasoUso` y
+  `ConsultarRutasOperadorCasoUso` (Tenancy, para la CLI), `CargarTablaRutasCasoUso` y `EnrutarWebhookCasoUso` (Borde),
+  puerto de salida `IVerificadorWebhook`. Infraestructura: tabla `plataforma.ruta_operador` (migración `RutasBorde`),
+  `RutaOperadorRepositorioAdaptador`, `VerificadorWebhookMeta`, `FormatoWebhookMeta.NumerosDestino`, `AddBordeComun`.
+- Proyecto `FlowRide.Borde` (YARP 2.3.0): `ProveedorRutasBorde` + `RecargaRutasBorde`, router de webhooks, límites de
+  tasa y cabeceras de seguridad. CLI: `registrar-ruta` y `listar-rutas`. Guía de Meta §7 (ngrok apunta al borde).
+- Problema: el SDK web de .NET 10 hace público el `Program` de nivel superior y chocaba con el de la API en las pruebas;
+  el borde usa `ProgramaBorde` con `Main` explícito.
+- Gates al cierre: build sin advertencias, formato OK, 532 unitarias (94,1 % / 83,2 %), 17 arquitectura, 139 integración
+  (`BordeApiTests`: borde real → API real del stack → Silo).
+- **Pendiente en el entorno local (lo corre el usuario):** cualquier comando de la CLI migra el catálogo; después,
+  `registrar-ruta` y los secretos del borde (guía §7).
 
 ## Próximos pasos
-1. Cerrar la Fase 9: commit, PR a `develop` y CI. Después, Fase 10 (Borde común: YARP, límites de tasa, cabeceras).
+1. Cerrar la Fase 10: commit, PR a `develop` y CI. Después, Fase 11 (Panel Web en React + TypeScript).
    **Recordatorio (2026-10-18):** itinerarios en PDF o Word por WhatsApp quedan fuera de V1; el bot responde que solo
    entiende texto y los itinerarios se registran desde el panel (RF-08). Opciones para después: recibir el archivo y
    alertar al operador, o extracción automática (requeriría ADR nuevo).

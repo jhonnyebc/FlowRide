@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\FlowRide.API\FlowRide.API.csproj" />
     <ProjectReference Include="..\..\src\FlowRide.Aprovisionamiento\FlowRide.Aprovisionamiento.csproj" />
+    <ProjectReference Include="..\..\src\FlowRide.Borde\FlowRide.Borde.csproj" />
   </ItemGroup>
 
 </Project>

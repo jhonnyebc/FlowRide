@@ -3,6 +3,7 @@ using ArchUnitNET.Loader;
 using ArchUnitNET.xUnit;
 using FlowRide.Application.Comun.CasosUso;
 using FlowRide.Aprovisionamiento;
+using FlowRide.Borde;
 using FlowRide.Domain.Entidades;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 using Assembly = System.Reflection.Assembly;
@@ -20,9 +21,11 @@ public class EstiloHexagonalTests
     private static readonly Assembly ApplicationAssembly = typeof(ICasoUsoConRetorno<,>).Assembly;
     private static readonly Assembly HerramientaAssembly = typeof(Comandos).Assembly;
     private static readonly Assembly ApiAssembly = typeof(Program).Assembly;
+    private static readonly Assembly BordeAssembly = typeof(MarcadorBorde).Assembly;
+    private static readonly Assembly InfrastructureAssembly = typeof(Infrastructure.DependencyInjection).Assembly;
 
     private static readonly Architecture Arquitectura = new ArchLoader()
-        .LoadAssemblies(DomainAssembly, ApplicationAssembly, HerramientaAssembly, ApiAssembly)
+        .LoadAssemblies(DomainAssembly, ApplicationAssembly, HerramientaAssembly, ApiAssembly, BordeAssembly, InfrastructureAssembly)
         .Build();
 
     private static IEnumerable<Type> ClasesConcretas(Assembly assembly) =>
@@ -93,5 +96,14 @@ public class EstiloHexagonalTests
             .Or().ResideInNamespace("FlowRide.API.Notificaciones").Or().ResideInNamespace("FlowRide.API.Reportes")
             .Should().NotDependOnAny(Types().That().ResideInNamespaceMatching(@"^FlowRide\.Application\.\w+\.CasosUso$"))
             .AndShould().NotDependOnAny(Types().That().ResideInAssembly(DomainAssembly))
+            .Check(Arquitectura);
+
+    [Fact]
+    public void ElBorde_SoloConocePuertosDeEntrada_YNoLlegaANingunSilo() =>
+        // ADR-0012: el borde es un adaptador de entrada sin datos operacionales; nunca abre la base de un operador.
+        Types().That().ResideInAssembly(BordeAssembly)
+            .Should().NotDependOnAny(Types().That().ResideInNamespaceMatching(@"^FlowRide\.Application\.\w+\.CasosUso$"))
+            .AndShould().NotDependOnAny(Types().That().ResideInAssembly(DomainAssembly))
+            .AndShould().NotDependOnAny(Types().That().ResideInNamespace("FlowRide.Infrastructure.Persistencia"))
             .Check(Arquitectura);
 }
