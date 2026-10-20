@@ -30,6 +30,10 @@ using FlowRide.Application.Parametros.CasosUso;
 using FlowRide.Application.Parametros.Entrada.Adaptadores;
 using FlowRide.Application.Parametros.Entrada.Puertos;
 using FlowRide.Application.Parametros.Salida.Puertos;
+using FlowRide.Application.Reportes.CasosUso;
+using FlowRide.Application.Reportes.Entrada.Adaptadores;
+using FlowRide.Application.Reportes.Entrada.Puertos;
+using FlowRide.Application.Reportes.Salida.Puertos;
 using FlowRide.Application.Seguridad.CasosUso;
 using FlowRide.Application.Seguridad.Entrada.Adaptadores;
 using FlowRide.Application.Seguridad.Entrada.Puertos;
@@ -72,6 +76,7 @@ using FlowRide.Domain.Plataforma;
 using FlowRide.Domain.Plataforma.AprovisionarOperador;
 using FlowRide.Domain.Plataforma.MigrarSilos;
 using FlowRide.Domain.Plataforma.Repositorios;
+using FlowRide.Domain.Reportes.GestionReportes;
 using FlowRide.Domain.Solicitudes;
 using FlowRide.Domain.Solicitudes.GestionSolicitudes;
 using FlowRide.Domain.Solicitudes.Repositorios;
@@ -89,6 +94,7 @@ using FlowRide.Infrastructure.Parametros;
 using FlowRide.Infrastructure.Persistencia;
 using FlowRide.Infrastructure.Persistencia.Outbox;
 using FlowRide.Infrastructure.Plataforma;
+using FlowRide.Infrastructure.Reportes;
 using FlowRide.Infrastructure.Seguridad;
 using FlowRide.Infrastructure.Solicitudes;
 using FlowRide.Infrastructure.Tenancy;
@@ -557,6 +563,39 @@ public static class DependencyInjection
         if (worker.Habilitado)
             services.AddHostedService(proveedor => proveedor.GetRequiredService<WorkerNotificaciones>());
 
+        return services;
+    }
+
+    /// <summary>
+    /// Reportes y vista operacional (Fase 9): vista centralizada del día (RF-36), indicadores (RF-42), reportes RF-46 a
+    /// RF-49 y exportes CSV en el bucket del operador con enlace firmado (ADR-0013). Los indicadores de periodos cerrados
+    /// usan cache-aside en memoria (ADR-0006). Requiere <c>AddOperacion</c>, <c>AddSolicitudes</c> y <c>AddViajes</c>.
+    /// </summary>
+    public static IServiceCollection AddReportes(this IServiceCollection services, IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        services.AddMemoryCache();
+        services.AddSingleton(configuration.GetSection(CacheReportesOptions.Seccion).Get<CacheReportesOptions>() ?? new CacheReportesOptions());
+
+        // Adaptadores de salida.
+        services.AddScoped<IConsultasReportes, ConsultasReportesEf>();
+        services.AddSingleton<ICacheReportes, CacheReportesMemoria>();
+
+        // Generador, casos de uso y adaptador de entrada.
+        services.TryAddScoped<ParametrosDominio>();
+        services.AddScoped<GeneradorReportes>();
+        services.AddScoped<ICasoUsoConRetorno<VistaCentralizadaDominio, VistaCentralizadaLectura>, VistaCentralizadaCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarIndicadoresDominio, IndicadoresLectura>, ConsultarIndicadoresCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarReporteDominio, ReporteLectura<ResumenViajes, ViajeReporteLectura>>, ReporteViajesCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarReporteDominio, ReporteLectura<ResumenSolicitudes, SolicitudReporteFila>>,
+            ReporteSolicitudesCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarReporteDominio, ReporteLectura<ResumenConductores, ConductorReporteLectura>>,
+            ReporteConductoresCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarReporteDominio, ReporteLectura<ResumenEmpresas, EmpresaReporteLectura>>,
+            ReporteEmpresasCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ExportarReporteDominio, ExporteReporte>, ExportarReporteCasoUso>();
+        services.AddScoped<IReportesPuertoEntrada, ReportesAdaptadorEntrada>();
         return services;
     }
 

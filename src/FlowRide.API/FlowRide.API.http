@@ -380,3 +380,38 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "nombre": "conductor_asignado", "idioma": "es_CO", "estado": "Aprobada" }
+
+# ---------------------------------------------------------------------------------------------------------------
+# Fase 9 — Reportes y vista operacional (RF-36, RF-42, RF-46 a RF-49; ADR-0006, ADR-0013). Periodo: desde (incluido)
+# y hasta (excluido) la hora programada del servicio, de máximo 93 días. El + del huso horario va como %2B.
+
+### RF-36 — Vista centralizada del día (sin fecha: hoy en la zona del operador), primero lo crítico
+GET {{host}}/api/reportes/vista-centralizada
+Authorization: Bearer {{token}}
+
+### RF-42 — Indicadores básicos del periodo
+GET {{host}}/api/reportes/indicadores?desde=2026-10-01T00:00:00-05:00&hasta=2026-11-01T00:00:00-05:00
+Authorization: Bearer {{token}}
+
+### RF-46 — Viajes realizados (filtros opcionales: conductorId, empresaClienteId, pagina, tamanoPagina)
+GET {{host}}/api/reportes/viajes?desde=2026-10-01T00:00:00-05:00&hasta=2026-11-01T00:00:00-05:00
+Authorization: Bearer {{token}}
+
+### RF-47 — Solicitudes atendidas y pendientes (grupo opcional: Atendida, Pendiente o Cancelada)
+GET {{host}}/api/reportes/solicitudes?desde=2026-10-01T00:00:00-05:00&hasta=2026-11-01T00:00:00-05:00&grupo=Pendiente
+Authorization: Bearer {{token}}
+
+### RF-48 — Conductores asignados
+GET {{host}}/api/reportes/conductores?desde=2026-10-01T00:00:00-05:00&hasta=2026-11-01T00:00:00-05:00
+Authorization: Bearer {{token}}
+
+### RF-49 — Histórico por cliente empresarial
+GET {{host}}/api/reportes/empresas?desde=2026-10-01T00:00:00-05:00&hasta=2026-11-01T00:00:00-05:00
+Authorization: Bearer {{token}}
+
+### Exportar a CSV (tipo: viajes, solicitudes, conductores o empresas); devuelve un enlace firmado de 15 minutos
+POST {{host}}/api/reportes/viajes/exportar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "desde": "2026-10-01T00:00:00-05:00", "hasta": "2026-11-01T00:00:00-05:00" }

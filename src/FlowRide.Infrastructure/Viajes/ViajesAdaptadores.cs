@@ -69,6 +69,21 @@ public sealed class ConsultasViajesEf(FlowRideDbContext contexto) : IConsultasVi
         ArgumentNullException.ThrowIfNull(filtro);
         ArgumentNullException.ThrowIfNull(paginacion);
 
+        var consulta = Filtrar(filtro);
+        var total = await consulta.CountAsync(ct);
+        var elementos = await Lectura(consulta.OrderByDescending(v => v.InicioProgramado).ThenBy(v => v.Id)
+            .Skip(paginacion.Salto).Take(paginacion.Tamano)).ToListAsync(ct);
+        return new PaginaResultado<ViajeLectura>(elementos, total, paginacion);
+    }
+
+    public async Task<IReadOnlyList<ViajeLectura>> ListarAsync(FiltroViajes filtro, int maximo, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(filtro);
+        return await Lectura(Filtrar(filtro).OrderBy(v => v.InicioProgramado).ThenBy(v => v.Id).Take(maximo)).ToListAsync(ct);
+    }
+
+    private IQueryable<FilaViaje> Filtrar(FiltroViajes filtro)
+    {
         var consulta = Filas();
         if (filtro.Estado is { } estado) consulta = consulta.Where(v => v.Estado == estado);
         if (filtro.ConductorId is { } conductorId) consulta = consulta.Where(v => v.ConductorId == conductorId);
@@ -76,11 +91,7 @@ public sealed class ConsultasViajesEf(FlowRideDbContext contexto) : IConsultasVi
         if (filtro.EmpresaClienteId is { } empresaId) consulta = consulta.Where(v => v.EmpresaClienteId == empresaId);
         if (filtro.Desde is { } desde) consulta = consulta.Where(v => v.InicioProgramado >= desde);
         if (filtro.Hasta is { } hasta) consulta = consulta.Where(v => v.InicioProgramado < hasta);
-
-        var total = await consulta.CountAsync(ct);
-        var elementos = await Lectura(consulta.OrderByDescending(v => v.InicioProgramado).ThenBy(v => v.Id)
-            .Skip(paginacion.Salto).Take(paginacion.Tamano)).ToListAsync(ct);
-        return new PaginaResultado<ViajeLectura>(elementos, total, paginacion);
+        return consulta;
     }
 
     public async Task<ViajeDetalleLectura?> DetalleAsync(Guid viajeId, CancellationToken ct)

@@ -12,6 +12,9 @@ public interface IConsultasViajes
 {
     Task<PaginaResultado<ViajeLectura>> BuscarAsync(FiltroViajes filtro, Paginacion paginacion, CancellationToken ct);
 
+    /// <summary>Todos los viajes que cumplen el filtro, por hora programada, hasta <paramref name="maximo"/> (reportes, RF-46).</summary>
+    Task<IReadOnlyList<ViajeLectura>> ListarAsync(FiltroViajes filtro, int maximo, CancellationToken ct);
+
     Task<ViajeDetalleLectura?> DetalleAsync(Guid viajeId, CancellationToken ct);
 
     /// <summary>Viajes en curso y programados que empiezan antes de <paramref name="programadosHasta"/>, por hora de inicio.</summary>
