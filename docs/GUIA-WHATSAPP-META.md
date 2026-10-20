@@ -77,6 +77,24 @@ configura una sola vez en Meta.
 2. Desde tu WhatsApp escríbele `hola` al número de prueba: el bot responde con el menú en unos segundos.
 3. La conversación se ve en `GET /api/whatsapp/conversaciones/{teléfono}` (Panel Web).
 
+## 7. Pasar el webhook por el borde común (Fase 10, ADR-0012)
+
+Con el borde, Meta llama a un único callback para todos los operadores: el borde valida la firma, busca el operador por
+el `phone_number_id` y reenvía el evento a su stack, que vuelve a validar la firma. La URL configurada en Meta **no
+cambia** (`/api/whatsapp/webhook`); solo cambia a dónde apunta ngrok.
+
+1. Registra la ruta del operador (subdominio, URL de su API y su `phone_number_id`, el mismo de `FlowRide:WhatsApp:PhoneNumberId`):
+   `dotnet run --project src/FlowRide.Aprovisionamiento -- registrar-ruta --id tenant-a --url http://localhost:5237 --phone-number-id <id del número de prueba>`
+2. Secretos del borde (una sola vez, en el almacén `flowride-borde`): la cadena del catálogo (la misma de la herramienta),
+   y el `AppSecret` y el `VerifyToken` de la app de Meta (los mismos del paso 3, porque es una sola app):
+   `dotnet user-secrets set "ConnectionStrings:Catalogo" "<cadena del catálogo>" --project src/FlowRide.Borde`
+   `dotnet user-secrets set "Borde:WhatsApp:AppSecret" "<clave secreta de la app>" --project src/FlowRide.Borde`
+   `dotnet user-secrets set "Borde:WhatsApp:VerifyToken" "<tu token de verificación>" --project src/FlowRide.Borde`
+3. Levanta la API y el borde (`dotnet run --project src/FlowRide.Borde --launch-profile https`, queda en
+   <https://localhost:8443>) y apunta ngrok al borde: `ngrok http --domain=<algo>.ngrok-free.dev https://localhost:8443`.
+4. El Panel Web y la API del operador quedan en `https://tenant-a.dev.localhost:8443` (el certificado de desarrollo de
+   .NET cubre `*.dev.localhost`; si el navegador no confía en él: `dotnet dev-certs https --trust`).
+
 ## Errores frecuentes de Meta
 
 | Código | Qué pasa | Qué hacer |

@@ -23,3 +23,5 @@ public sealed record MigrarSilosRespuesta(IReadOnlyList<MigracionSiloRespuesta> 
 }
 
 public sealed record OperadorRespuesta(string TenantId, string RazonSocial, string Nit, string CorreoContacto, string Estado);
+
+public sealed record RutaOperadorRespuesta(string TenantId, string Subdominio, string UrlStack, string? PhoneNumberId);

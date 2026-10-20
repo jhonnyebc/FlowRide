@@ -8,6 +8,8 @@ public sealed record Comando(string Nombre, IReadOnlyDictionary<string, string> 
     public const string Migrar = "migrar";
     public const string MigrarTodos = "migrar-todos";
     public const string Listar = "listar";
+    public const string RegistrarRuta = "registrar-ruta";
+    public const string ListarRutas = "listar-rutas";
 
     public static readonly string Ayuda = """
         Uso: flowride-aprovisionamiento <comando> [opciones]
@@ -21,6 +23,10 @@ public sealed record Comando(string Nombre, IReadOnlyDictionary<string, string> 
           migrar --id <tenant>      Aplica las migraciones pendientes al Silo de un operador.
           migrar-todos              Migra todos los operadores no suspendidos, en orden por Id.
           listar                    Muestra los operadores del catálogo.
+          registrar-ruta --id <tenant> --url <url-del-stack> [--subdominio <texto>] [--phone-number-id <id>]
+              Registra o actualiza cómo llega el borde común al stack del operador (ADR-0012): su subdominio
+              (por defecto, el Id), la URL de su API y el phone_number_id de su número de WhatsApp en Meta.
+          listar-rutas              Muestra las rutas del borde.
           ayuda                     Muestra esta ayuda.
         """;
 
@@ -30,6 +36,8 @@ public sealed record Comando(string Nombre, IReadOnlyDictionary<string, string> 
         [Migrar] = ["id"],
         [MigrarTodos] = [],
         [Listar] = [],
+        [RegistrarRuta] = ["id", "url"],
+        [ListarRutas] = [],
         [AyudaNombre] = []
     };
 
@@ -37,6 +45,12 @@ public sealed record Comando(string Nombre, IReadOnlyDictionary<string, string> 
     private static readonly Dictionary<string, string[]> OpcionesOpcionales = new(StringComparer.Ordinal)
     {
         [CrearOperador] = ["admin-nombre", "admin-correo", "admin-telefono"]
+    };
+
+    /// <summary>Opciones opcionales que van cada una por su lado.</summary>
+    private static readonly Dictionary<string, string[]> OpcionesIndependientes = new(StringComparer.Ordinal)
+    {
+        [RegistrarRuta] = ["subdominio", "phone-number-id"]
     };
 
     public string Opcion(string nombre) => Opciones[nombre];
@@ -81,7 +95,9 @@ public sealed record Comando(string Nombre, IReadOnlyDictionary<string, string> 
         }
 
         var opcionales = OpcionesOpcionales.GetValueOrDefault(nombre, []);
-        var desconocidas = opciones.Keys.Where(clave => !requeridas.Contains(clave) && !opcionales.Contains(clave)).ToArray();
+        var independientes = OpcionesIndependientes.GetValueOrDefault(nombre, []);
+        var desconocidas = opciones.Keys
+            .Where(clave => !requeridas.Contains(clave) && !opcionales.Contains(clave) && !independientes.Contains(clave)).ToArray();
         if (desconocidas.Length > 0)
         {
             error = $"Opción desconocida para '{nombre}': --{desconocidas[0]}.";

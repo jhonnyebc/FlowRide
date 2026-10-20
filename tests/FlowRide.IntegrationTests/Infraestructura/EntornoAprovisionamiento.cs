@@ -25,15 +25,19 @@ public sealed class EntornoAprovisionamiento : IAsyncDisposable
     private readonly ServiceProvider _servicios;
     private readonly ConcurrentDictionary<string, CifradorCampos> _cifradores = new(StringComparer.Ordinal);
 
-    private EntornoAprovisionamiento(ServiceProvider servicios, string raizSecretos, string cadenaAdministracion)
+    private EntornoAprovisionamiento(ServiceProvider servicios, string raizSecretos, string cadenaAdministracion, string cadenaCatalogo)
     {
         _servicios = servicios;
         RaizSecretos = raizSecretos;
         CadenaAdministracion = cadenaAdministracion;
+        CadenaCatalogo = cadenaCatalogo;
     }
 
     public string RaizSecretos { get; }
     public string CadenaAdministracion { get; }
+
+    /// <summary>Catálogo de plataforma de este entorno (lo lee el borde común).</summary>
+    public string CadenaCatalogo { get; }
     public AlmacenSecretosLocal Secretos => new(RaizSecretos);
 
     /// <param name="keycloak">Keycloak real; sin él, los realms se registran en memoria.</param>
@@ -45,11 +49,12 @@ public sealed class EntornoAprovisionamiento : IAsyncDisposable
         var administracion = postgres.CadenaConexion;
         var catalogo = $"catalogo_{Guid.NewGuid():N}"[..20];
         await EjecutarComoAdministradorAsync(administracion, $"CREATE DATABASE \"{catalogo}\"");
+        var cadenaCatalogo = new NpgsqlConnectionStringBuilder(administracion) { Database = catalogo }.ConnectionString;
 
         var configuracion = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:Catalogo"] = new NpgsqlConnectionStringBuilder(administracion) { Database = catalogo }.ConnectionString,
+                ["ConnectionStrings:Catalogo"] = cadenaCatalogo,
                 ["ConnectionStrings:AdministracionServidor"] = administracion,
                 ["FlowRide:Identidad:UrlKeycloak"] = keycloak?.UrlBase ?? "http://keycloak.pruebas.invalid",
                 ["FlowRide:Keycloak:Administrador:Usuario"] = keycloak is null ? "admin" : KeycloakFixture.Usuario,
@@ -72,7 +77,7 @@ public sealed class EntornoAprovisionamiento : IAsyncDisposable
         await using (var alcance = servicios.CreateAsyncScope())
             await alcance.ServiceProvider.GetRequiredService<CatalogoDbContext>().Database.MigrateAsync();
 
-        return new EntornoAprovisionamiento(servicios, raiz, administracion);
+        return new EntornoAprovisionamiento(servicios, raiz, administracion, cadenaCatalogo);
     }
 
     public async Task<AprovisionarOperadorRespuesta> AprovisionarAsync(string tenantId)
