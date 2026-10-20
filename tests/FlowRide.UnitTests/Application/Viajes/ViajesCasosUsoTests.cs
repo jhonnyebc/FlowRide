@@ -348,6 +348,19 @@ internal sealed class ConsultasViajesEnMemoria : IConsultasViajes
     public Task<PaginaResultado<ViajeLectura>> BuscarAsync(FiltroViajes filtro, Paginacion paginacion, CancellationToken ct) =>
         Task.FromResult(new PaginaResultado<ViajeLectura>(Viajes, Viajes.Count, paginacion));
 
+    public FiltroViajes? UltimoFiltro { get; private set; }
+
+    public Task<IReadOnlyList<ViajeLectura>> ListarAsync(FiltroViajes filtro, int maximo, CancellationToken ct)
+    {
+        UltimoFiltro = filtro;
+        return Task.FromResult<IReadOnlyList<ViajeLectura>>(Viajes
+            .Where(v => filtro.Estado is null || v.Estado == filtro.Estado)
+            .Where(v => filtro.ConductorId is null || v.ConductorId == filtro.ConductorId)
+            .Where(v => filtro.EmpresaClienteId is null || v.EmpresaClienteId == filtro.EmpresaClienteId)
+            .Where(v => (filtro.Desde is null || v.InicioProgramado >= filtro.Desde) && (filtro.Hasta is null || v.InicioProgramado < filtro.Hasta))
+            .Take(maximo).ToList());
+    }
+
     public Task<ViajeDetalleLectura?> DetalleAsync(Guid viajeId, CancellationToken ct) =>
         Task.FromResult(Viajes.Where(v => v.Id == viajeId)
             .Select(v => new ViajeDetalleLectura(v, [new ParadaLectura(Guid.NewGuid(), 1, "Terminal 2", v.InicioProgramado, null)], [], null))

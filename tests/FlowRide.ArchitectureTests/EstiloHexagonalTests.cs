@@ -90,7 +90,7 @@ public class EstiloHexagonalTests
             .Or().ResideInNamespace("FlowRide.API.Operacion").Or().ResideInNamespace("FlowRide.API.Parametros")
             .Or().ResideInNamespace("FlowRide.API.Solicitudes").Or().ResideInNamespace("FlowRide.API.Asignaciones")
             .Or().ResideInNamespace("FlowRide.API.Viajes").Or().ResideInNamespace("FlowRide.API.Canal")
-            .Or().ResideInNamespace("FlowRide.API.Notificaciones")
+            .Or().ResideInNamespace("FlowRide.API.Notificaciones").Or().ResideInNamespace("FlowRide.API.Reportes")
             .Should().NotDependOnAny(Types().That().ResideInNamespaceMatching(@"^FlowRide\.Application\.\w+\.CasosUso$"))
             .AndShould().NotDependOnAny(Types().That().ResideInAssembly(DomainAssembly))
             .Check(Arquitectura);
