@@ -43,6 +43,28 @@ public static class Comandos
                     await salida.WriteLineAsync($"{migracion.Silos.Count(silo => silo.Exitoso)} de {migracion.Silos.Count} Silos al día.");
                 return migracion.TodosExitosos ? 0 : 1;
 
+            case Comando.RegistrarRuta:
+                var ruta = await servicios.GetRequiredService<IRutasOperadorPuertoEntrada>().RegistrarAsync(new RegistrarRutaOperadorPeticion
+                {
+                    TenantId = comando.Opcion("id"),
+                    UrlStack = comando.Opcion("url"),
+                    Subdominio = comando.Tiene("subdominio") ? comando.Opcion("subdominio") : null,
+                    PhoneNumberId = comando.Tiene("phone-number-id") ? comando.Opcion("phone-number-id") : null
+                }, ct);
+                await salida.WriteLineAsync($"Ruta registrada: {ruta.Subdominio}.<dominio del borde> -> {ruta.UrlStack} (operador {ruta.TenantId}).");
+                await salida.WriteLineAsync(ruta.PhoneNumberId is null
+                    ? "  Sin número de WhatsApp: el borde no le reenvía webhooks."
+                    : $"  Webhooks del phone_number_id {ruta.PhoneNumberId} van a este stack.");
+                await salida.WriteLineAsync("  El borde la toma en su próxima recarga (máximo 30 s), sin reiniciar.");
+                return 0;
+
+            case Comando.ListarRutas:
+                var rutas = await servicios.GetRequiredService<IRutasOperadorPuertoEntrada>().ConsultarAsync(ct);
+                if (rutas.Count == 0) await salida.WriteLineAsync("No hay rutas registradas.");
+                foreach (var r in rutas)
+                    await salida.WriteLineAsync($"{r.TenantId,-20} {r.Subdominio,-20} {r.UrlStack,-30} {r.PhoneNumberId ?? "(sin WhatsApp)"}");
+                return 0;
+
             case Comando.Listar:
                 var operadores = await servicios.GetRequiredService<IConsultarOperadoresPuertoEntrada>().ConsultarAsync(ct);
                 if (operadores.Count == 0) await salida.WriteLineAsync("No hay operadores registrados.");

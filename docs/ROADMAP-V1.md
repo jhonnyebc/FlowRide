@@ -24,8 +24,8 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 6 | Viajes y calificación | Viajes, Calificacion | 0007, 0011 | ✅ PR #9 fusionada |
 | 7 | Canal WhatsApp | Mensajeria | 0003, 0008, 0012 | ✅ PR #10 fusionada |
 | 8 | Notificaciones y alertas | Notificaciones | 0007, 0015, 0016 | ✅ PR #11 fusionada |
-| 9 | Reportes y vista operacional | Reportes | 0006, 0013 | 🟡 rama `feature/RF-46-reportes` (falta PR) |
-| 10 | Borde común | Plataforma | 0012, 0014 | ⬜ |
+| 9 | Reportes y vista operacional | Reportes | 0006, 0013 | ✅ PR #12 fusionada |
+| 10 | Borde común | Plataforma | 0012, 0014 | 🟡 rama `feature/RF-19-borde-comun` (falta PR) |
 | 11 | Panel Web | Web | 0003, 0015, 0016, 0019 | ⬜ |
 | 12 | Operación: despliegue, backups y retención | Plataforma | 0010, 0011, 0013 | ⬜ |
 
@@ -135,7 +135,12 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 - RF cubiertos: RF-36, RF-42, RF-46, RF-47, RF-48, RF-49.
 
 ### Fase 10 — Borde común
-- [ ] YARP: ruteo por subdominio y por `phone_number_id`, límites de tasa, validación `X-Hub-Signature-256` y cabeceras de seguridad.
+- [x] Proyecto `FlowRide.Borde` con YARP: una ruta por operador activo, `{subdominio}.{dominio}` → su stack, recargada del catálogo cada 30 s sin reiniciar. Tabla `plataforma.ruta_operador` (migración `RutasBorde` del catálogo) y comandos `registrar-ruta` y `listar-rutas` de la CLI.
+- [x] Router de webhooks: handshake, validación `X-Hub-Signature-256` con la app de Meta de la plataforma, destino por `phone_number_id` y reenvío del cuerpo intacto (el stack vuelve a validar). Stack caído → 502 para que Meta reintente; métricas de rechazos por firma y de números sin operador.
+- [x] Límites de tasa por IP y por ruta, tamaño máximo de petición, métodos permitidos y cabeceras de seguridad (sin `Server`). HTTPS local en `https://localhost:8443` y `https://<operador>.dev.localhost:8443`.
+- [ ] WAF con OWASP CRS: gestionado de Azure (Front Door o Application Gateway), en la Fase 12 (decisión del 2026-10-19).
+- Pruebas: 532 unitarias (94,1 % líneas / 83,2 % ramas), 17 de arquitectura, 139 de integración (el borde reenvía a la API real del stack).
+- RF relacionados: RF-14, RF-19 (escenarios OPLOG-SEG-02, ADM-SEG-02, COND-DISP-01).
 
 ### Fase 11 — Panel Web
 - [ ] SPA en React + TypeScript (`web/`): OIDC + PKCE, cliente generado desde OpenAPI, alertas por SSE, WCAG 2.1 AA.
@@ -235,3 +240,5 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 2026-10-18 | Se agregan los eventos `solicitud.cancelada` y `asignacion.cancelada` al cancelar una solicitud, y `canal.envio_fallido` cuando un WhatsApp no se entrega; el envío en vivo lee de la base cada 2 s (funciona con varias réplicas); Mailpit publica el SMTP 1025 en `docker-compose`. |
 | 2026-10-19 | Fase 9 (decisiones del usuario): exportes en CSV, generados en la misma petición (síncronos) con periodo máximo de 93 días; reportes e indicadores para el Administrador y el Operador logístico (las personales siguen sin direcciones según el parámetro); indicadores de volumen, cumplimiento, conductores y por cliente empresarial. |
 | 2026-10-19 | La puntualidad usa una tolerancia configurable (`reporte.tolerancia_puntualidad_minutos`, 10 min); una asignación vencida cuenta aparte del rechazo; solo los indicadores de periodos cerrados se cachean (TTL ≤ 10 min), lo demás va siempre a PostgreSQL. |
+| 2026-10-19 | Fase 10 (decisiones del usuario): la tabla de ruteo vive en el catálogo de plataforma y la llena la CLI; el borde y el stack validan la firma de Meta (defensa en profundidad); el WAF con OWASP CRS es el gestionado de Azure en la Fase 12; en local, HTTPS con `*.dev.localhost` (lo cubre el certificado de desarrollo de .NET 10). |
+| 2026-10-19 | Con una sola app de Meta, el `AppSecret` del stack de cada operador es el mismo de la app de la plataforma. El borde reenvía el cuerpo intacto a cada operador que aparece en el webhook (el stack ya ignora lo que no es de su número); un número sin operador se responde 200 para que Meta no reintente sin fin. |

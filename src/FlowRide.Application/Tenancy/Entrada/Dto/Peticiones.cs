@@ -14,3 +14,12 @@ public sealed class MigrarSilosPeticion
 {
     public string? TenantId { get; init; }
 }
+
+/// <summary>Ruta del borde de un operador. Sin subdominio se usa el Id del operador; el número de WhatsApp es opcional.</summary>
+public sealed class RegistrarRutaOperadorPeticion
+{
+    public string? TenantId { get; init; }
+    public string? Subdominio { get; init; }
+    public string? UrlStack { get; init; }
+    public string? PhoneNumberId { get; init; }
+}

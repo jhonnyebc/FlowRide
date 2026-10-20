@@ -4,6 +4,7 @@ using FlowRide.Application.Tenancy.Entrada.Dto;
 using FlowRide.Application.Tenancy.Entrada.Puertos;
 using FlowRide.Domain.Plataforma;
 using FlowRide.Domain.Plataforma.AprovisionarOperador;
+using FlowRide.Domain.Plataforma.Borde;
 using FlowRide.Domain.Plataforma.MigrarSilos;
 using FlowRide.Domain.Transversal;
 
@@ -69,4 +70,25 @@ public sealed class ConsultarOperadoresAdaptadorEntrada(
         .Select(operador => new OperadorRespuesta(
             operador.Id, operador.RazonSocial, operador.Nit, operador.CorreoContacto, operador.Estado.ToString()))
         .ToList();
+}
+
+public sealed class RutasOperadorAdaptadorEntrada(
+    ICasoUsoConRetorno<RegistrarRutaOperadorDominio, RutaOperador> registrar,
+    ICasoUsoConRetorno<CargarTablaRutasDominio, IReadOnlyList<RutaOperador>> consultar) : IRutasOperadorPuertoEntrada
+{
+    public async Task<RutaOperadorRespuesta> RegistrarAsync(RegistrarRutaOperadorPeticion peticion, CancellationToken ct)
+    {
+        if (peticion is null || string.IsNullOrWhiteSpace(peticion.TenantId) || string.IsNullOrWhiteSpace(peticion.UrlStack))
+            throw new FlowRideExcepcion("tenantId y urlStack son obligatorios.");
+
+        var tenantId = peticion.TenantId.Trim();
+        var subdominio = string.IsNullOrWhiteSpace(peticion.Subdominio) ? tenantId : peticion.Subdominio.Trim();
+        return Respuesta(await registrar.EjecutarAsync(
+            new RegistrarRutaOperadorDominio(tenantId, subdominio, peticion.UrlStack.Trim(), peticion.PhoneNumberId), ct));
+    }
+
+    public async Task<IReadOnlyList<RutaOperadorRespuesta>> ConsultarAsync(CancellationToken ct) =>
+        (await consultar.EjecutarAsync(CargarTablaRutasDominio.Instancia, ct)).Select(Respuesta).ToList();
+
+    private static RutaOperadorRespuesta Respuesta(RutaOperador ruta) => new(ruta.OperadorId, ruta.Subdominio, ruta.UrlStack, ruta.PhoneNumberId);
 }
