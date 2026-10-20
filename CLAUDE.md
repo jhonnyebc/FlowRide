@@ -91,6 +91,12 @@ Las pruebas de `EstiloHexagonalTests` hacen cumplir los puntos 1, 2, 3 y 5.
 - `GatewayNotificaciones`: pasajero/conductor → WhatsApp (bandeja `canal.mensaje_saliente`); dentro de la ventana de 24 h, texto; fuera, la plantilla **aprobada** de la clave (`notif.plantilla_whatsapp`, sembrada Pendiente); si no hay, alerta crítica. Alertas → `notif.alerta` (+ correo a los administradores si es crítica, `notif.correo_saliente`, SMTP `FlowRide:Correo`, Mailpit 1025 en local).
 - Textos en `Application/Notificaciones/Catalogo/mensajes.es-CO.json` (recurso embebido; las alertas son `título|detalle`). Panel: `/api/alertas` (lista, `/en-vivo` por SSE, `/{id}/leida`) y `/api/notificaciones/plantillas`.
 
+## Reportes y vista operacional (Fase 9)
+- Módulo `Reportes` (RF-36, RF-42, RF-46 a RF-49), para Administrador y Operador logístico (política `PanelWeb`). `IConsultasReportes` lee filas planas del periodo (solicitudes con su última asignación y viaje; asignaciones con su viaje y si vencieron) y `IConsultasViajes.ListarAsync`; `GeneradorReportes` agrega en memoria con `ReglasReportes` (dominio) y aplica la visibilidad de las personales.
+- Periodo `PeriodoReporte`: desde (incluido) y hasta (excluido) la hora programada, máximo 93 días y 50 000 filas (ADM-REND-01). Puntualidad con el parámetro `reporte.tolerancia_puntualidad_minutos` (10). Vista centralizada: un día en la zona del operador, semáforo `Critico`/`Atencion`/`Normal` (OPLOG-UX-02).
+- Caché (ADR-0006): solo los indicadores de periodos **cerrados**, `ICacheReportes` en memoria con TTL ≤ 10 min (`FlowRide:Cache:TtlIndicadoresSegundos`, 300). Vista, reportes y periodos abiertos van siempre a PostgreSQL.
+- Exporte CSV síncrono (`;`, decimales con coma, UTF-8 con BOM, hora local, protección contra inyección de fórmulas) a `exports/<tipo>/<id>/reporte-….csv` del bucket, enlace firmado de 15 min y evento `reporte.exportar`; si la auditoría falla, se borra el archivo. API: `/api/reportes/{vista-centralizada, indicadores, viajes, solicitudes, conductores, empresas}` y `POST /api/reportes/{tipo}/exportar`.
+
 ## RF-10
 El sistema asigna automáticamente un conductor y un vehículo a cada solicitud pendiente, aplicando las reglas configurables del tenant.
 

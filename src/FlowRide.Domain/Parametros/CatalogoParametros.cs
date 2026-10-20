@@ -114,6 +114,7 @@ public static class CatalogoParametros
     public const string VisibilidadSolicitudesPersonales = "solicitud.visibilidad_personales";
     public const string PlazoRespuestaAsignacionMinutos = "asignacion.plazo_respuesta_minutos";
     public const string PlazoCalificacionDias = "calificacion.plazo_dias";
+    public const string ToleranciaPuntualidadMinutos = "reporte.tolerancia_puntualidad_minutos";
 
     public const string VisiblesParaPasajeroYOperadorLogistico = "PasajeroYOperadorLogistico";
     public const string VisiblesSoloParaPasajero = "SoloPasajero";
@@ -132,7 +133,9 @@ public static class CatalogoParametros
         DefinicionParametro.Entero(PlazoRespuestaAsignacionMinutos,
             "Minutos que tiene el conductor para aceptar o rechazar una asignación; si no responde, vuelve a la cola (RF-34).", 15, 1, 1440),
         DefinicionParametro.Entero(PlazoCalificacionDias,
-            "Días después de terminado el viaje en que el pasajero puede calificarlo (RF-54).", 7, 1, 90)
+            "Días después de terminado el viaje en que el pasajero puede calificarlo (RF-54).", 7, 1, 90),
+        DefinicionParametro.Entero(ToleranciaPuntualidadMinutos,
+            "Minutos después de la hora programada en que un viaje que inicia todavía cuenta como puntual (RF-42, RF-46).", 10, 0, 120)
     ];
 
     public static DefinicionParametro Buscar(string clave) =>

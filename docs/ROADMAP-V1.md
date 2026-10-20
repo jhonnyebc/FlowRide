@@ -23,8 +23,8 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 5 | Asignación de punta a punta | Asignacion | 0007, 0009, 0016 | ✅ PR #8 fusionada |
 | 6 | Viajes y calificación | Viajes, Calificacion | 0007, 0011 | ✅ PR #9 fusionada |
 | 7 | Canal WhatsApp | Mensajeria | 0003, 0008, 0012 | ✅ PR #10 fusionada |
-| 8 | Notificaciones y alertas | Notificaciones | 0007, 0015, 0016 | ✅ rama `feature/RF-43-notificaciones` (pendiente de PR) |
-| 9 | Reportes y vista operacional | Reportes | 0006, 0013 | ⬜ |
+| 8 | Notificaciones y alertas | Notificaciones | 0007, 0015, 0016 | ✅ PR #11 fusionada |
+| 9 | Reportes y vista operacional | Reportes | 0006, 0013 | 🟡 rama `feature/RF-46-reportes` (falta PR) |
 | 10 | Borde común | Plataforma | 0012, 0014 | ⬜ |
 | 11 | Panel Web | Web | 0003, 0015, 0016, 0019 | ⬜ |
 | 12 | Operación: despliegue, backups y retención | Plataforma | 0010, 0011, 0013 | ⬜ |
@@ -127,7 +127,12 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 - RF cubiertos: RF-16, RF-17, RF-35, RF-43, RF-44, RF-45.
 
 ### Fase 9 — Reportes y vista operacional
-- [ ] Indicadores, reportes y exportes con URL firmada de 15 min o menos.
+- [x] Vista centralizada del día (RF-36): solicitudes con su asignación y viaje, semaforizadas (crítico: sin candidatos, retrasado o sin conductor confirmado a 30 min; atención: espera asignación o respuesta, urgente o con incidentes).
+- [x] Indicadores básicos (RF-42): volumen y estados, cumplimiento (puntualidad con tolerancia configurable, retraso promedio, incidentes), conductores (aceptación, rechazo, vencidas, calificación, los 5 con más viajes) y por cliente empresarial. Cache-aside (ADR-0006) solo para periodos cerrados.
+- [x] Reportes RF-46 (viajes realizados), RF-47 (atendidas, pendientes y canceladas), RF-48 (conductores asignados) y RF-49 (histórico por cliente empresarial), con resumen y filas paginadas; periodo de hasta 93 días.
+- [x] Exporte CSV síncrono al bucket del operador (`exports/`, ADR-0013) con enlace firmado de 15 min y auditoría. El borrado a los 7 días es la política de ciclo de vida del bucket (Fase 12, en Azure).
+- Pruebas: 516 unitarias (93,9 % líneas / 83,0 % ramas), 16 de arquitectura, 133 de integración. Sin migración (solo un parámetro nuevo con valor por defecto).
+- RF cubiertos: RF-36, RF-42, RF-46, RF-47, RF-48, RF-49.
 
 ### Fase 10 — Borde común
 - [ ] YARP: ruteo por subdominio y por `phone_number_id`, límites de tasa, validación `X-Hub-Signature-256` y cabeceras de seguridad.
@@ -178,20 +183,20 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | RF-33 | Visualización de asignaciones generadas | 5 | ✅ |
 | RF-34 | Actualización del estado de asignación | 5-6 | ✅ aceptar, rechazar y vencimiento |
 | RF-35 | Recordatorios automáticos | 8 | ✅ |
-| RF-36 | Vista centralizada de solicitudes y viajes | 9 | ⬜ |
+| RF-36 | Vista centralizada de solicitudes y viajes | 9 | ✅ |
 | RF-37 | Monitoreo de servicios en curso | 6 | ✅ sin GPS (ADR-0005 fuera de alcance) |
 | RF-38 | Consulta de usuarios, conductores y asignaciones | 3-5 | ✅ |
 | RF-39 | Intervención manual en la operación | 5 | ✅ con RF-12 |
 | RF-40 | Trazabilidad de cada viaje | 6 | ✅ |
 | RF-41 | Búsqueda y filtrado | 3 | ✅ |
-| RF-42 | Indicadores básicos | 9 | ⬜ |
+| RF-42 | Indicadores básicos | 9 | ✅ |
 | RF-43 | Notificación de cambios de estado | 8 | ✅ |
 | RF-44 | Notificación de reasignación o novedades | 8 | ✅ |
 | RF-45 | Alertas operativas | 8 | ✅ panel (SSE) y correo para las críticas |
-| RF-46 | Reporte de viajes realizados | 9 | ⬜ |
-| RF-47 | Reporte de solicitudes atendidas y pendientes | 9 | ⬜ |
-| RF-48 | Reporte de conductores asignados | 9 | ⬜ |
-| RF-49 | Reporte histórico por cliente empresarial | 9 | ⬜ |
+| RF-46 | Reporte de viajes realizados | 9 | ✅ |
+| RF-47 | Reporte de solicitudes atendidas y pendientes | 9 | ✅ |
+| RF-48 | Reporte de conductores asignados | 9 | ✅ |
+| RF-49 | Reporte histórico por cliente empresarial | 9 | ✅ |
 | RF-50 | Registro de eventos del sistema | 0 | 🟡 log estructurado por solicitud |
 | RF-51 | Registro de errores y excepciones | 0 | 🟡 ProblemDetails + log con traceId |
 | RF-52 | Auditoría de acciones administrativas | 2 | ⬜ |
@@ -228,3 +233,5 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 2026-10-18 | Los teléfonos de WhatsApp se validan y normalizan a E.164 (`+57…`, sin espacios ni guiones) al crear o editar usuarios, pasajeros y conductores (también el primer administrador de la CLI): son la identidad en el canal. Se detectó al probar con Meta, porque la API aceptaba cualquier texto. |
 | 2026-10-18 | Fase 8 (decisiones del usuario): todos los avisos propuestos (conductor, pasajero, panel y recordatorios); por correo van las alertas de solicitud urgente sin candidatos, accidente o falla mecánica, turno abandonado y WhatsApp fallido; fuera de la ventana de 24 h, plantilla aprobada o error con alerta (ADR-0016); alertas guardadas y en vivo por SSE. |
 | 2026-10-18 | Se agregan los eventos `solicitud.cancelada` y `asignacion.cancelada` al cancelar una solicitud, y `canal.envio_fallido` cuando un WhatsApp no se entrega; el envío en vivo lee de la base cada 2 s (funciona con varias réplicas); Mailpit publica el SMTP 1025 en `docker-compose`. |
+| 2026-10-19 | Fase 9 (decisiones del usuario): exportes en CSV, generados en la misma petición (síncronos) con periodo máximo de 93 días; reportes e indicadores para el Administrador y el Operador logístico (las personales siguen sin direcciones según el parámetro); indicadores de volumen, cumplimiento, conductores y por cliente empresarial. |
+| 2026-10-19 | La puntualidad usa una tolerancia configurable (`reporte.tolerancia_puntualidad_minutos`, 10 min); una asignación vencida cuenta aparte del rechazo; solo los indicadores de periodos cerrados se cachean (TTL ≤ 10 min), lo demás va siempre a PostgreSQL. |
