@@ -103,6 +103,13 @@ Las pruebas de `EstiloHexagonalTests` hacen cumplir los puntos 1, 2, 3 y 5.
 - Seguridad: límites de tasa por IP (panel 300/min, webhook 1200/min, 429 con `Retry-After`), tamaño máximo (10 MB; webhook 1 MB), solo métodos GET/HEAD/POST/PUT/PATCH/DELETE/OPTIONS, cabeceras (`nosniff`, `DENY`, CSP, `Referrer-Policy`, HSTS en HTTPS) y sin `Server`. El WAF (OWASP CRS) es el gestionado de Azure en la Fase 12.
 - El `Program` del borde es `ProgramaBorde` con `Main` explícito: el `Program` de nivel superior del SDK web en .NET 10 es público y chocaría con el de la API en las pruebas.
 
+## Seguridad OWASP (requisitos del profesor, 2026-10-20)
+- Secretos: hook versionado `.githooks/pre-push` con gitleaks (local o la imagen `zricethezav/gitleaks:v8.30.1` en Docker) que escanea solo lo que se va a publicar; bloquea el push si encuentra algo. Activar una vez por clon: `git config core.hooksPath .githooks`. El CI sigue escaneando todo el historial.
+- Keycloak (`plantilla-realm.json`): contraseña de 12+ con mayúscula, minúscula y número, distinta del usuario y el correo, historial de 5 y hash argon2; fuerza bruta: bloqueo tras 5 fallos (espera creciente hasta 15 min); TOTP de 6 dígitos. El Administrador (`RolesSistema.ExigeDobleFactor`) configura su TOTP al crearse o al pasar a ese rol (acción requerida `CONFIGURE_TOTP`).
+- Reautenticación (RFC 9470): política `Politicas.AutenticacionReciente` (claim `auth_time` ≤ `FlowRide:Identidad:MinutosAutenticacionReciente`, 5) en crear, activar, desactivar y cambiar rol de usuarios, parámetros, plantillas y configuración del motor. Sin sesión reciente: 401 con `WWW-Authenticate: Bearer error="insufficient_user_authentication", max_age="300"`. El cliente del panel tiene el mapper `auth_time` (el grant de contraseña directa no lo trae: en las pruebas con Keycloak real se usa `IniciarSesionConNavegadorAsync`).
+- Borde (parte AUTH del API gateway): a `/api/` de un subdominio solo pasa un token vigente del realm de ese operador (`ValidadorTokensBorde`, claves del realm en caché, `tenant_id` igual al de la ruta); si no, 401 sin llegar al stack. El stack vuelve a validar.
+- CSRF: la API solo acepta `Authorization: Bearer` (sin cookies de sesión), así que no aplica; el Panel Web no guardará tokens en cookies ni secretos en `VITE_*`.
+
 ## RF-10
 El sistema asigna automáticamente un conductor y un vehículo a cada solicitud pendiente, aplicando las reglas configurables del tenant.
 
@@ -137,6 +144,7 @@ Transacciones PostgreSQL, concurrencia optimista con token de versión, restricc
 - Arquitectura: `dotnet test tests/FlowRide.ArchitectureTests`
 - Integración (requiere Docker): `dotnet test tests/FlowRide.IntegrationTests`
 - Herramientas locales: `dotnet tool restore` (instala `dotnet-ef` desde `dotnet-tools.json`).
+- Hooks de Git (una vez por clon): `git config core.hooksPath .githooks` (gitleaks antes de cada push; necesita gitleaks o Docker en ejecución).
 - Entorno local: `cp .env.example .env`, definir contraseñas y `docker compose up -d`. PostgreSQL queda en el **puerto 5433** del host (5432 lo ocupa un PostgreSQL local), Keycloak en **8080** (consola: usuario `KEYCLOAK_ADMIN_USER`), Mailpit en **8025** (ahí llegan los correos de Keycloak) y Azurite en **10000** (documentos; cuenta de desarrollo `UseDevelopmentStorage=true`). Al iniciar el volumen solo se crea el catálogo (`flowride_catalogo`); los Silos y los realms los crea la herramienta.
 - Herramienta de aprovisionamiento (secretos de plataforma una sola vez, con los valores de `.env`):
   `dotnet user-secrets set "ConnectionStrings:Catalogo" "Host=localhost;Port=5433;Database=flowride_catalogo;Username=flowride_catalogo;Password=<CATALOGO_DB_PASSWORD>" --project src/FlowRide.Aprovisionamiento`

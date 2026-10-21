@@ -51,6 +51,17 @@ public class CrearUsuarioCasoUsoTests : CasosUsoIdentidadBase
         Assert.True(evento.HashValido());
         Assert.Equal("OperadorLogistico", Valores(evento.ValoresDespues)["rol"]);
         Assert.DoesNotContain("ana@a.co", evento.ValoresDespues, StringComparison.Ordinal);
+        Assert.Empty(Proveedor.ConDobleFactor);
+    }
+
+    [Fact]
+    public async Task UnAdministrador_DebeConfigurarSuDobleFactor()
+    {
+        var usuario = await Crear().EjecutarAsync(Datos with { Rol = "Administrador" }, CancellationToken.None);
+
+        Assert.Contains(usuario.IdentidadExternaId!, Proveedor.ConDobleFactor);
+        Assert.True(RolesSistema.ExigeDobleFactor(RolesSistema.AdministradorId));
+        Assert.False(RolesSistema.ExigeDobleFactor(RolesSistema.OperadorLogisticoId));
     }
 
     [Fact]
@@ -215,7 +226,7 @@ public class CambiarRolUsuarioCasoUsoTests : CasosUsoIdentidadBase
     private static readonly Guid Actor = Guid.NewGuid();
 
     private CambiarRolUsuarioCasoUso CasoUso() =>
-        new(new UsuarioDominio(Usuarios), Usuarios, Auditoria, UnidadTrabajo, new RelojFijo(Ahora));
+        new(new UsuarioDominio(Usuarios), Usuarios, Auditoria, UnidadTrabajo, Proveedor, new RelojFijo(Ahora));
 
     [Fact]
     public async Task CambiaElRolYLoAudita()
@@ -228,6 +239,7 @@ public class CambiarRolUsuarioCasoUsoTests : CasosUsoIdentidadBase
         var evento = Assert.Single(Auditoria.Eventos);
         Assert.Equal("OperadorLogistico", Valores(evento.ValoresAntes)["rol"]);
         Assert.Equal("Administrador", Valores(evento.ValoresDespues)["rol"]);
+        Assert.Contains("sub-ana@a.co", Proveedor.ConDobleFactor);
     }
 
     [Fact]

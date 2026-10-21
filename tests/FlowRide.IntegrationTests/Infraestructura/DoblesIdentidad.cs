@@ -9,12 +9,20 @@ public sealed class ProveedorIdentidadDePrueba : IProveedorIdentidad
 {
     public ConcurrentDictionary<string, bool> Cuentas { get; } = new(StringComparer.Ordinal);
     public ConcurrentQueue<string> CorreosEnviados { get; } = new();
+    public ConcurrentDictionary<string, bool> ConDobleFactor { get; } = new(StringComparer.Ordinal);
 
-    public Task<string> AsegurarUsuarioAsync(string correo, string nombre, CancellationToken ct)
+    public Task<string> AsegurarUsuarioAsync(string correo, string nombre, bool exigirDobleFactor, CancellationToken ct)
     {
         var id = $"sub-{correo}";
         Cuentas.TryAdd(id, true);
+        if (exigirDobleFactor) ConDobleFactor[id] = true;
         return Task.FromResult(id);
+    }
+
+    public Task ExigirDobleFactorAsync(string identidadExternaId, CancellationToken ct)
+    {
+        ConDobleFactor[identidadExternaId] = true;
+        return Task.CompletedTask;
     }
 
     public Task EnviarConfiguracionContrasenaAsync(string identidadExternaId, CancellationToken ct)

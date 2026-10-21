@@ -33,7 +33,8 @@ public sealed class CrearUsuarioCasoUso(
         await usuarioDominio.ValidarTelefonoDisponibleAsync(datos.TelefonoWhatsApp, null, ct);
 
         // 2. Cuenta en el proveedor primero: si después falla la base, al reintentar se reutiliza (se busca por correo).
-        var identidadExternaId = await proveedor.AsegurarUsuarioAsync(datos.Correo.Trim(), datos.Nombre.Trim(), ct);
+        var identidadExternaId = await proveedor.AsegurarUsuarioAsync(datos.Correo.Trim(), datos.Nombre.Trim(),
+            RolesSistema.ExigeDobleFactor(rol.Id), ct);
 
         // 3. Usuario interno y su auditoría, en una sola transacción.
         var ahora = reloj.GetUtcNow();

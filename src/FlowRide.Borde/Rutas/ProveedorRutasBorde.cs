@@ -50,6 +50,7 @@ public sealed class ProveedorRutasBorde : IProxyConfigProvider
                 ClusterId = $"stack-{r.TenantId}",
                 Order = OrdenRutasStacks,
                 RateLimiterPolicy = PoliticaLimite,
+                Metadata = new Dictionary<string, string>(StringComparer.Ordinal) { [Seguridad.TokensBorde.MetadatoOperador] = r.TenantId },
                 Match = new RouteMatch { Hosts = [r.Host], Path = "/{**resto}" }
             }).ToList();
             Clusters = rutas.Rutas.Select(r => new ClusterConfig
