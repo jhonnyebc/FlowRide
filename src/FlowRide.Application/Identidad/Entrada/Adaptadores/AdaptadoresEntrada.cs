@@ -56,6 +56,26 @@ public sealed class CambiarRolUsuarioAdaptadorEntrada(
     }
 }
 
+public sealed class ActualizarUsuarioAdaptadorEntrada(
+    ICasoUsoConRetorno<ActualizarUsuarioDominio, Usuario> casoUso) : IActualizarUsuarioPuertoEntrada
+{
+    public async Task<UsuarioRespuesta> ActualizarAsync(
+        Guid usuarioId, ActualizarUsuarioPeticion peticion, Guid? actorId, CancellationToken ct)
+    {
+        if (peticion is null
+            || string.IsNullOrWhiteSpace(peticion.Nombre)
+            || string.IsNullOrWhiteSpace(peticion.Correo)
+            || string.IsNullOrWhiteSpace(peticion.TelefonoWhatsApp))
+        {
+            throw new FlowRideExcepcion("nombre, correo y telefonoWhatsApp son obligatorios.");
+        }
+
+        var datos = new ActualizarUsuarioDominio(usuarioId, peticion.Nombre.Trim(), peticion.Correo.Trim(),
+            TelefonosWhatsApp.Normalizar(peticion.TelefonoWhatsApp), actorId);
+        return MapeoUsuarios.ARespuesta(await casoUso.EjecutarAsync(datos, ct));
+    }
+}
+
 public sealed class ConsultarUsuariosAdaptadorEntrada(
     ICasoUsoConRetorno<ConsultarUsuariosDominio, IReadOnlyList<Usuario>> casoUso) : IConsultarUsuariosPuertoEntrada
 {

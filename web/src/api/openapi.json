@@ -182,6 +182,46 @@
         }
       }
     },
+    "/api/usuarios/{id}": {
+      "put": {
+        "tags": [
+          "Usuarios"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualizarUsuarioPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auditoria/verificacion": {
       "get": {
         "tags": [
@@ -3058,6 +3098,29 @@
   },
   "components": {
     "schemas": {
+      "ActualizarUsuarioPeticion": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "correo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "telefonoWhatsApp": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "AlertaLectura": {
         "required": [
           "id",

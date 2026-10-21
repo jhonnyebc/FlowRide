@@ -112,6 +112,26 @@ public class AdaptadoresEntradaIdentidadTests
     }
 
     [Fact]
+    public async Task Actualizar_RecortaNormalizaElTelefonoYExigeLosTresDatos()
+    {
+        var id = Guid.NewGuid();
+        var casoUso = new CasoUsoGrabador<ActualizarUsuarioDominio, Usuario>(_ => Usuario());
+        var adaptador = new ActualizarUsuarioAdaptadorEntrada(casoUso);
+
+        await adaptador.ActualizarAsync(id, new ActualizarUsuarioPeticion
+        {
+            Nombre = " Ana Pérez ",
+            Correo = " ana@a.co ",
+            TelefonoWhatsApp = " +57 300 111-2233 "
+        }, Actor, CancellationToken.None);
+
+        Assert.Equal(new ActualizarUsuarioDominio(id, "Ana Pérez", "ana@a.co", "+573001112233", Actor), Assert.Single(casoUso.Recibidos));
+        await Assert.ThrowsAsync<FlowRideExcepcion>(() =>
+            adaptador.ActualizarAsync(id, new ActualizarUsuarioPeticion { Nombre = "Ana", Correo = " " }, Actor, CancellationToken.None));
+        await Assert.ThrowsAsync<FlowRideExcepcion>(() => adaptador.ActualizarAsync(id, null!, Actor, CancellationToken.None));
+    }
+
+    [Fact]
     public async Task Consultar_OrdenaPorNombre()
     {
         var casoUso = new CasoUsoGrabador<ConsultarUsuariosDominio, IReadOnlyList<Usuario>>(_ =>

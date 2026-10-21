@@ -270,6 +270,73 @@ public class CambiarRolUsuarioCasoUsoTests : CasosUsoIdentidadBase
     }
 }
 
+public class ActualizarUsuarioCasoUsoTests : CasosUsoIdentidadBase
+{
+    private static readonly Guid Actor = Guid.NewGuid();
+
+    private ActualizarUsuarioCasoUso CasoUso() =>
+        new(new UsuarioDominio(Usuarios), Usuarios, Auditoria, UnidadTrabajo, Proveedor, new RelojFijo(Ahora));
+
+    [Fact]
+    public async Task CambiaLosDatos_SincronizaLaCuentaYAuditaSoloLosCampos()
+    {
+        var ana = Usuarios.Registrar("Ana", "ana@a.co", "+57300", RolesSistema.OperadorLogisticoId);
+
+        var usuario = await CasoUso().EjecutarAsync(
+            new ActualizarUsuarioDominio(ana.Id, "Ana Pérez", "ana.perez@a.co", "+57399", Actor), CancellationToken.None);
+
+        Assert.Equal(("Ana Pérez", "ana.perez@a.co", "+57399"), (usuario.Nombre, usuario.Correo, usuario.TelefonoWhatsApp));
+        Assert.Equal(("sub-ana@a.co", "ana.perez@a.co", "Ana Pérez"), Assert.Single(Proveedor.Actualizadas));
+        var evento = Assert.Single(Auditoria.Eventos);
+        Assert.Equal(AccionesAuditoria.UsuarioActualizar, evento.Accion);
+        Assert.Equal(Actor, evento.ActorId);
+        Assert.Equal("nombre,correo,telefonoWhatsApp", Valores(evento.ValoresDespues)["campos"]);
+        Assert.DoesNotContain("ana.perez", evento.ValoresDespues!, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task SoloElTelefono_NoTocaLaCuentaDelProveedor()
+    {
+        var ana = Usuarios.Registrar("Ana", "ana@a.co", "+57300");
+
+        await CasoUso().EjecutarAsync(new ActualizarUsuarioDominio(ana.Id, "Ana", "ANA@a.co", "+57399", Actor), CancellationToken.None);
+
+        Assert.Empty(Proveedor.Actualizadas);
+        Assert.Equal("telefonoWhatsApp", Valores(Assert.Single(Auditoria.Eventos).ValoresDespues)["campos"]);
+    }
+
+    [Fact]
+    public async Task SinCambios_NoAuditaNiModifica()
+    {
+        var ana = Usuarios.Registrar("Ana", "ana@a.co", "+57300");
+
+        await CasoUso().EjecutarAsync(new ActualizarUsuarioDominio(ana.Id, "Ana", "ana@a.co", "+57300", ana.Id), CancellationToken.None);
+
+        Assert.Empty(Auditoria.Eventos);
+        Assert.Equal(0, Usuarios.Modificados);
+        Assert.Equal(0, Proveedor.Llamadas);
+    }
+
+    [Fact]
+    public async Task CorreoOTelefonoDeOtro_ConductorOCorreoInvalido_SeRechazanSinTocarNada()
+    {
+        var ana = Usuarios.Registrar("Ana", "ana@a.co", "+57300");
+        Usuarios.Registrar("Beto", "beto@a.co", "+57301");
+        var conductor = Usuarios.Registrar("Carlos", null, "+57302", RolesSistema.ConductorId);
+        Task Actualizar(Guid id, string correo, string telefono) =>
+            CasoUso().EjecutarAsync(new ActualizarUsuarioDominio(id, "Ana", correo, telefono, Actor), CancellationToken.None);
+
+        await Assert.ThrowsAsync<FlowRideExcepcion>(() => Actualizar(ana.Id, "beto@a.co", "+57300"));
+        await Assert.ThrowsAsync<FlowRideExcepcion>(() => Actualizar(ana.Id, "ana@a.co", "+57301"));
+        await Assert.ThrowsAsync<FlowRideExcepcion>(() => Actualizar(ana.Id, "no-es-correo", "+57300"));
+        await Assert.ThrowsAsync<FlowRideExcepcion>(() => Actualizar(conductor.Id, "carlos@a.co", "+57302"));
+        await Assert.ThrowsAsync<FlowRideExcepcion>(() => Actualizar(Guid.NewGuid(), "x@a.co", "+57309"));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => CasoUso().EjecutarAsync(null!, CancellationToken.None));
+        Assert.Equal(0, Proveedor.Llamadas);
+        Assert.Empty(Auditoria.Eventos);
+    }
+}
+
 public class ConsultasIdentidadCasosUsoTests : CasosUsoIdentidadBase
 {
     [Fact]

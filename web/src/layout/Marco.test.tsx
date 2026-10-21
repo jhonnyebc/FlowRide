@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { servicioVista, viaje } from '../pruebas/datos';
-import { apiFalsa, renderizar, sinViolacionesDeAccesibilidad } from '../pruebas/utilidades';
+import { administrador, apiFalsa, renderizar, sinViolacionesDeAccesibilidad } from '../pruebas/utilidades';
 import { Marco } from './Marco';
 
 const cerrarSesion = vi.fn();
@@ -39,6 +39,18 @@ describe('Marco del panel', () => {
     expect(screen.getByRole('link', { name: 'Vista del día' })).toHaveAccessibleDescription('1 críticos hoy');
     expect(screen.getByRole('link', { name: 'Viajes en curso' })).toHaveAccessibleDescription('1 en curso');
     await sinViolacionesDeAccesibilidad();
+  });
+
+  it('Administración: Usuarios solo aparece para el Administrador', () => {
+    const { unmount } = renderizar(<Marco />);
+    expect(screen.getByRole('group', { name: 'Administración' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Empresas cliente' })).toHaveAttribute('href', '/administracion/empresas');
+    expect(screen.getByRole('link', { name: 'Pasajeros' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Usuarios' })).not.toBeInTheDocument();
+    unmount();
+
+    renderizar(<Marco />, { usuario: administrador });
+    expect(screen.getByRole('link', { name: 'Usuarios' })).toHaveAttribute('href', '/administracion/usuarios');
   });
 
   it('cambia el tema y cierra sesión desde el menú del usuario', async () => {

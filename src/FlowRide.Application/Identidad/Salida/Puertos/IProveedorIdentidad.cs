@@ -13,6 +13,12 @@ public interface IProveedorIdentidad
     /// </summary>
     Task<string> AsegurarUsuarioAsync(string correo, string nombre, bool exigirDobleFactor, CancellationToken ct);
 
+    /// <summary>
+    /// Actualiza el nombre y el correo de la cuenta (el correo es su usuario de inicio de sesión). Si el correo cambia,
+    /// queda sin verificar y se le envía a la nueva dirección el correo para confirmarla junto con lo que tenga pendiente.
+    /// </summary>
+    Task ActualizarCuentaAsync(string identidadExternaId, string correo, string nombre, CancellationToken ct);
+
     /// <summary>La cuenta debe configurar su TOTP (si aún no lo tiene) en su próximo inicio de sesión.</summary>
     Task ExigirDobleFactorAsync(string identidadExternaId, CancellationToken ct);
 
