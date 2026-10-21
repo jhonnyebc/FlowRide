@@ -21,6 +21,9 @@ GET {{host}}/openapi/v1.json
 # flowride-panel; pégalo aquí sin versionarlo.
 @token = pega-aqui-un-token-del-realm
 
+# Acciones sensibles del Administrador (usuarios, parámetros, plantillas, motor): si el inicio de sesión tiene más de
+# 5 minutos, la API responde 401 con error="insufficient_user_authentication": vuelve a pedir el token.
+
 ### RF-01 — Sin token: 401
 GET {{host}}/api/usuarios
 

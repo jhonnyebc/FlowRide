@@ -62,11 +62,11 @@ public static class AsignacionesEndpoints
         {
             var configuracion = await puerto.CrearAsync(peticion, usuario.UsuarioActual(), ct);
             return Results.Created($"/api/motor/configuraciones/{configuracion.Version}", configuracion);
-        }).RequireAuthorization(Politicas.Administrador);
+        }).RequireAuthorization(Politicas.Administrador, Politicas.AutenticacionReciente);
 
         motor.MapPost("/{version:int}/activar", async (int version, ClaimsPrincipal usuario, IConfiguracionMotorPuertoEntrada puerto,
                 CancellationToken ct) =>
-            Results.Ok(await puerto.ActivarAsync(version, usuario.UsuarioActual(), ct))).RequireAuthorization(Politicas.Administrador);
+            Results.Ok(await puerto.ActivarAsync(version, usuario.UsuarioActual(), ct))).RequireAuthorization(Politicas.Administrador, Politicas.AutenticacionReciente);
 
         return app;
     }

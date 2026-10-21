@@ -2,6 +2,7 @@ using FlowRide.Borde.Rutas;
 using FlowRide.Borde.Seguridad;
 using FlowRide.Borde.Webhooks;
 using FlowRide.Infrastructure;
+using FlowRide.Infrastructure.Identidad;
 using Yarp.ReverseProxy.Configuration;
 
 namespace FlowRide.Borde;
@@ -26,6 +27,10 @@ internal static class ProgramaBorde
 
         builder.Services.AddSingleton(opciones);
         builder.Services.AddBordeComun(builder.Configuration);
+        // Autenticación en el borde (parte AUTH del API gateway): las claves públicas del realm de cada operador.
+        builder.Services.AddSingleton(builder.Configuration.GetSection(IdentidadOptions.Seccion).Get<IdentidadOptions>() ?? new IdentidadOptions());
+        builder.Services.AddSingleton<IEmisoresTokens, EmisoresKeycloak>();
+        builder.Services.AddSingleton<ValidadorTokensBorde>();
         builder.Services.AddSingleton<ProveedorRutasBorde>();
         builder.Services.AddSingleton<IProxyConfigProvider>(proveedor => proveedor.GetRequiredService<ProveedorRutasBorde>());
         builder.Services.AddSingleton<RecargaRutasBorde>();
@@ -45,7 +50,13 @@ internal static class ProgramaBorde
 
         app.MapHealthChecks("/salud");
         app.MapWebhooksWhatsApp(opciones);
-        app.MapReverseProxy();
+        app.MapReverseProxy(proxy =>
+        {
+            proxy.UseTokenDelOperador();
+            proxy.UseSessionAffinity();
+            proxy.UseLoadBalancing();
+            proxy.UsePassiveHealthChecks();
+        });
 
         app.Run();
     }

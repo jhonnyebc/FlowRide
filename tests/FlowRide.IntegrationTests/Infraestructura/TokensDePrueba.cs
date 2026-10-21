@@ -24,9 +24,15 @@ public static class TokensDePrueba
         string? tenantId = "tenant-a",
         string audiencia = ConstantesKeycloak.Audiencia,
         DateTime? expira = null,
-        SecurityKey? clave = null)
+        SecurityKey? clave = null,
+        DateTimeOffset? autenticadoEn = null)
     {
-        var claims = new Dictionary<string, object> { ["sub"] = sub };
+        // auth_time: cuándo inició sesión (las acciones sensibles exigen que sea reciente).
+        var claims = new Dictionary<string, object>
+        {
+            ["sub"] = sub,
+            ["auth_time"] = (autenticadoEn ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds()
+        };
         if (tenantId is not null) claims[ConstantesKeycloak.ClaimTenant] = tenantId;
 
         var vence = expira ?? DateTime.UtcNow.AddMinutes(5);
@@ -40,6 +46,14 @@ public static class TokensDePrueba
             Expires = vence,
             SigningCredentials = new SigningCredentials(clave ?? Clave, SecurityAlgorithms.HmacSha256)
         });
+    }
+
+    /// <summary>Metadatos OIDC del emisor de prueba (sin red), para quien valide los tokens fuera de la API (el borde).</summary>
+    public static IConfigurationManager<OpenIdConnectConfiguration> Configuracion()
+    {
+        var configuracion = new OpenIdConnectConfiguration { Issuer = Emisor };
+        configuracion.SigningKeys.Add(Clave);
+        return new StaticConfigurationManager<OpenIdConnectConfiguration>(configuracion);
     }
 
     /// <summary>Cambia los metadatos OIDC del realm por los del emisor de prueba (sin red).</summary>

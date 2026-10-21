@@ -32,19 +32,22 @@ public static class UsuariosEndpoints
         {
             var creado = await puerto.CrearAsync(peticion, usuario.UsuarioActual(), ct);
             return Results.Created($"/api/usuarios/{creado.Id}", creado);
-        });
+        }).RequireAuthorization(Politicas.AutenticacionReciente);
 
         administracion.MapPost("/{id:guid}/desactivar", async (Guid id, ClaimsPrincipal usuario,
                 ICambiarEstadoUsuarioPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(await puerto.CambiarEstadoAsync(id, activo: false, usuario.UsuarioActual(), ct)));
+            Results.Ok(await puerto.CambiarEstadoAsync(id, activo: false, usuario.UsuarioActual(), ct)))
+            .RequireAuthorization(Politicas.AutenticacionReciente);
 
         administracion.MapPost("/{id:guid}/activar", async (Guid id, ClaimsPrincipal usuario,
                 ICambiarEstadoUsuarioPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(await puerto.CambiarEstadoAsync(id, activo: true, usuario.UsuarioActual(), ct)));
+            Results.Ok(await puerto.CambiarEstadoAsync(id, activo: true, usuario.UsuarioActual(), ct)))
+            .RequireAuthorization(Politicas.AutenticacionReciente);
 
         administracion.MapPut("/{id:guid}/rol", async (Guid id, CambiarRolUsuarioPeticion peticion, ClaimsPrincipal usuario,
                 ICambiarRolUsuarioPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(await puerto.CambiarRolAsync(id, peticion, usuario.UsuarioActual(), ct)));
+            Results.Ok(await puerto.CambiarRolAsync(id, peticion, usuario.UsuarioActual(), ct)))
+            .RequireAuthorization(Politicas.AutenticacionReciente);
 
         return app;
     }

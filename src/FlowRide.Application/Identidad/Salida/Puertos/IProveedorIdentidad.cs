@@ -8,9 +8,13 @@ public interface IProveedorIdentidad
 {
     /// <summary>
     /// Crea la cuenta con ese correo, o devuelve la que ya existe (reintento tras un fallo), y retorna su identificador
-    /// externo (claim <c>sub</c>). La cuenta queda sin contraseña hasta que el usuario la defina.
+    /// externo (claim <c>sub</c>). La cuenta queda sin contraseña hasta que el usuario la defina. Con
+    /// <paramref name="exigirDobleFactor"/>, además debe configurar su TOTP en el primer inicio de sesión.
     /// </summary>
-    Task<string> AsegurarUsuarioAsync(string correo, string nombre, CancellationToken ct);
+    Task<string> AsegurarUsuarioAsync(string correo, string nombre, bool exigirDobleFactor, CancellationToken ct);
+
+    /// <summary>La cuenta debe configurar su TOTP (si aún no lo tiene) en su próximo inicio de sesión.</summary>
+    Task ExigirDobleFactorAsync(string identidadExternaId, CancellationToken ct);
 
     /// <summary>Envía al usuario el correo para definir su contraseña (también sirve para recuperarla, RF-23).</summary>
     Task EnviarConfiguracionContrasenaAsync(string identidadExternaId, CancellationToken ct);
