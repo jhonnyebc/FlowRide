@@ -23,10 +23,10 @@ public static class NotificacionesEndpoints
         var alertas = app.MapGroup("/alertas").WithTags("Alertas").RequireAuthorization(Politicas.PanelWeb);
 
         alertas.MapGet("/", async ([AsParameters] BusquedaAlertasPeticion busqueda, INotificacionesPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(await puerto.BuscarAlertasAsync(busqueda, ct)));
+            TypedResults.Ok(await puerto.BuscarAlertasAsync(busqueda, ct)));
 
         alertas.MapPost("/{id:guid}/leida", async (Guid id, ClaimsPrincipal usuario, INotificacionesPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(await puerto.MarcarAlertaLeidaAsync(id, usuario.UsuarioActual(), ct)));
+            TypedResults.Ok(await puerto.MarcarAlertaLeidaAsync(id, usuario.UsuarioActual(), ct)));
 
         // En vivo: manda las alertas posteriores a "desde" (o al Last-Event-ID al reconectar) y luego las nuevas.
         alertas.MapGet("/en-vivo", (long? desde, HttpRequest peticion, INotificacionesPuertoEntrada puerto, CancellationToken ct) =>
@@ -38,11 +38,11 @@ public static class NotificacionesEndpoints
         var plantillas = app.MapGroup("/notificaciones/plantillas").WithTags("Notificaciones");
 
         plantillas.MapGet("/", async (INotificacionesPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(await puerto.PlantillasAsync(ct))).RequireAuthorization(Politicas.PanelWeb);
+            TypedResults.Ok(await puerto.PlantillasAsync(ct))).RequireAuthorization(Politicas.PanelWeb);
 
         plantillas.MapPut("/{clave}", async (string clave, PlantillaPeticion peticion, ClaimsPrincipal usuario, INotificacionesPuertoEntrada puerto,
                 CancellationToken ct) =>
-            Results.Ok(await puerto.ActualizarPlantillaAsync(clave, peticion, usuario.UsuarioActual(), ct)))
+            TypedResults.Ok(await puerto.ActualizarPlantillaAsync(clave, peticion, usuario.UsuarioActual(), ct)))
             .RequireAuthorization(Politicas.Administrador, Politicas.AutenticacionReciente);
 
         return app;

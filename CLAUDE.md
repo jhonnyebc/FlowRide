@@ -110,6 +110,16 @@ Las pruebas de `EstiloHexagonalTests` hacen cumplir los puntos 1, 2, 3 y 5.
 - Borde (parte AUTH del API gateway): a `/api/` de un subdominio solo pasa un token vigente del realm de ese operador (`ValidadorTokensBorde`, claves del realm en caché, `tenant_id` igual al de la ruta); si no, 401 sin llegar al stack. El stack vuelve a validar.
 - CSRF: la API solo acepta `Authorization: Bearer` (sin cookies de sesión), así que no aplica; el Panel Web no guardará tokens en cookies ni secretos en `VITE_*`.
 
+## Panel Web (Fase 11, ADR-0019)
+- `web/`: Vite + React 19 + TypeScript + Mantine 8 (tema claro y oscuro), Mantine Charts (recharts 2), React Router, TanStack Query. Versiones exactas en `package.json` (ninguna con menos de dos semanas de publicada).
+- Sesión: OIDC código + PKCE con `oidc-client-ts`/`react-oidc-context` contra `flowride-<operador>`; el operador sale del subdominio (en local, `VITE_OPERADOR`). Tokens **solo en memoria** (nada en cookies ni localStorage). El 401 `insufficient_user_authentication` dispara `signinRedirect({ max_age: 0 })`.
+- Cliente de la API: `openapi-fetch` con tipos de `openapi-typescript` generados desde `web/src/api/openapi.json` (`npm run api:tipos`). Ese archivo lo produce la API: `ContratoOpenApiTests` falla si se desincroniza; se regenera con `FLOWRIDE_ACTUALIZAR_CONTRATO=1`. Para que el contrato sea útil, los endpoints usan `TypedResults`, los enums del dominio se serializan como texto (`JsonStringEnumConverter`) y los números son estrictos.
+- Alertas en vivo: SSE leído con `fetch` (EventSource no manda el token), reconexión con espera creciente desde la última secuencia.
+- Fechas en pantalla: instantes en la zona del navegador; eventos futuros con su hora local y el nombre de su zona.
+- Accesibilidad (WCAG 2.1 AA): enlace "saltar al contenido", foco visible, estados con color + icono + texto, botones de cerrar con nombre (tema). Cada pantalla tiene prueba con axe (`sinViolacionesDeAccesibilidad`).
+- Pruebas: Vitest + Testing Library + axe; `apiFalsa` responde por `MÉTODO /ruta`; `MantineProvider env="test"`. CI: job "Frontend" (tipos al día, lint con la regla de no poner secretos en `VITE_*`, tipos, pruebas, build).
+- Entregas: 11a base + Operación (tablero con gráficas, vista del día, solicitudes, viajes, alertas); 11b administración; 11c parámetros, plantillas, motor y reportes.
+
 ## RF-10
 El sistema asigna automáticamente un conductor y un vehículo a cada solicitud pendiente, aplicando las reglas configurables del tenant.
 
@@ -154,6 +164,7 @@ Transacciones PostgreSQL, concurrencia optimista con token de versión, restricc
 - API local: el `TenantId` y la URL de Keycloak están en `appsettings.Development.json`; en Development la API lee su cadena de conexión y el secreto de su cliente de servicio del almacén del operador que creó la herramienta (`%APPDATA%\Microsoft\UserSecrets\flowride-<tenant>\secrets.json`). `dotnet run --project src/FlowRide.API` (http://localhost:5237; pruebas en `src/FlowRide.API/FlowRide.API.http`). Las variables de entorno y la línea de comandos siguen pudiendo sobrescribirla.
 - Borde común local: `registrar-ruta --id tenant-a --url http://localhost:5237 [--phone-number-id <id>]` con la herramienta; secretos en `src/FlowRide.Borde` (`ConnectionStrings:Catalogo`, `Borde:WhatsApp:AppSecret`, `Borde:WhatsApp:VerifyToken`) y `dotnet run --project src/FlowRide.Borde --launch-profile https` (https://localhost:8443; el operador en https://tenant-a.dev.localhost:8443). Detalle en `docs/GUIA-WHATSAPP-META.md` §7.
 - Primer inicio de sesión: abrir el correo "Actualiza tu cuenta" en Mailpit (http://localhost:8025), seguir el enlace y definir la contraseña.
+- Panel Web local: `cd web`, `npm ci` y `npm run dev` (http://localhost:5173, el servidor de Vite pasa `/api` a la API en 5237); requiere Keycloak y la API levantados. Gates: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
 - En PowerShell, si `docker` no se encuentra, recargar el PATH o abrir una terminal nueva.
 
 ## Alcance

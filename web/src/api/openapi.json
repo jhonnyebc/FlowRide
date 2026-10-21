@@ -1,0 +1,6927 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "FlowRide.API | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/usuarios/yo": {
+      "get": {
+        "tags": [
+          "Usuarios"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioAutenticadoRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/usuarios": {
+      "get": {
+        "tags": [
+          "Usuarios"
+        ],
+        "parameters": [
+          {
+            "name": "rol",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UsuarioRespuesta"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Usuarios"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearUsuarioPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/usuarios/{id}/desactivar": {
+      "post": {
+        "tags": [
+          "Usuarios"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/usuarios/{id}/activar": {
+      "post": {
+        "tags": [
+          "Usuarios"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/usuarios/{id}/rol": {
+      "put": {
+        "tags": [
+          "Usuarios"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CambiarRolUsuarioPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auditoria/verificacion": {
+      "get": {
+        "tags": [
+          "Auditor\u00EDa"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificacionAuditoriaRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conductores/{conductorId}/turnos/{turnoId}/abandonar": {
+      "post": {
+        "tags": [
+          "Asignaci\u00F3n"
+        ],
+        "parameters": [
+          {
+            "name": "conductorId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "turnoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MotivoPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnonymousTypeOfIReadOnlyListOfGuid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/solicitudes/{id}/trazabilidad": {
+      "get": {
+        "tags": [
+          "Viajes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrazabilidadLectura"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/empresas-cliente": {
+      "get": {
+        "tags": [
+          "Empresas cliente"
+        ],
+        "parameters": [
+          {
+            "name": "Texto",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Activo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "Estado",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "EmpresaClienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TamanoPagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaRespuestaOfEmpresaClienteRespuesta"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Empresas cliente"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmpresaClientePeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmpresaClienteRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/empresas-cliente/{id}": {
+      "put": {
+        "tags": [
+          "Empresas cliente"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmpresaClientePeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmpresaClienteRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/empresas-cliente/{id}/activar": {
+      "post": {
+        "tags": [
+          "Empresas cliente"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmpresaClienteRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/empresas-cliente/{id}/desactivar": {
+      "post": {
+        "tags": [
+          "Empresas cliente"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmpresaClienteRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pasajeros": {
+      "get": {
+        "tags": [
+          "Pasajeros"
+        ],
+        "parameters": [
+          {
+            "name": "Texto",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Activo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "Estado",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "EmpresaClienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TamanoPagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaRespuestaOfPasajeroRespuesta"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Pasajeros"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasajeroPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasajeroRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pasajeros/{id}": {
+      "put": {
+        "tags": [
+          "Pasajeros"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasajeroPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasajeroRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conductores": {
+      "get": {
+        "tags": [
+          "Conductores"
+        ],
+        "parameters": [
+          {
+            "name": "Texto",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Activo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "Estado",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "EmpresaClienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TamanoPagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaRespuestaOfConductorRespuesta"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Conductores"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConductorPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConductorRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conductores/disponibles": {
+      "get": {
+        "tags": [
+          "Conductores"
+        ],
+        "parameters": [
+          {
+            "name": "inicio",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "fin",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "zonaHoraria",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConductorDisponibleRespuesta"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conductores/{id}": {
+      "get": {
+        "tags": [
+          "Conductores"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConductorDetalleRespuesta"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Conductores"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConductorPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConductorRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conductores/{id}/turnos": {
+      "post": {
+        "tags": [
+          "Conductores"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnoPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnoRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conductores/{id}/documentos/{documentoId}/descarga": {
+      "get": {
+        "tags": [
+          "Conductores"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "documentoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UrlDocumentoRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conductores/{id}/estado": {
+      "put": {
+        "tags": [
+          "Conductores"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EstadoConductorPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConductorRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conductores/{id}/documentos": {
+      "post": {
+        "tags": [
+          "Conductores"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "allOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "archivo": {
+                        "$ref": "#/components/schemas/IFormFile"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tipo": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "fechaVencimiento": {
+                        "type": "string",
+                        "format": "date"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentoConductorRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conductores/{id}/documentos/{documentoId}": {
+      "delete": {
+        "tags": [
+          "Conductores"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "documentoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/vehiculos": {
+      "get": {
+        "tags": [
+          "Veh\u00EDculos"
+        ],
+        "parameters": [
+          {
+            "name": "Texto",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Activo",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "Estado",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "EmpresaClienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TamanoPagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaRespuestaOfVehiculoRespuesta"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Veh\u00EDculos"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehiculoPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehiculoRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vehiculos/{id}": {
+      "put": {
+        "tags": [
+          "Veh\u00EDculos"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehiculoPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehiculoRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vehiculos/{id}/activar": {
+      "post": {
+        "tags": [
+          "Veh\u00EDculos"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehiculoRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vehiculos/{id}/desactivar": {
+      "post": {
+        "tags": [
+          "Veh\u00EDculos"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehiculoRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vehiculos/{id}/conductor-habitual": {
+      "put": {
+        "tags": [
+          "Veh\u00EDculos"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConductorHabitualPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehiculoRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/parametros": {
+      "get": {
+        "tags": [
+          "Par\u00E1metros"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ParametroRespuesta"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/parametros/{clave}": {
+      "put": {
+        "tags": [
+          "Par\u00E1metros"
+        ],
+        "parameters": [
+          {
+            "name": "clave",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CambiarParametroPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParametroRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/solicitudes": {
+      "get": {
+        "tags": [
+          "Solicitudes"
+        ],
+        "parameters": [
+          {
+            "name": "Estado",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "PasajeroId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "EmpresaClienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Urgente",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "Pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TamanoPagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaRespuestaOfSolicitudRespuesta"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Solicitudes"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolicitudPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolicitudDetalleRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/solicitudes/{id}": {
+      "get": {
+        "tags": [
+          "Solicitudes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolicitudDetalleRespuesta"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Solicitudes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolicitudPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolicitudDetalleRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/solicitudes/{id}/cancelar": {
+      "post": {
+        "tags": [
+          "Solicitudes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelarSolicitudPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolicitudDetalleRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/itinerarios": {
+      "get": {
+        "tags": [
+          "Itinerarios"
+        ],
+        "parameters": [
+          {
+            "name": "EmpresaClienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "CodigoServicio",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "Hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "Pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TamanoPagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaRespuestaOfItinerarioRespuesta"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Itinerarios"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItinerariosPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItinerarioRespuesta"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/solicitudes/{id}/asignar": {
+      "post": {
+        "tags": [
+          "Asignaci\u00F3n"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoAsignacionRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/solicitudes/{id}/decisiones": {
+      "get": {
+        "tags": [
+          "Asignaci\u00F3n"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DecisionLectura"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/solicitudes/{id}/asignacion-manual": {
+      "post": {
+        "tags": [
+          "Asignaci\u00F3n"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidatoManualPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AsignacionRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/solicitudes/{id}/devolver-a-cola": {
+      "post": {
+        "tags": [
+          "Asignaci\u00F3n"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MotivoPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/asignaciones": {
+      "get": {
+        "tags": [
+          "Asignaci\u00F3n"
+        ],
+        "parameters": [
+          {
+            "name": "ConductorId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "SolicitudId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Estado",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TamanoPagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaRespuestaOfAsignacionLectura"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/asignaciones/{id}/reasignar": {
+      "post": {
+        "tags": [
+          "Asignaci\u00F3n"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidatoManualPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AsignacionRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/motor/configuraciones": {
+      "get": {
+        "tags": [
+          "Motor de asignaci\u00F3n"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConfiguracionMotorRespuesta"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Motor de asignaci\u00F3n"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfiguracionMotorPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfiguracionMotorRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/motor/configuraciones/{version}/activar": {
+      "post": {
+        "tags": [
+          "Motor de asignaci\u00F3n"
+        ],
+        "parameters": [
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfiguracionMotorRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/asignaciones/{id}/aceptar": {
+      "post": {
+        "tags": [
+          "Viajes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViajeRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/asignaciones/{id}/rechazar": {
+      "post": {
+        "tags": [
+          "Viajes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MotivoPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/viajes": {
+      "get": {
+        "tags": [
+          "Viajes"
+        ],
+        "parameters": [
+          {
+            "name": "Estado",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ConductorId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "PasajeroId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "EmpresaClienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TamanoPagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaRespuestaOfViajeLectura"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/viajes/monitoreo": {
+      "get": {
+        "tags": [
+          "Viajes"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MonitoreoViajeLectura"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/viajes/{id}": {
+      "get": {
+        "tags": [
+          "Viajes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViajeDetalleLectura"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/viajes/{id}/iniciar": {
+      "post": {
+        "tags": [
+          "Viajes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViajeRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/viajes/{id}/finalizar": {
+      "post": {
+        "tags": [
+          "Viajes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViajeRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/viajes/{id}/paradas": {
+      "post": {
+        "tags": [
+          "Viajes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParadaPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParadaRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/viajes/{id}/paradas/{paradaId}/llegada": {
+      "post": {
+        "tags": [
+          "Viajes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "paradaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParadaRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/viajes/{id}/incidentes": {
+      "post": {
+        "tags": [
+          "Viajes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IncidentePeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidenteRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/viajes/{id}/calificacion": {
+      "post": {
+        "tags": [
+          "Viajes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalificacionPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalificacionRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/alertas": {
+      "get": {
+        "tags": [
+          "Alertas"
+        ],
+        "parameters": [
+          {
+            "name": "SoloNoLeidas",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "Pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TamanoPagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaRespuestaOfAlertaLectura"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/alertas/{id}/leida": {
+      "post": {
+        "tags": [
+          "Alertas"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertaLeidaRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/alertas/en-vivo": {
+      "get": {
+        "tags": [
+          "Alertas"
+        ],
+        "parameters": [
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/SseItemOfAlertaLectura"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notificaciones/plantillas": {
+      "get": {
+        "tags": [
+          "Notificaciones"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlantillaRespuesta"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notificaciones/plantillas/{clave}": {
+      "put": {
+        "tags": [
+          "Notificaciones"
+        ],
+        "parameters": [
+          {
+            "name": "clave",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlantillaPeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantillaRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reportes/vista-centralizada": {
+      "get": {
+        "tags": [
+          "Reportes"
+        ],
+        "parameters": [
+          {
+            "name": "Fecha",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "EmpresaClienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VistaCentralizadaLectura"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reportes/indicadores": {
+      "get": {
+        "tags": [
+          "Reportes"
+        ],
+        "parameters": [
+          {
+            "name": "Desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "ConductorId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "EmpresaClienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Grupo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TamanoPagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndicadoresLectura"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reportes/viajes": {
+      "get": {
+        "tags": [
+          "Reportes"
+        ],
+        "parameters": [
+          {
+            "name": "Desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "ConductorId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "EmpresaClienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Grupo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TamanoPagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReporteRespuestaOfResumenViajesAndViajeReporteLectura"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reportes/solicitudes": {
+      "get": {
+        "tags": [
+          "Reportes"
+        ],
+        "parameters": [
+          {
+            "name": "Desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "ConductorId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "EmpresaClienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Grupo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TamanoPagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReporteRespuestaOfResumenSolicitudesAndSolicitudReporteFila"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reportes/conductores": {
+      "get": {
+        "tags": [
+          "Reportes"
+        ],
+        "parameters": [
+          {
+            "name": "Desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "ConductorId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "EmpresaClienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Grupo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TamanoPagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReporteRespuestaOfResumenConductoresAndConductorReporteLectura"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reportes/empresas": {
+      "get": {
+        "tags": [
+          "Reportes"
+        ],
+        "parameters": [
+          {
+            "name": "Desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "ConductorId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "EmpresaClienteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Grupo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TamanoPagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReporteRespuestaOfResumenEmpresasAndEmpresaReporteLectura"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reportes/{tipo}/exportar": {
+      "post": {
+        "tags": [
+          "Reportes"
+        ],
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportePeticion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExporteRespuesta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/whatsapp/webhook": {
+      "get": {
+        "tags": [
+          "Canal WhatsApp"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Canal WhatsApp"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/whatsapp/conversaciones/{telefono}": {
+      "get": {
+        "tags": [
+          "Canal WhatsApp"
+        ],
+        "parameters": [
+          {
+            "name": "telefono",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AlertaLectura": {
+        "required": [
+          "id",
+          "secuencia",
+          "tipo",
+          "severidad",
+          "titulo",
+          "detalle",
+          "creadaEn",
+          "referenciaId",
+          "leidaEn"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "secuencia": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "severidad": {
+            "$ref": "#/components/schemas/SeveridadAlerta"
+          },
+          "titulo": {
+            "type": "string"
+          },
+          "detalle": {
+            "type": "string"
+          },
+          "creadaEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "referenciaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "leidaEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "AlertaLeidaRespuesta": {
+        "required": [
+          "id",
+          "leidaEn"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "leidaEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "AnonymousTypeOfIReadOnlyListOfGuid": {
+        "required": [
+          "solicitudesDevueltas"
+        ],
+        "type": "object",
+        "properties": {
+          "solicitudesDevueltas": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "AsignacionLectura": {
+        "required": [
+          "id",
+          "solicitudId",
+          "conductorId",
+          "conductorNombre",
+          "vehiculoId",
+          "placa",
+          "inicio",
+          "fin",
+          "estado",
+          "origen",
+          "asignadaEn",
+          "motivoCierre",
+          "asignacionReemplazadaId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "solicitudId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "conductorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "conductorNombre": {
+            "type": "string"
+          },
+          "vehiculoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "placa": {
+            "type": "string"
+          },
+          "inicio": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fin": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoAsignacion"
+          },
+          "origen": {
+            "$ref": "#/components/schemas/OrigenAsignacion"
+          },
+          "asignadaEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "motivoCierre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "asignacionReemplazadaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "AsignacionRespuesta": {
+        "required": [
+          "id",
+          "solicitudId",
+          "conductorId",
+          "vehiculoId",
+          "inicio",
+          "fin",
+          "estado",
+          "origen",
+          "asignadaEn",
+          "decisionId",
+          "asignacionReemplazadaId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "solicitudId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "conductorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehiculoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "inicio": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fin": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "estado": {
+            "type": "string"
+          },
+          "origen": {
+            "type": "string"
+          },
+          "asignadaEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decisionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "asignacionReemplazadaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "CalificacionLectura": {
+        "required": [
+          "id",
+          "puntaje",
+          "comentario",
+          "fechaHora"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "puntaje": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comentario": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fechaHora": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CalificacionPeticion": {
+        "type": "object",
+        "properties": {
+          "puntaje": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "comentario": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "CalificacionRespuesta": {
+        "required": [
+          "id",
+          "viajeId",
+          "pasajeroId",
+          "puntaje",
+          "comentario",
+          "fechaHora"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "viajeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pasajeroId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "puntaje": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comentario": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fechaHora": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CambiarParametroPeticion": {
+        "type": "object",
+        "properties": {
+          "valor": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          }
+        }
+      },
+      "CambiarRolUsuarioPeticion": {
+        "type": "object",
+        "properties": {
+          "rol": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "CambioEstadoRespuesta": {
+        "required": [
+          "estadoAnterior",
+          "estadoNuevo",
+          "fechaHora",
+          "actorId",
+          "motivo"
+        ],
+        "type": "object",
+        "properties": {
+          "estadoAnterior": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "estadoNuevo": {
+            "type": "string"
+          },
+          "fechaHora": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actorId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "motivo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "CanalSolicitud": {
+        "enum": [
+          "WhatsApp",
+          "PanelWeb"
+        ]
+      },
+      "CancelarSolicitudPeticion": {
+        "type": "object",
+        "properties": {
+          "motivo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "CandidatoManualPeticion": {
+        "type": "object",
+        "properties": {
+          "conductorId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "vehiculoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "motivo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ConductorDetalleRespuesta": {
+        "required": [
+          "conductor",
+          "turnos",
+          "documentos"
+        ],
+        "type": "object",
+        "properties": {
+          "conductor": {
+            "$ref": "#/components/schemas/ConductorRespuesta"
+          },
+          "turnos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TurnoRespuesta"
+            }
+          },
+          "documentos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentoConductorRespuesta"
+            }
+          }
+        }
+      },
+      "ConductorDisponibleRespuesta": {
+        "required": [
+          "id",
+          "nombre",
+          "categoriaLicencia",
+          "vencimientoLicencia"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "categoriaLicencia": {
+            "type": "string"
+          },
+          "vencimientoLicencia": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "ConductorHabitualPeticion": {
+        "type": "object",
+        "properties": {
+          "conductorId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "ConductorPeticion": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "telefonoWhatsApp": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "correo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "numeroLicencia": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "categoriaLicencia": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "vencimientoLicencia": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "aptoServicioCritico": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        }
+      },
+      "ConductorReporteLectura": {
+        "required": [
+          "conductorId",
+          "nombre",
+          "placas",
+          "asignaciones",
+          "aceptadas",
+          "rechazadas",
+          "vencidas",
+          "sinRespuesta",
+          "porcentajeAceptacion",
+          "viajesRealizados",
+          "puntuales",
+          "porcentajePuntualidad",
+          "incidentes",
+          "calificacionPromedio"
+        ],
+        "type": "object",
+        "properties": {
+          "conductorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "placas": {
+            "type": "string"
+          },
+          "asignaciones": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aceptadas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rechazadas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vencidas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sinRespuesta": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "porcentajeAceptacion": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "viajesRealizados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "puntuales": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "porcentajePuntualidad": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "incidentes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "calificacionPromedio": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "ConductorRespuesta": {
+        "required": [
+          "id",
+          "nombre",
+          "telefonoWhatsApp",
+          "correo",
+          "numeroLicencia",
+          "categoriaLicencia",
+          "vencimientoLicencia",
+          "estado",
+          "activo",
+          "aptoServicioCritico"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "telefonoWhatsApp": {
+            "type": "string"
+          },
+          "correo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "numeroLicencia": {
+            "type": "string"
+          },
+          "categoriaLicencia": {
+            "type": "string"
+          },
+          "vencimientoLicencia": {
+            "type": "string",
+            "format": "date"
+          },
+          "estado": {
+            "type": "string"
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "aptoServicioCritico": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ConfiguracionMotorPeticion": {
+        "type": "object",
+        "properties": {
+          "reglas": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ReglaPeticion"
+            }
+          }
+        }
+      },
+      "ConfiguracionMotorRespuesta": {
+        "required": [
+          "id",
+          "version",
+          "estado",
+          "creadaEn",
+          "activadaEn",
+          "reglas"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "estado": {
+            "type": "string"
+          },
+          "creadaEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "activadaEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "reglas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReglaRespuesta"
+            }
+          }
+        }
+      },
+      "CrearUsuarioPeticion": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "correo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "telefonoWhatsApp": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rol": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "DecisionLectura": {
+        "required": [
+          "id",
+          "solicitudId",
+          "versionConfiguracion",
+          "origen",
+          "evaluadaEn",
+          "resultado",
+          "conductorSeleccionadoId",
+          "vehiculoSeleccionadoId",
+          "motivo",
+          "desempate",
+          "evaluaciones"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "solicitudId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "versionConfiguracion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "origen": {
+            "$ref": "#/components/schemas/OrigenAsignacion"
+          },
+          "evaluadaEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resultado": {
+            "type": "string"
+          },
+          "conductorSeleccionadoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "vehiculoSeleccionadoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "motivo": {
+            "type": "string"
+          },
+          "desempate": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "evaluaciones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EvaluacionLectura"
+            }
+          }
+        }
+      },
+      "DocumentoConductorRespuesta": {
+        "required": [
+          "id",
+          "tipo",
+          "fechaVencimiento"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "fechaVencimiento": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "EmpresaClientePeticion": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "nit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "correoContacto": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "EmpresaClienteRespuesta": {
+        "required": [
+          "id",
+          "nombre",
+          "nit",
+          "correoContacto",
+          "activa"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "nit": {
+            "type": "string"
+          },
+          "correoContacto": {
+            "type": "string"
+          },
+          "activa": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EmpresaReporteLectura": {
+        "required": [
+          "empresaClienteId",
+          "nombre",
+          "solicitudes",
+          "atendidas",
+          "pendientes",
+          "canceladas",
+          "urgentes",
+          "pasajeros",
+          "viajesRealizados",
+          "incidentes",
+          "calificacionPromedio"
+        ],
+        "type": "object",
+        "properties": {
+          "empresaClienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "solicitudes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "atendidas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendientes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "canceladas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "urgentes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pasajeros": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "viajesRealizados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "incidentes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "calificacionPromedio": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "EstadoAsignacion": {
+        "enum": [
+          "Asignada",
+          "Aceptada",
+          "Rechazada",
+          "EnCurso",
+          "Finalizada",
+          "Cancelada",
+          "Reemplazada"
+        ]
+      },
+      "EstadoConductorPeticion": {
+        "type": "object",
+        "properties": {
+          "estado": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "EstadoSolicitud": {
+        "enum": [
+          "Pendiente",
+          "Asignada",
+          "SinCandidatos",
+          "EnCurso",
+          "Completada",
+          "Cancelada"
+        ]
+      },
+      "EstadoViaje": {
+        "enum": [
+          "Programado",
+          "EnCurso",
+          "Finalizado",
+          "Cancelado"
+        ]
+      },
+      "EvaluacionLectura": {
+        "required": [
+          "conductorId",
+          "vehiculoId",
+          "turnoId",
+          "elegible",
+          "motivoDescarte",
+          "prioridad",
+          "puntajeTotal",
+          "posicionRanking",
+          "resultados"
+        ],
+        "type": "object",
+        "properties": {
+          "conductorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehiculoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "turnoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "elegible": {
+            "type": "boolean"
+          },
+          "motivoDescarte": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "prioridad": {
+            "type": "number",
+            "format": "double"
+          },
+          "puntajeTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "posicionRanking": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "resultados": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResultadoReglaLectura"
+            }
+          }
+        }
+      },
+      "EventoTrazabilidad": {
+        "required": [
+          "fechaHora",
+          "tipo",
+          "descripcion",
+          "actorId",
+          "motivo",
+          "referenciaId"
+        ],
+        "type": "object",
+        "properties": {
+          "fechaHora": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "actorId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "motivo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "referenciaId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "ExporteRespuesta": {
+        "required": [
+          "id",
+          "tipo",
+          "nombreArchivo",
+          "filas",
+          "url",
+          "expiraEn"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "nombreArchivo": {
+            "type": "string"
+          },
+          "filas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "expiraEn": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GrupoSolicitud": {
+        "enum": [
+          "Atendida",
+          "Pendiente",
+          "Cancelada"
+        ]
+      },
+      "IFormFile": {
+        "type": "string",
+        "format": "binary"
+      },
+      "IncidenteLectura": {
+        "required": [
+          "id",
+          "tipo",
+          "descripcion",
+          "fechaHora",
+          "reportadoPorId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoIncidente"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "fechaHora": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reportadoPorId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "IncidentePeticion": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "descripcion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "IncidenteRespuesta": {
+        "required": [
+          "id",
+          "viajeId",
+          "tipo",
+          "descripcion",
+          "fechaHora",
+          "reportadoPorId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "viajeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "fechaHora": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reportadoPorId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "IndicadoresConductores": {
+        "required": [
+          "conductoresConAsignaciones",
+          "asignaciones",
+          "porcentajeAceptacion",
+          "porcentajeRechazo",
+          "porcentajeVencidas",
+          "calificacionPromedio",
+          "masViajes"
+        ],
+        "type": "object",
+        "properties": {
+          "conductoresConAsignaciones": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "asignaciones": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "porcentajeAceptacion": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "porcentajeRechazo": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "porcentajeVencidas": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "calificacionPromedio": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "masViajes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConductorReporteLectura"
+            }
+          }
+        }
+      },
+      "IndicadoresCumplimiento": {
+        "required": [
+          "viajesIniciados",
+          "puntuales",
+          "porcentajePuntualidad",
+          "retrasoPromedioMinutos",
+          "incidentes",
+          "toleranciaMinutos"
+        ],
+        "type": "object",
+        "properties": {
+          "viajesIniciados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "puntuales": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "porcentajePuntualidad": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "retrasoPromedioMinutos": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "incidentes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "toleranciaMinutos": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "IndicadoresLectura": {
+        "required": [
+          "desde",
+          "hasta",
+          "volumen",
+          "cumplimiento",
+          "conductores",
+          "empresas"
+        ],
+        "type": "object",
+        "properties": {
+          "desde": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "volumen": {
+            "$ref": "#/components/schemas/IndicadoresVolumen"
+          },
+          "cumplimiento": {
+            "$ref": "#/components/schemas/IndicadoresCumplimiento"
+          },
+          "conductores": {
+            "$ref": "#/components/schemas/IndicadoresConductores"
+          },
+          "empresas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmpresaReporteLectura"
+            }
+          }
+        }
+      },
+      "IndicadoresVolumen": {
+        "required": [
+          "solicitudes",
+          "atendidas",
+          "pendientes",
+          "canceladas",
+          "urgentes",
+          "solicitudesPorEstado",
+          "viajesRealizados",
+          "viajesCancelados"
+        ],
+        "type": "object",
+        "properties": {
+          "solicitudes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "atendidas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendientes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "canceladas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "urgentes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "solicitudesPorEstado": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "viajesRealizados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "viajesCancelados": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ItinerarioRespuesta": {
+        "required": [
+          "id",
+          "empresaClienteId",
+          "codigoServicio",
+          "fecha",
+          "origen",
+          "destino",
+          "horaSalida",
+          "horaLlegada",
+          "zonaHoraria"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "empresaClienteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigoServicio": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "origen": {
+            "type": "string"
+          },
+          "destino": {
+            "type": "string"
+          },
+          "horaSalida": {
+            "type": "string",
+            "format": "time"
+          },
+          "horaLlegada": {
+            "type": "string",
+            "format": "time"
+          },
+          "zonaHoraria": {
+            "type": "string"
+          }
+        }
+      },
+      "ItinerariosPeticion": {
+        "type": "object",
+        "properties": {
+          "empresaClienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "codigoServicio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "origen": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "destino": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "horaSalida": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "time"
+          },
+          "horaLlegada": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "time"
+          },
+          "zonaHoraria": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fechaDesde": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "fechaHasta": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "dias": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "JsonElement": {},
+      "MonitoreoViajeLectura": {
+        "required": [
+          "viaje",
+          "retrasado",
+          "minutosRetraso"
+        ],
+        "type": "object",
+        "properties": {
+          "viaje": {
+            "$ref": "#/components/schemas/ViajeLectura"
+          },
+          "retrasado": {
+            "type": "boolean"
+          },
+          "minutosRetraso": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "MotivoPeticion": {
+        "type": "object",
+        "properties": {
+          "motivo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "NivelAtencion": {
+        "enum": [
+          "Critico",
+          "Atencion",
+          "Normal"
+        ]
+      },
+      "OrigenAsignacion": {
+        "enum": [
+          "Automatica",
+          "Manual"
+        ]
+      },
+      "PaginaRespuestaOfAlertaLectura": {
+        "required": [
+          "elementos",
+          "total",
+          "pagina",
+          "tamanoPagina"
+        ],
+        "type": "object",
+        "properties": {
+          "elementos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertaLectura"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginaRespuestaOfAsignacionLectura": {
+        "required": [
+          "elementos",
+          "total",
+          "pagina",
+          "tamanoPagina"
+        ],
+        "type": "object",
+        "properties": {
+          "elementos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AsignacionLectura"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginaRespuestaOfConductorReporteLectura": {
+        "required": [
+          "elementos",
+          "total",
+          "pagina",
+          "tamanoPagina"
+        ],
+        "type": "object",
+        "properties": {
+          "elementos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConductorReporteLectura"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginaRespuestaOfConductorRespuesta": {
+        "required": [
+          "elementos",
+          "total",
+          "pagina",
+          "tamanoPagina"
+        ],
+        "type": "object",
+        "properties": {
+          "elementos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConductorRespuesta"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginaRespuestaOfEmpresaClienteRespuesta": {
+        "required": [
+          "elementos",
+          "total",
+          "pagina",
+          "tamanoPagina"
+        ],
+        "type": "object",
+        "properties": {
+          "elementos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmpresaClienteRespuesta"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginaRespuestaOfEmpresaReporteLectura": {
+        "required": [
+          "elementos",
+          "total",
+          "pagina",
+          "tamanoPagina"
+        ],
+        "type": "object",
+        "properties": {
+          "elementos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmpresaReporteLectura"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginaRespuestaOfItinerarioRespuesta": {
+        "required": [
+          "elementos",
+          "total",
+          "pagina",
+          "tamanoPagina"
+        ],
+        "type": "object",
+        "properties": {
+          "elementos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItinerarioRespuesta"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginaRespuestaOfPasajeroRespuesta": {
+        "required": [
+          "elementos",
+          "total",
+          "pagina",
+          "tamanoPagina"
+        ],
+        "type": "object",
+        "properties": {
+          "elementos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PasajeroRespuesta"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginaRespuestaOfSolicitudReporteFila": {
+        "required": [
+          "elementos",
+          "total",
+          "pagina",
+          "tamanoPagina"
+        ],
+        "type": "object",
+        "properties": {
+          "elementos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SolicitudReporteFila"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginaRespuestaOfSolicitudRespuesta": {
+        "required": [
+          "elementos",
+          "total",
+          "pagina",
+          "tamanoPagina"
+        ],
+        "type": "object",
+        "properties": {
+          "elementos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SolicitudRespuesta"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginaRespuestaOfVehiculoRespuesta": {
+        "required": [
+          "elementos",
+          "total",
+          "pagina",
+          "tamanoPagina"
+        ],
+        "type": "object",
+        "properties": {
+          "elementos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VehiculoRespuesta"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginaRespuestaOfViajeLectura": {
+        "required": [
+          "elementos",
+          "total",
+          "pagina",
+          "tamanoPagina"
+        ],
+        "type": "object",
+        "properties": {
+          "elementos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ViajeLectura"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginaRespuestaOfViajeReporteLectura": {
+        "required": [
+          "elementos",
+          "total",
+          "pagina",
+          "tamanoPagina"
+        ],
+        "type": "object",
+        "properties": {
+          "elementos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ViajeReporteLectura"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pagina": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ParadaLectura": {
+        "required": [
+          "id",
+          "orden",
+          "direccion",
+          "horaEstimada",
+          "horaReal"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orden": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "direccion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "horaEstimada": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "horaReal": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "ParadaPeticion": {
+        "type": "object",
+        "properties": {
+          "direccion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "orden": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "horaEstimada": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "zonaHoraria": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ParadaRespuesta": {
+        "required": [
+          "id",
+          "viajeId",
+          "orden",
+          "direccion",
+          "horaEstimada",
+          "horaReal",
+          "horaEstimadaLocal",
+          "zonaHoraria"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "viajeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orden": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "direccion": {
+            "type": "string"
+          },
+          "horaEstimada": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "horaReal": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "horaEstimadaLocal": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "zonaHoraria": {
+            "type": "string"
+          }
+        }
+      },
+      "ParametroRespuesta": {
+        "required": [
+          "clave",
+          "tipo",
+          "descripcion",
+          "valor",
+          "valorPorDefecto",
+          "version",
+          "esPorDefecto",
+          "modificadoEn",
+          "minimo",
+          "maximo",
+          "opciones"
+        ],
+        "type": "object",
+        "properties": {
+          "clave": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "valor": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "valorPorDefecto": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "esPorDefecto": {
+            "type": "boolean"
+          },
+          "modificadoEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "minimo": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "maximo": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "opciones": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PasajeroPeticion": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "telefonoWhatsApp": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "correo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "empresaClienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "codigoInterno": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PasajeroRespuesta": {
+        "required": [
+          "id",
+          "nombre",
+          "telefonoWhatsApp",
+          "correo",
+          "empresaClienteId",
+          "codigoInterno",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "telefonoWhatsApp": {
+            "type": "string"
+          },
+          "correo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "empresaClienteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigoInterno": {
+            "type": "string"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PlantillaPeticion": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "idioma": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "estado": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PlantillaRespuesta": {
+        "required": [
+          "clave",
+          "nombre",
+          "idioma",
+          "estado",
+          "variables",
+          "modificadaEn"
+        ],
+        "type": "object",
+        "properties": {
+          "clave": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "idioma": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string"
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "modificadaEn": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ReglaPeticion": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "habilitada": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "orden": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "peso": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "parametros": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ReglaRespuesta": {
+        "required": [
+          "codigo",
+          "tipo",
+          "habilitada",
+          "orden",
+          "peso",
+          "parametros"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "habilitada": {
+            "type": "boolean"
+          },
+          "orden": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "peso": {
+            "type": "number",
+            "format": "double"
+          },
+          "parametros": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ReportePeticion": {
+        "type": "object",
+        "properties": {
+          "desde": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "hasta": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "conductorId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "empresaClienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "grupo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pagina": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "ReporteRespuestaOfResumenConductoresAndConductorReporteLectura": {
+        "required": [
+          "desde",
+          "hasta",
+          "resumen",
+          "filas"
+        ],
+        "type": "object",
+        "properties": {
+          "desde": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resumen": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ResumenConductores"
+              }
+            ]
+          },
+          "filas": {
+            "$ref": "#/components/schemas/PaginaRespuestaOfConductorReporteLectura"
+          }
+        }
+      },
+      "ReporteRespuestaOfResumenEmpresasAndEmpresaReporteLectura": {
+        "required": [
+          "desde",
+          "hasta",
+          "resumen",
+          "filas"
+        ],
+        "type": "object",
+        "properties": {
+          "desde": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resumen": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ResumenEmpresas"
+              }
+            ]
+          },
+          "filas": {
+            "$ref": "#/components/schemas/PaginaRespuestaOfEmpresaReporteLectura"
+          }
+        }
+      },
+      "ReporteRespuestaOfResumenSolicitudesAndSolicitudReporteFila": {
+        "required": [
+          "desde",
+          "hasta",
+          "resumen",
+          "filas"
+        ],
+        "type": "object",
+        "properties": {
+          "desde": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resumen": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ResumenSolicitudes"
+              }
+            ]
+          },
+          "filas": {
+            "$ref": "#/components/schemas/PaginaRespuestaOfSolicitudReporteFila"
+          }
+        }
+      },
+      "ReporteRespuestaOfResumenViajesAndViajeReporteLectura": {
+        "required": [
+          "desde",
+          "hasta",
+          "resumen",
+          "filas"
+        ],
+        "type": "object",
+        "properties": {
+          "desde": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resumen": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ResumenViajes"
+              }
+            ]
+          },
+          "filas": {
+            "$ref": "#/components/schemas/PaginaRespuestaOfViajeReporteLectura"
+          }
+        }
+      },
+      "ResultadoAsignacionRespuesta": {
+        "required": [
+          "solicitudId",
+          "resultado",
+          "asignacionId",
+          "conductorId",
+          "vehiculoId",
+          "decisionId",
+          "motivo"
+        ],
+        "type": "object",
+        "properties": {
+          "solicitudId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "resultado": {
+            "type": "string"
+          },
+          "asignacionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "conductorId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "vehiculoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "decisionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "motivo": {
+            "type": "string"
+          }
+        }
+      },
+      "ResultadoReglaLectura": {
+        "required": [
+          "codigoRegla",
+          "versionRegla",
+          "tipo",
+          "orden",
+          "aprobado",
+          "valor",
+          "peso",
+          "valorPonderado",
+          "motivo"
+        ],
+        "type": "object",
+        "properties": {
+          "codigoRegla": {
+            "type": "string"
+          },
+          "versionRegla": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "orden": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aprobado": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "valor": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "peso": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "valorPonderado": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "motivo": {
+            "type": "string"
+          }
+        }
+      },
+      "ResumenConductores": {
+        "required": [
+          "conductores",
+          "asignaciones",
+          "aceptadas",
+          "rechazadas",
+          "vencidas",
+          "viajesRealizados"
+        ],
+        "type": "object",
+        "properties": {
+          "conductores": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "asignaciones": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aceptadas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rechazadas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vencidas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "viajesRealizados": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ResumenEmpresas": {
+        "required": [
+          "empresas",
+          "solicitudes",
+          "viajesRealizados"
+        ],
+        "type": "object",
+        "properties": {
+          "empresas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "solicitudes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "viajesRealizados": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ResumenSolicitudes": {
+        "required": [
+          "total",
+          "atendidas",
+          "pendientes",
+          "canceladas",
+          "porcentajeAtencion",
+          "porEstado"
+        ],
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "atendidas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendientes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "canceladas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "porcentajeAtencion": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "porEstado": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      },
+      "ResumenViajes": {
+        "required": [
+          "viajes",
+          "puntuales",
+          "porcentajePuntualidad",
+          "retrasoPromedioMinutos",
+          "incidentes",
+          "calificados",
+          "calificacionPromedio",
+          "toleranciaMinutos"
+        ],
+        "type": "object",
+        "properties": {
+          "viajes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "puntuales": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "porcentajePuntualidad": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "retrasoPromedioMinutos": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "incidentes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "calificados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "calificacionPromedio": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "toleranciaMinutos": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ServicioVistaLectura": {
+        "required": [
+          "servicio",
+          "nivel",
+          "motivo"
+        ],
+        "type": "object",
+        "properties": {
+          "servicio": {
+            "$ref": "#/components/schemas/SolicitudReporteLectura"
+          },
+          "nivel": {
+            "$ref": "#/components/schemas/NivelAtencion"
+          },
+          "motivo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SeveridadAlerta": {
+        "enum": [
+          "Info",
+          "Advertencia",
+          "Critica"
+        ]
+      },
+      "SolicitudDetalleRespuesta": {
+        "required": [
+          "solicitud",
+          "historial"
+        ],
+        "type": "object",
+        "properties": {
+          "solicitud": {
+            "$ref": "#/components/schemas/SolicitudRespuesta"
+          },
+          "historial": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CambioEstadoRespuesta"
+            }
+          }
+        }
+      },
+      "SolicitudPeticion": {
+        "type": "object",
+        "properties": {
+          "pasajeroId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itinerarioId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "direccionOrigen": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "direccionDestino": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fechaHoraServicio": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "zonaHoraria": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "duracionMinutos": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "cantidadPasajeros": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "urgente": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "esPersonal": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        }
+      },
+      "SolicitudReporteFila": {
+        "required": [
+          "solicitud",
+          "grupo"
+        ],
+        "type": "object",
+        "properties": {
+          "solicitud": {
+            "$ref": "#/components/schemas/SolicitudReporteLectura"
+          },
+          "grupo": {
+            "$ref": "#/components/schemas/GrupoSolicitud"
+          }
+        }
+      },
+      "SolicitudReporteLectura": {
+        "required": [
+          "id",
+          "pasajeroId",
+          "pasajeroNombre",
+          "empresaClienteId",
+          "empresaClienteNombre",
+          "direccionOrigen",
+          "direccionDestino",
+          "fechaHoraServicio",
+          "cantidadPasajeros",
+          "urgente",
+          "esPersonal",
+          "canal",
+          "estado",
+          "registradaEn",
+          "asignacionId",
+          "estadoAsignacion",
+          "conductorId",
+          "conductorNombre",
+          "placa",
+          "viajeId",
+          "estadoViaje",
+          "inicioReal",
+          "finReal",
+          "incidentes",
+          "puntaje"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pasajeroId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pasajeroNombre": {
+            "type": "string"
+          },
+          "empresaClienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "empresaClienteNombre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "direccionOrigen": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "direccionDestino": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fechaHoraServicio": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cantidadPasajeros": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "urgente": {
+            "type": "boolean"
+          },
+          "esPersonal": {
+            "type": "boolean"
+          },
+          "canal": {
+            "$ref": "#/components/schemas/CanalSolicitud"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoSolicitud"
+          },
+          "registradaEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "asignacionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "estadoAsignacion": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EstadoAsignacion"
+              }
+            ]
+          },
+          "conductorId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "conductorNombre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "placa": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "viajeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "estadoViaje": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EstadoViaje"
+              }
+            ]
+          },
+          "inicioReal": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "finReal": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "incidentes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "puntaje": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detalleRestringido": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "SolicitudRespuesta": {
+        "required": [
+          "id",
+          "pasajeroId",
+          "pasajeroNombre",
+          "empresaClienteId",
+          "empresaClienteNombre",
+          "itinerarioId",
+          "direccionOrigen",
+          "direccionDestino",
+          "fechaHoraServicio",
+          "horaLocalServicio",
+          "zonaHoraria",
+          "duracionMinutos",
+          "cantidadPasajeros",
+          "urgente",
+          "esPersonal",
+          "canal",
+          "estado",
+          "registradaEn",
+          "detalleRestringido"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pasajeroId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pasajeroNombre": {
+            "type": "string"
+          },
+          "empresaClienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "empresaClienteNombre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "itinerarioId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "direccionOrigen": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "direccionDestino": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fechaHoraServicio": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "horaLocalServicio": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "zonaHoraria": {
+            "type": "string"
+          },
+          "duracionMinutos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cantidadPasajeros": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "urgente": {
+            "type": "boolean"
+          },
+          "esPersonal": {
+            "type": "boolean"
+          },
+          "canal": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string"
+          },
+          "registradaEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "detalleRestringido": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SseItemOfAlertaLectura": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AlertaLectura"
+          },
+          "eventType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "eventId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reconnectionInterval": {
+            "pattern": "^-?(\\d\u002B\\.)?\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,7})?$",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "TipoIncidente": {
+        "enum": [
+          "Retraso",
+          "FallaMecanica",
+          "AbandonoTurno",
+          "Accidente",
+          "Otro"
+        ]
+      },
+      "TrazabilidadLectura": {
+        "required": [
+          "solicitudId",
+          "estado",
+          "eventos"
+        ],
+        "type": "object",
+        "properties": {
+          "solicitudId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoSolicitud"
+          },
+          "eventos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventoTrazabilidad"
+            }
+          }
+        }
+      },
+      "TurnoPeticion": {
+        "type": "object",
+        "properties": {
+          "inicio": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "fin": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "zonaHoraria": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "TurnoRespuesta": {
+        "required": [
+          "id",
+          "inicio",
+          "fin",
+          "estado",
+          "inicioLocal",
+          "finLocal",
+          "zonaHoraria"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "inicio": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fin": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "estado": {
+            "type": "string"
+          },
+          "inicioLocal": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finLocal": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "zonaHoraria": {
+            "type": "string"
+          }
+        }
+      },
+      "UrlDocumentoRespuesta": {
+        "required": [
+          "url",
+          "expiraEn"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "expiraEn": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UsuarioAutenticadoRespuesta": {
+        "required": [
+          "id",
+          "nombre",
+          "correo",
+          "rol"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "correo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rol": {
+            "type": "string"
+          }
+        }
+      },
+      "UsuarioRespuesta": {
+        "required": [
+          "id",
+          "nombre",
+          "correo",
+          "telefonoWhatsApp",
+          "rol",
+          "activo",
+          "creadoEn"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "correo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "telefonoWhatsApp": {
+            "type": "string"
+          },
+          "rol": {
+            "type": "string"
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "creadoEn": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "VehiculoPeticion": {
+        "type": "object",
+        "properties": {
+          "placa": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "marca": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "modelo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "capacidad": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "vencimientoRtm": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "vencimientoSoat": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "VehiculoRespuesta": {
+        "required": [
+          "id",
+          "placa",
+          "marca",
+          "modelo",
+          "capacidad",
+          "vencimientoRtm",
+          "vencimientoSoat",
+          "activo",
+          "conductorHabitualId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "placa": {
+            "type": "string"
+          },
+          "marca": {
+            "type": "string"
+          },
+          "modelo": {
+            "type": "string"
+          },
+          "capacidad": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vencimientoRtm": {
+            "type": "string",
+            "format": "date"
+          },
+          "vencimientoSoat": {
+            "type": "string",
+            "format": "date"
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "conductorHabitualId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "VerificacionAuditoriaRespuesta": {
+        "required": [
+          "totalEventos",
+          "integra",
+          "primerEventoAlteradoId",
+          "mensaje"
+        ],
+        "type": "object",
+        "properties": {
+          "totalEventos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "integra": {
+            "type": "boolean"
+          },
+          "primerEventoAlteradoId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int64"
+          },
+          "mensaje": {
+            "type": "string"
+          }
+        }
+      },
+      "ViajeDetalleLectura": {
+        "required": [
+          "viaje",
+          "paradas",
+          "incidentes",
+          "calificacion"
+        ],
+        "type": "object",
+        "properties": {
+          "viaje": {
+            "$ref": "#/components/schemas/ViajeLectura"
+          },
+          "paradas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParadaLectura"
+            }
+          },
+          "incidentes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IncidenteLectura"
+            }
+          },
+          "calificacion": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CalificacionLectura"
+              }
+            ]
+          }
+        }
+      },
+      "ViajeLectura": {
+        "required": [
+          "id",
+          "asignacionId",
+          "solicitudId",
+          "estado",
+          "conductorId",
+          "conductorNombre",
+          "vehiculoId",
+          "placa",
+          "pasajeroId",
+          "pasajeroNombre",
+          "empresaClienteId",
+          "empresaClienteNombre",
+          "direccionOrigen",
+          "direccionDestino",
+          "urgente",
+          "esPersonal",
+          "inicioProgramado",
+          "finProgramado",
+          "fechaHoraInicio",
+          "fechaHoraFin",
+          "incidentes",
+          "puntaje"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "asignacionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "solicitudId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoViaje"
+          },
+          "conductorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "conductorNombre": {
+            "type": "string"
+          },
+          "vehiculoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "placa": {
+            "type": "string"
+          },
+          "pasajeroId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pasajeroNombre": {
+            "type": "string"
+          },
+          "empresaClienteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "empresaClienteNombre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "direccionOrigen": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "direccionDestino": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "urgente": {
+            "type": "boolean"
+          },
+          "esPersonal": {
+            "type": "boolean"
+          },
+          "inicioProgramado": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finProgramado": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fechaHoraInicio": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "fechaHoraFin": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "incidentes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "puntaje": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detalleRestringido": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "ViajeReporteLectura": {
+        "required": [
+          "viaje",
+          "puntual",
+          "minutosRetraso"
+        ],
+        "type": "object",
+        "properties": {
+          "viaje": {
+            "$ref": "#/components/schemas/ViajeLectura"
+          },
+          "puntual": {
+            "type": "boolean"
+          },
+          "minutosRetraso": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ViajeRespuesta": {
+        "required": [
+          "id",
+          "asignacionId",
+          "estado",
+          "fechaHoraInicio",
+          "fechaHoraFin"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "asignacionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "estado": {
+            "type": "string"
+          },
+          "fechaHoraInicio": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "fechaHoraFin": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "VistaCentralizadaLectura": {
+        "required": [
+          "desde",
+          "hasta",
+          "criticos",
+          "atencion",
+          "normales",
+          "servicios"
+        ],
+        "type": "object",
+        "properties": {
+          "desde": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "criticos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "atencion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "normales": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "servicios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServicioVistaLectura"
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Usuarios"
+    },
+    {
+      "name": "Auditor\u00EDa"
+    },
+    {
+      "name": "Asignaci\u00F3n"
+    },
+    {
+      "name": "Viajes"
+    },
+    {
+      "name": "Empresas cliente"
+    },
+    {
+      "name": "Pasajeros"
+    },
+    {
+      "name": "Conductores"
+    },
+    {
+      "name": "Veh\u00EDculos"
+    },
+    {
+      "name": "Par\u00E1metros"
+    },
+    {
+      "name": "Solicitudes"
+    },
+    {
+      "name": "Itinerarios"
+    },
+    {
+      "name": "Motor de asignaci\u00F3n"
+    },
+    {
+      "name": "Alertas"
+    },
+    {
+      "name": "Notificaciones"
+    },
+    {
+      "name": "Reportes"
+    },
+    {
+      "name": "Canal WhatsApp"
+    }
+  ]
+}

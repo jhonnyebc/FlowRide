@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json.Serialization;
 using FlowRide.API.Asignaciones;
 using FlowRide.API.Auditoria;
 using FlowRide.API.Canal;
@@ -35,6 +36,8 @@ builder.Services.AddCanalWhatsApp(builder.Configuration);
 builder.Services.AddNotificaciones(builder.Configuration);
 builder.Services.AddReportes(builder.Configuration);
 builder.Services.AddAutenticacionFlowRide();
+// Números como números (sin aceptarlos como texto): el contrato OpenAPI del Panel Web queda con tipos exactos.
+builder.Services.ConfigureHttpJsonOptions(opciones => opciones.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
 builder.Services.AddOpenApi();
 builder.Services.AddExceptionHandler<ManejadorExcepciones>();
 builder.Services.AddProblemDetails(options =>
@@ -53,7 +56,8 @@ app.UseStatusCodePages();
 app.UseAuthentication();
 app.UseAuthorization();
 
-if (app.Environment.IsDevelopment())
+// El contrato OpenAPI es la fuente del cliente tipado del Panel Web (ADR-0019); en pruebas se compara con el del frontend.
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
 {
     app.MapOpenApi().AllowAnonymous();
 }

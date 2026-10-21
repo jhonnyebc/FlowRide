@@ -13,11 +13,11 @@ public static class ParametrosEndpoints
         var grupo = app.MapGroup("/parametros").WithTags("Parámetros");
 
         grupo.MapGet("/", async (IParametrosPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(await puerto.ConsultarAsync(ct))).RequireAuthorization(Politicas.PanelWeb);
+            TypedResults.Ok(await puerto.ConsultarAsync(ct))).RequireAuthorization(Politicas.PanelWeb);
 
         grupo.MapPut("/{clave}", async (string clave, CambiarParametroPeticion peticion, ClaimsPrincipal usuario,
                 IParametrosPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(await puerto.CambiarAsync(clave, peticion, usuario.UsuarioActual(), ct)))
+            TypedResults.Ok(await puerto.CambiarAsync(clave, peticion, usuario.UsuarioActual(), ct)))
             .RequireAuthorization(Politicas.Administrador, Politicas.AutenticacionReciente);
 
         return app;

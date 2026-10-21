@@ -20,65 +20,65 @@ public static class ViajesEndpoints
         asignaciones.MapPost("/{id:guid}/aceptar", async (Guid id, ClaimsPrincipal usuario, IViajesPuertoEntrada puerto, CancellationToken ct) =>
         {
             var viaje = await puerto.AceptarAsignacionAsync(id, usuario.UsuarioActual(), ct);
-            return Results.Created($"/api/viajes/{viaje.Id}", viaje);
+            return TypedResults.Created($"/api/viajes/{viaje.Id}", viaje);
         });
 
         asignaciones.MapPost("/{id:guid}/rechazar", async (Guid id, MotivoPeticion peticion, ClaimsPrincipal usuario,
             IViajesPuertoEntrada puerto, CancellationToken ct) =>
         {
             await puerto.RechazarAsignacionAsync(id, peticion, usuario.UsuarioActual(), ct);
-            return Results.NoContent();
+            return TypedResults.NoContent();
         });
 
         var viajes = app.MapGroup("/viajes").WithTags("Viajes").RequireAuthorization(Politicas.PanelWeb);
 
         viajes.MapGet("/", async ([AsParameters] BusquedaViajesPeticion busqueda, ClaimsPrincipal usuario, IViajesPuertoEntrada puerto,
                 CancellationToken ct) =>
-            Results.Ok(await puerto.BuscarAsync(busqueda, Rol(usuario), ct)));
+            TypedResults.Ok(await puerto.BuscarAsync(busqueda, Rol(usuario), ct)));
 
         viajes.MapGet("/monitoreo", async (ClaimsPrincipal usuario, IViajesPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(await puerto.MonitorearAsync(Rol(usuario), ct)));
+            TypedResults.Ok(await puerto.MonitorearAsync(Rol(usuario), ct)));
 
         viajes.MapGet("/{id:guid}", async (Guid id, ClaimsPrincipal usuario, IViajesPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(await puerto.ConsultarAsync(id, Rol(usuario), ct)));
+            TypedResults.Ok(await puerto.ConsultarAsync(id, Rol(usuario), ct)));
 
         viajes.MapPost("/{id:guid}/iniciar", async (Guid id, ClaimsPrincipal usuario, IViajesPuertoEntrada puerto, CancellationToken ct) =>
-                Results.Ok(await puerto.IniciarAsync(id, usuario.UsuarioActual(), ct)))
+                TypedResults.Ok(await puerto.IniciarAsync(id, usuario.UsuarioActual(), ct)))
             .RequireAuthorization(Politicas.OperadorLogistico);
 
         viajes.MapPost("/{id:guid}/finalizar", async (Guid id, ClaimsPrincipal usuario, IViajesPuertoEntrada puerto, CancellationToken ct) =>
-                Results.Ok(await puerto.FinalizarAsync(id, usuario.UsuarioActual(), ct)))
+                TypedResults.Ok(await puerto.FinalizarAsync(id, usuario.UsuarioActual(), ct)))
             .RequireAuthorization(Politicas.OperadorLogistico);
 
         viajes.MapPost("/{id:guid}/paradas", async (Guid id, ParadaPeticion peticion, ClaimsPrincipal usuario, IViajesPuertoEntrada puerto,
             CancellationToken ct) =>
         {
             var parada = await puerto.RegistrarParadaAsync(id, peticion, usuario.UsuarioActual(), ct);
-            return Results.Created($"/api/viajes/{id}", parada);
+            return TypedResults.Created($"/api/viajes/{id}", parada);
         }).RequireAuthorization(Politicas.OperadorLogistico);
 
         viajes.MapPost("/{id:guid}/paradas/{paradaId:guid}/llegada", async (Guid id, Guid paradaId, ClaimsPrincipal usuario,
                 IViajesPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(await puerto.RegistrarLlegadaAsync(id, paradaId, usuario.UsuarioActual(), ct)))
+            TypedResults.Ok(await puerto.RegistrarLlegadaAsync(id, paradaId, usuario.UsuarioActual(), ct)))
             .RequireAuthorization(Politicas.OperadorLogistico);
 
         viajes.MapPost("/{id:guid}/incidentes", async (Guid id, IncidentePeticion peticion, ClaimsPrincipal usuario,
             IViajesPuertoEntrada puerto, CancellationToken ct) =>
         {
             var incidente = await puerto.ReportarIncidenteAsync(id, peticion, usuario.UsuarioActual(), ct);
-            return Results.Created($"/api/viajes/{id}", incidente);
+            return TypedResults.Created($"/api/viajes/{id}", incidente);
         }).RequireAuthorization(Politicas.OperadorLogistico);
 
         viajes.MapPost("/{id:guid}/calificacion", async (Guid id, CalificacionPeticion peticion, ClaimsPrincipal usuario,
             IViajesPuertoEntrada puerto, CancellationToken ct) =>
         {
             var calificacion = await puerto.CalificarAsync(id, peticion, usuario.UsuarioActual(), ct);
-            return Results.Created($"/api/viajes/{id}", calificacion);
+            return TypedResults.Created($"/api/viajes/{id}", calificacion);
         }).RequireAuthorization(Politicas.OperadorLogistico);
 
         app.MapGet("/solicitudes/{id:guid}/trazabilidad", async (Guid id, ClaimsPrincipal usuario, IViajesPuertoEntrada puerto,
                 CancellationToken ct) =>
-            Results.Ok(await puerto.TrazabilidadAsync(id, Rol(usuario), ct)))
+            TypedResults.Ok(await puerto.TrazabilidadAsync(id, Rol(usuario), ct)))
             .WithTags("Viajes")
             .RequireAuthorization(Politicas.PanelWeb);
 

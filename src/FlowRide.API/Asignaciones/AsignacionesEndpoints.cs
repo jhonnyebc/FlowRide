@@ -16,57 +16,57 @@ public static class AsignacionesEndpoints
         var solicitudes = app.MapGroup("/solicitudes").WithTags("Asignación").RequireAuthorization(Politicas.PanelWeb);
 
         solicitudes.MapPost("/{id:guid}/asignar", async (Guid id, IAsignacionesPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(await puerto.AsignarAsync(id, ct)));
+            TypedResults.Ok(await puerto.AsignarAsync(id, ct)));
 
         solicitudes.MapGet("/{id:guid}/decisiones", async (Guid id, IAsignacionesPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(await puerto.DecisionesAsync(id, ct)));
+            TypedResults.Ok(await puerto.DecisionesAsync(id, ct)));
 
         solicitudes.MapPost("/{id:guid}/asignacion-manual", async (Guid id, CandidatoManualPeticion peticion, ClaimsPrincipal usuario,
             IAsignacionesPuertoEntrada puerto, CancellationToken ct) =>
         {
             var asignacion = await puerto.AsignarManualAsync(id, peticion, usuario.UsuarioActual(), ct);
-            return Results.Created($"/api/asignaciones?solicitudId={id}", asignacion);
+            return TypedResults.Created($"/api/asignaciones?solicitudId={id}", asignacion);
         }).RequireAuthorization(Politicas.OperadorLogistico);
 
         solicitudes.MapPost("/{id:guid}/devolver-a-cola", async (Guid id, MotivoPeticion peticion, ClaimsPrincipal usuario,
             IAsignacionesPuertoEntrada puerto, CancellationToken ct) =>
         {
             await puerto.DevolverAColaAsync(id, peticion, usuario.UsuarioActual(), ct);
-            return Results.NoContent();
+            return TypedResults.NoContent();
         }).RequireAuthorization(Politicas.OperadorLogistico);
 
         var asignaciones = app.MapGroup("/asignaciones").WithTags("Asignación").RequireAuthorization(Politicas.PanelWeb);
 
         asignaciones.MapGet("/", async ([AsParameters] BusquedaAsignacionesPeticion busqueda, IAsignacionesPuertoEntrada puerto,
                 CancellationToken ct) =>
-            Results.Ok(await puerto.BuscarAsync(busqueda, ct)));
+            TypedResults.Ok(await puerto.BuscarAsync(busqueda, ct)));
 
         asignaciones.MapPost("/{id:guid}/reasignar", async (Guid id, CandidatoManualPeticion peticion, ClaimsPrincipal usuario,
                 IAsignacionesPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(await puerto.ReasignarAsync(id, peticion, usuario.UsuarioActual(), ct)))
+            TypedResults.Ok(await puerto.ReasignarAsync(id, peticion, usuario.UsuarioActual(), ct)))
             .RequireAuthorization(Politicas.OperadorLogistico);
 
         app.MapPost("/conductores/{conductorId:guid}/turnos/{turnoId:guid}/abandonar", async (Guid conductorId, Guid turnoId,
                 MotivoPeticion peticion, ClaimsPrincipal usuario, IAsignacionesPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(new { solicitudesDevueltas = await puerto.AbandonarTurnoAsync(conductorId, turnoId, peticion, usuario.UsuarioActual(), ct) }))
+            TypedResults.Ok(new { solicitudesDevueltas = await puerto.AbandonarTurnoAsync(conductorId, turnoId, peticion, usuario.UsuarioActual(), ct) }))
             .WithTags("Asignación")
             .RequireAuthorization(Politicas.OperadorLogistico);
 
         var motor = app.MapGroup("/motor/configuraciones").WithTags("Motor de asignación");
 
         motor.MapGet("/", async (IConfiguracionMotorPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(await puerto.ConsultarAsync(ct))).RequireAuthorization(Politicas.PanelWeb);
+            TypedResults.Ok(await puerto.ConsultarAsync(ct))).RequireAuthorization(Politicas.PanelWeb);
 
         motor.MapPost("/", async (ConfiguracionMotorPeticion peticion, ClaimsPrincipal usuario, IConfiguracionMotorPuertoEntrada puerto,
             CancellationToken ct) =>
         {
             var configuracion = await puerto.CrearAsync(peticion, usuario.UsuarioActual(), ct);
-            return Results.Created($"/api/motor/configuraciones/{configuracion.Version}", configuracion);
+            return TypedResults.Created($"/api/motor/configuraciones/{configuracion.Version}", configuracion);
         }).RequireAuthorization(Politicas.Administrador, Politicas.AutenticacionReciente);
 
         motor.MapPost("/{version:int}/activar", async (int version, ClaimsPrincipal usuario, IConfiguracionMotorPuertoEntrada puerto,
                 CancellationToken ct) =>
-            Results.Ok(await puerto.ActivarAsync(version, usuario.UsuarioActual(), ct))).RequireAuthorization(Politicas.Administrador, Politicas.AutenticacionReciente);
+            TypedResults.Ok(await puerto.ActivarAsync(version, usuario.UsuarioActual(), ct))).RequireAuthorization(Politicas.Administrador, Politicas.AutenticacionReciente);
 
         return app;
     }

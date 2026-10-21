@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using FlowRide.Domain.Canal.GestionCanal;
 
 namespace FlowRide.Application.Canal.Salida.Puertos;
@@ -25,6 +26,7 @@ public interface IWhatsAppGateway
         CancellationToken ct);
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TipoResultadoEnvio
 {
     Enviado,

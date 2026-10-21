@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using FlowRide.Domain.Comun;
 using FlowRide.Domain.Enumeraciones;
 using FlowRide.Domain.Transversal;
@@ -5,6 +6,7 @@ using FlowRide.Domain.Transversal;
 namespace FlowRide.Domain.Reportes;
 
 /// <summary>Reportes operacionales de V1 (RF-46 a RF-49).</summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TipoReporte
 {
     Viajes,
@@ -14,6 +16,7 @@ public enum TipoReporte
 }
 
 /// <summary>Cómo cuenta una solicitud en el reporte de atendidas y pendientes (RF-47).</summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum GrupoSolicitud
 {
     Atendida,
@@ -22,6 +25,7 @@ public enum GrupoSolicitud
 }
 
 /// <summary>Semaforización de la vista centralizada (RF-36, OPLOG-UX-02).</summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum NivelAtencion
 {
     Critico,
