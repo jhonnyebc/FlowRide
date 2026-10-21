@@ -9,3 +9,6 @@
 *.pdf binary
 *.docx binary
 *.xlsx binary
+
+# Los hooks de Git son scripts de shell: siempre con finales de línea LF.
+.githooks/* text eol=lf

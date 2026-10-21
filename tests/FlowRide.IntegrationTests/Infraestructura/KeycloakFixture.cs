@@ -118,6 +118,50 @@ public sealed class KeycloakFixture : IAsyncLifetime
         return cuerpo?["access_token"]?.GetValue<string>()
                ?? throw new InvalidOperationException($"Keycloak no entregó el token: {cuerpo?.ToJsonString()}");
     }
+
+    /// <summary>
+    /// Inicia sesión como lo hace el Panel Web: código de autorización con PKCE por el formulario de Keycloak. A diferencia
+    /// de la contraseña directa, deja en el token el <c>auth_time</c> que exigen las acciones sensibles.
+    /// </summary>
+    public async Task<string> IniciarSesionConNavegadorAsync(string realm, string correo, string contrasena = "Clave-de-prueba-1")
+    {
+        await IniciarSesionAsync(realm, correo, contrasena); // deja la cuenta con contraseña y sin acciones pendientes
+
+        const string Redireccion = "http://localhost:5173/callback";
+        var verificador = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Encode(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+        var reto = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Encode(
+            System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.ASCII.GetBytes(verificador)));
+        // Keycloak marca sus cookies como Secure; por http (el contenedor de prueba) se reenvían a mano.
+        using var manejador = new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false };
+        using var navegador = new HttpClient(manejador);
+
+        using var formularioLogin = await navegador.GetAsync($"{UrlBase}/realms/{realm}/protocol/openid-connect/auth?client_id={ConstantesKeycloak.ClientePanel}" +
+            $"&response_type=code&scope=openid&redirect_uri={Uri.EscapeDataString(Redireccion)}&code_challenge={reto}&code_challenge_method=S256&state=prueba");
+        var pagina = await formularioLogin.Content.ReadAsStringAsync();
+        var cookies = string.Join("; ", formularioLogin.Headers.TryGetValues("Set-Cookie", out var valores)
+            ? valores.Select(c => c.Split(';')[0])
+            : []);
+        var accion = System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Match(pagina, "action=\"([^\"]+)\"").Groups[1].Value);
+        using var credenciales = new FormUrlEncodedContent(new Dictionary<string, string> { ["username"] = correo, ["password"] = contrasena });
+        using var envio = new HttpRequestMessage(HttpMethod.Post, accion) { Content = credenciales };
+        envio.Headers.Add("Cookie", cookies);
+        using var login = await navegador.SendAsync(envio);
+        var codigo = System.Web.HttpUtility.ParseQueryString(login.Headers.Location?.Query ?? string.Empty)["code"]
+                     ?? throw new InvalidOperationException($"Keycloak no devolvió el código ({(int)login.StatusCode}).");
+
+        using var canje = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["grant_type"] = "authorization_code",
+            ["client_id"] = ConstantesKeycloak.ClientePanel,
+            ["code"] = codigo,
+            ["redirect_uri"] = Redireccion,
+            ["code_verifier"] = verificador
+        });
+        using var respuesta = await _http.PostAsync($"{UrlBase}/realms/{realm}/protocol/openid-connect/token", canje);
+        var cuerpo = await respuesta.Content.ReadFromJsonAsync<JsonNode>();
+        return cuerpo?["access_token"]?.GetValue<string>()
+               ?? throw new InvalidOperationException($"Keycloak no entregó el token: {cuerpo?.ToJsonString()}");
+    }
 }
 
 [CollectionDefinition(Nombre)]

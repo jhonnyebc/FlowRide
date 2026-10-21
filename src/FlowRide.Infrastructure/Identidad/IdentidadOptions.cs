@@ -20,6 +20,9 @@ public sealed class IdentidadOptions
     /// <summary>Exige HTTPS para leer los metadatos OIDC. Solo se apaga en desarrollo local.</summary>
     public bool RequiereHttps { get; set; } = true;
 
+    /// <summary>Minutos desde el último inicio de sesión dentro de los que se permiten las acciones sensibles (RFC 9470).</summary>
+    public int MinutosAutenticacionReciente { get; set; } = 5;
+
     public string Autoridad(string nombreRealm) => $"{UrlKeycloak.TrimEnd('/')}/realms/{nombreRealm}";
 
     /// <summary>Emisor de los tokens del operador: su realm, derivado de su TenantId.</summary>

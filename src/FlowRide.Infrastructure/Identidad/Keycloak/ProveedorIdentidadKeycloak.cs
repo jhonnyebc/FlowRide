@@ -13,15 +13,22 @@ public sealed class ProveedorIdentidadKeycloak(ClienteKeycloak keycloak, string 
     /// <summary>Vigencia del enlace del correo para definir la contraseña: 72 horas.</summary>
     private const int VigenciaEnlaceSegundos = 72 * 3600;
 
+    private const string AccionCambiarContrasena = "UPDATE_PASSWORD";
+    private const string AccionConfigurarTotp = "CONFIGURE_TOTP";
+
     private string Usuarios => $"admin/realms/{Uri.EscapeDataString(nombreRealm)}/users";
 
-    public async Task<string> AsegurarUsuarioAsync(string correo, string nombre, CancellationToken ct)
+    public async Task<string> AsegurarUsuarioAsync(string correo, string nombre, bool exigirDobleFactor, CancellationToken ct)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(correo);
         ArgumentException.ThrowIfNullOrWhiteSpace(nombre);
 
         if (await BuscarPorCorreoAsync(correo, ct) is { } existente)
+        {
+            if (exigirDobleFactor)
+                await ExigirDobleFactorAsync(existente, ct);
             return existente;
+        }
 
         // Keycloak pide nombre y apellido: el nombre completo se reparte entre los dos.
         var partes = nombre.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -33,7 +40,9 @@ public sealed class ProveedorIdentidadKeycloak(ClienteKeycloak keycloak, string 
             ["lastName"] = partes.Length > 1 ? partes[1] : partes[0],
             ["enabled"] = true,
             ["emailVerified"] = true,
-            ["requiredActions"] = new JsonArray("UPDATE_PASSWORD")
+            ["requiredActions"] = exigirDobleFactor
+                ? new JsonArray(AccionCambiarContrasena, AccionConfigurarTotp)
+                : new JsonArray(AccionCambiarContrasena)
         };
         await keycloak.CrearAsync(Usuarios, cuenta, ct);
 
@@ -47,7 +56,28 @@ public sealed class ProveedorIdentidadKeycloak(ClienteKeycloak keycloak, string 
         return keycloak.EjecutarAsync(HttpMethod.Put,
             $"{Usuarios}/{Uri.EscapeDataString(identidadExternaId)}/execute-actions-email" +
             $"?client_id={ConstantesKeycloak.ClientePanel}&redirect_uri={destino}&lifespan={VigenciaEnlaceSegundos}",
-            new JsonArray("UPDATE_PASSWORD"), ct);
+            new JsonArray(AccionCambiarContrasena), ct);
+    }
+
+    /// <summary>
+    /// Agrega la acción requerida CONFIGURE_TOTP si la cuenta no tiene ya un TOTP: Keycloak lo pide en el próximo inicio de
+    /// sesión y, una vez configurado, el flujo del navegador lo exige siempre.
+    /// </summary>
+    public async Task ExigirDobleFactorAsync(string identidadExternaId, CancellationToken ct)
+    {
+        var ruta = $"{Usuarios}/{Uri.EscapeDataString(identidadExternaId)}";
+        var credenciales = await keycloak.ListarAsync($"{ruta}/credentials", ct);
+        if (credenciales.Any(c => c?["type"]?.GetValue<string>() == "otp"))
+            return;
+
+        var cuenta = await keycloak.ObtenerAsync(ruta, ct)
+                     ?? throw new InvalidOperationException($"La cuenta {identidadExternaId} no existe en el realm {nombreRealm}.");
+        var acciones = cuenta["requiredActions"] as JsonArray ?? [];
+        if (acciones.Any(a => a?.GetValue<string>() == AccionConfigurarTotp))
+            return;
+        acciones.Add(AccionConfigurarTotp);
+        cuenta["requiredActions"] = acciones.DeepClone();
+        await keycloak.EjecutarAsync(HttpMethod.Put, ruta, cuenta, ct);
     }
 
     public Task HabilitarAsync(string identidadExternaId, CancellationToken ct) =>

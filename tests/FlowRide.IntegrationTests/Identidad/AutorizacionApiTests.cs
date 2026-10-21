@@ -73,6 +73,37 @@ public class AutorizacionApiTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task AccionSensible_ConSesionDeHaceMasDe5Minutos_PideReautenticar()
+    {
+        var (admin, _) = await UsuarioConSesionAsync(RolesSistema.AdministradorId);
+        var antigua = Cliente(TokensDePrueba.Crear(admin.IdentidadExternaId!, Tenant, autenticadoEn: DateTimeOffset.UtcNow.AddMinutes(-10)));
+        var reciente = Cliente(TokensDePrueba.Crear(admin.IdentidadExternaId!, Tenant, autenticadoEn: DateTimeOffset.UtcNow.AddMinutes(-1)));
+        var peticion = new CrearUsuarioPeticion
+        {
+            Nombre = "Nueva administradora",
+            Correo = $"{Guid.NewGuid():N}"[..10] + "@ops.co",
+            TelefonoWhatsApp = $"+57{Random.Shared.NextInt64(3_000_000_000, 3_999_999_999)}",
+            Rol = "Administrador"
+        };
+
+        var conSesionAntigua = await antigua.PostAsJsonAsync("/api/usuarios", peticion);
+        var consulta = await antigua.GetAsync("/api/usuarios");
+        var parametro = await antigua.PutAsJsonAsync("/api/parametros/calificacion.plazo_dias", new { valor = "5" });
+        var conSesionReciente = await reciente.PostAsJsonAsync("/api/usuarios", peticion);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, conSesionAntigua.StatusCode);
+        var desafio = conSesionAntigua.Headers.WwwAuthenticate.ToString();
+        Assert.Contains("insufficient_user_authentication", desafio, StringComparison.Ordinal);
+        Assert.Contains("max_age=\"300\"", desafio, StringComparison.Ordinal);
+        Assert.Equal(HttpStatusCode.OK, consulta.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, parametro.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, conSesionReciente.StatusCode);
+        var creada = (await conSesionReciente.Content.ReadFromJsonAsync<UsuarioRespuesta>())!;
+        Assert.True(_proveedor.ConDobleFactor.ContainsKey($"sub-{peticion.Correo}"), "Un Administrador debe configurar su TOTP.");
+        Assert.Equal("Administrador", creada.Rol);
+    }
+
+    [Fact]
     public async Task SinToken_Responde401()
     {
         var respuesta = await Cliente(null).GetAsync("/api/usuarios");

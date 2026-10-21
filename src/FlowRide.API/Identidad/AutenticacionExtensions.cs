@@ -4,6 +4,8 @@ using FlowRide.Application.Identidad.Entrada.Puertos;
 using FlowRide.Infrastructure.Identidad;
 using FlowRide.Infrastructure.Plataforma;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace FlowRide.API.Identidad;
@@ -14,6 +16,9 @@ public static class Politicas
     public const string Administrador = "Administrador";
     public const string PanelWeb = "PanelWeb";
     public const string OperadorLogistico = "OperadorLogistico";
+
+    /// <summary>Acciones sensibles: además del rol, un inicio de sesión reciente.</summary>
+    public const string AutenticacionReciente = "AutenticacionReciente";
 }
 
 /// <summary>Claims que la API agrega tras resolver el usuario interno.</summary>
@@ -51,7 +56,11 @@ public static partial class AutenticacionExtensions
         services.AddAuthorizationBuilder()
             .AddPolicy(Politicas.Administrador, politica => politica.RequireRole(RolesPanel.Administrador))
             .AddPolicy(Politicas.PanelWeb, politica => politica.RequireRole(RolesPanel.Administrador, RolesPanel.OperadorLogistico))
-            .AddPolicy(Politicas.OperadorLogistico, politica => politica.RequireRole(RolesPanel.OperadorLogistico));
+            .AddPolicy(Politicas.OperadorLogistico, politica => politica.RequireRole(RolesPanel.OperadorLogistico))
+            .AddPolicy(Politicas.AutenticacionReciente, politica => politica.AddRequirements(new RequisitoAutenticacionReciente()));
+        services.AddSingleton<IAuthorizationHandler, ManejadorAutenticacionReciente>();
+        services.AddSingleton<IAuthorizationMiddlewareResultHandler, RespuestaAutenticacionReciente>();
+        services.TryAddSingleton(TimeProvider.System);
 
         return services;
     }
