@@ -271,12 +271,14 @@ public static class DependencyInjection
         services.AddScoped<ICasoUsoConRetorno<CrearUsuarioDominio, ResultadoAdministradorInicial>, AsegurarAdministradorInicialCasoUso>();
         services.AddScoped<ICasoUsoConRetorno<CambiarEstadoUsuarioDominio, Usuario>, CambiarEstadoUsuarioCasoUso>();
         services.AddScoped<ICasoUsoConRetorno<CambiarRolUsuarioDominio, Usuario>, CambiarRolUsuarioCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ActualizarUsuarioDominio, Usuario>, ActualizarUsuarioCasoUso>();
         services.AddScoped<ICasoUsoConRetorno<ConsultarUsuariosDominio, IReadOnlyList<Usuario>>, ConsultarUsuariosCasoUso>();
         services.AddScoped<ICasoUsoConRetorno<ResolverIdentidadDominio, Usuario?>, ResolverIdentidadCasoUso>();
         services.AddScoped<ICrearUsuarioPuertoEntrada, CrearUsuarioAdaptadorEntrada>();
         services.AddScoped<IAsegurarAdministradorInicialPuertoEntrada, AsegurarAdministradorInicialAdaptadorEntrada>();
         services.AddScoped<ICambiarEstadoUsuarioPuertoEntrada, CambiarEstadoUsuarioAdaptadorEntrada>();
         services.AddScoped<ICambiarRolUsuarioPuertoEntrada, CambiarRolUsuarioAdaptadorEntrada>();
+        services.AddScoped<IActualizarUsuarioPuertoEntrada, ActualizarUsuarioAdaptadorEntrada>();
         services.AddScoped<IConsultarUsuariosPuertoEntrada, ConsultarUsuariosAdaptadorEntrada>();
         services.AddScoped<IResolverIdentidadPuertoEntrada, ResolverIdentidadAdaptadorEntrada>();
 

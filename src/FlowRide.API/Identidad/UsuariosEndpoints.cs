@@ -49,6 +49,12 @@ public static class UsuariosEndpoints
             TypedResults.Ok(await puerto.CambiarRolAsync(id, peticion, usuario.UsuarioActual(), ct)))
             .RequireAuthorization(Politicas.AutenticacionReciente);
 
+        // RF-24: el correo es el usuario de inicio de sesión, así que también pide un inicio de sesión reciente.
+        administracion.MapPut("/{id:guid}", async (Guid id, ActualizarUsuarioPeticion peticion, ClaimsPrincipal usuario,
+                IActualizarUsuarioPuertoEntrada puerto, CancellationToken ct) =>
+            TypedResults.Ok(await puerto.ActualizarAsync(id, peticion, usuario.UsuarioActual(), ct)))
+            .RequireAuthorization(Politicas.AutenticacionReciente);
+
         return app;
     }
 }

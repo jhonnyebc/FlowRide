@@ -9,6 +9,7 @@ public static class AccionesAuditoria
     public const string UsuarioActivar = "usuario.activar";
     public const string UsuarioDesactivar = "usuario.desactivar";
     public const string UsuarioCambiarRol = "usuario.cambiar_rol";
+    public const string UsuarioActualizar = "usuario.actualizar";
 
     public const string RecursoEmpresaCliente = "empresa_cliente";
     public const string RecursoPasajero = "pasajero";

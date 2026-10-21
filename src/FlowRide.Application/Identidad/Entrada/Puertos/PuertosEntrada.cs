@@ -24,6 +24,11 @@ public interface ICambiarRolUsuarioPuertoEntrada
     Task<UsuarioRespuesta> CambiarRolAsync(Guid usuarioId, CambiarRolUsuarioPeticion peticion, Guid? actorId, CancellationToken ct);
 }
 
+public interface IActualizarUsuarioPuertoEntrada
+{
+    Task<UsuarioRespuesta> ActualizarAsync(Guid usuarioId, ActualizarUsuarioPeticion peticion, Guid? actorId, CancellationToken ct);
+}
+
 public interface IConsultarUsuariosPuertoEntrada
 {
     Task<IReadOnlyList<UsuarioRespuesta>> ConsultarAsync(string? rol, CancellationToken ct);

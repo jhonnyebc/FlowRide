@@ -29,13 +29,15 @@ import {
   IconMoon,
   IconRoute,
   IconSun,
+  IconUserShield,
+  IconUsers,
 } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from 'react-oidc-context';
 import { NavLink as EnlaceRuta, Outlet, useLocation } from 'react-router';
 import { monitoreo, vistaDelDia } from '../api/consultas';
 import { useAlertasNoLeidas } from '../alertas/useAlertas';
-import { useUsuario } from '../auth/usuario';
+import { esAdministrador, useUsuario } from '../auth/usuario';
 import { hoyIso } from '../comun/fechas';
 import { operadorActual } from '../configuracion';
 import { texto, textos } from '../textos';
@@ -65,12 +67,33 @@ function useContadores(): Record<string, Contador | undefined> {
   };
 }
 
-const secciones = [
-  { ruta: '/', etiqueta: textos.menu.tablero, icono: IconLayoutDashboard, exacta: true },
-  { ruta: '/dia', etiqueta: textos.menu.vistaDelDia, icono: IconCalendarEvent, exacta: false },
-  { ruta: '/solicitudes', etiqueta: textos.menu.solicitudes, icono: IconListDetails, exacta: false },
-  { ruta: '/viajes', etiqueta: textos.menu.viajesEnCurso, icono: IconRoute, exacta: false },
-  { ruta: '/alertas', etiqueta: textos.menu.alertas, icono: IconAlertTriangle, exacta: false },
+interface Seccion {
+  ruta: string;
+  etiqueta: string;
+  icono: typeof IconRoute;
+  exacta?: boolean;
+  soloAdministrador?: boolean;
+}
+
+const grupos: { titulo: string; secciones: Seccion[] }[] = [
+  {
+    titulo: textos.menu.operacion,
+    secciones: [
+      { ruta: '/', etiqueta: textos.menu.tablero, icono: IconLayoutDashboard, exacta: true },
+      { ruta: '/dia', etiqueta: textos.menu.vistaDelDia, icono: IconCalendarEvent },
+      { ruta: '/solicitudes', etiqueta: textos.menu.solicitudes, icono: IconListDetails },
+      { ruta: '/viajes', etiqueta: textos.menu.viajesEnCurso, icono: IconRoute },
+      { ruta: '/alertas', etiqueta: textos.menu.alertas, icono: IconAlertTriangle },
+    ],
+  },
+  {
+    titulo: textos.menu.administracion,
+    secciones: [
+      { ruta: '/administracion/usuarios', etiqueta: textos.menu.usuarios, icono: IconUserShield, soloAdministrador: true },
+      { ruta: '/administracion/empresas', etiqueta: textos.menu.empresas, icono: IconBuildingSkyscraper },
+      { ruta: '/administracion/pasajeros', etiqueta: textos.menu.pasajeros, icono: IconUsers },
+    ],
+  },
 ];
 
 /** Marco del panel: cabecera, menú lateral con lo pendiente de cada sección y el contenido. Todo usable con teclado (OPLOG-ACC-01). */
@@ -147,34 +170,38 @@ export function Marco() {
       </AppShell.Header>
       <AppShell.Navbar p="sm" aria-label="Menú principal" className="marco-navbar">
         <AppShell.Section grow style={{ overflowY: 'auto' }}>
-          <Text size="xs" fw={500} c="var(--fr-texto-suave)" px="sm" pt={4} pb={8}>
-            {textos.menu.operacion}
-          </Text>
-          {secciones.map(({ ruta, etiqueta, icono: Icono, exacta }) => {
-            const activa = exacta ? pathname === ruta : pathname.startsWith(ruta);
-            const contador = contadores[ruta];
-            return (
-              <NavLink
-                key={ruta}
-                component={EnlaceRuta}
-                to={ruta}
-                label={etiqueta}
-                active={activa}
-                onClick={close}
-                aria-current={activa ? 'page' : undefined}
-                aria-description={contador ? `${contador.valor} ${contador.descripcion}` : undefined}
-                leftSection={<Icono size={19} stroke={1.7} aria-hidden />}
-                rightSection={
-                  contador && (
-                    <Badge size="sm" radius="xl" circle={contador.valor < 10} color={contador.color} variant="filled" aria-hidden>
-                      {contador.valor > 99 ? '99+' : contador.valor}
-                    </Badge>
-                  )
-                }
-                className="marco-enlace"
-              />
-            );
-          })}
+          {grupos.map(({ titulo, secciones }) => (
+            <div key={titulo} role="group" aria-label={titulo}>
+              <Text size="xs" fw={500} c="var(--fr-texto-suave)" px="sm" pt={titulo === textos.menu.operacion ? 4 : 16} pb={8}>
+                {titulo}
+              </Text>
+              {secciones.filter((s) => !s.soloAdministrador || esAdministrador(usuario)).map(({ ruta, etiqueta, icono: Icono, exacta }) => {
+                const activa = exacta ? pathname === ruta : pathname.startsWith(ruta);
+                const contador = contadores[ruta];
+                return (
+                  <NavLink
+                    key={ruta}
+                    component={EnlaceRuta}
+                    to={ruta}
+                    label={etiqueta}
+                    active={activa}
+                    onClick={close}
+                    aria-current={activa ? 'page' : undefined}
+                    aria-description={contador ? `${contador.valor} ${contador.descripcion}` : undefined}
+                    leftSection={<Icono size={19} stroke={1.7} aria-hidden />}
+                    rightSection={
+                      contador && (
+                        <Badge size="sm" radius="xl" circle={contador.valor < 10} color={contador.color} variant="filled" aria-hidden>
+                          {contador.valor > 99 ? '99+' : contador.valor}
+                        </Badge>
+                      )
+                    }
+                    className="marco-enlace"
+                  />
+                );
+              })}
+            </div>
+          ))}
         </AppShell.Section>
         <AppShell.Section>
           <Paper p="sm" className="superficie">
