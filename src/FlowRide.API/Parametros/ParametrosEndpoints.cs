@@ -18,7 +18,7 @@ public static class ParametrosEndpoints
         grupo.MapPut("/{clave}", async (string clave, CambiarParametroPeticion peticion, ClaimsPrincipal usuario,
                 IParametrosPuertoEntrada puerto, CancellationToken ct) =>
             Results.Ok(await puerto.CambiarAsync(clave, peticion, usuario.UsuarioActual(), ct)))
-            .RequireAuthorization(Politicas.Administrador);
+            .RequireAuthorization(Politicas.Administrador, Politicas.AutenticacionReciente);
 
         return app;
     }

@@ -83,6 +83,37 @@ public class BordeApiTests(PostgresFixture postgres) : PruebasAsignacionBase(pos
     private Task<long> EntrantesAsync() => EjecutarEnSiloAsync<long>("SELECT count(*) FROM canal.mensaje_entrante");
 
     [Fact]
+    public async Task ElBorde_SoloReenviaALaApiConUnTokenDelOperadorDeEseSubdominio()
+    {
+        await RegistrarRutaAsync();
+        await using var borde = await BordeAsync();
+        HttpClient ConToken(string token)
+        {
+            var cliente = Cliente(borde);
+            cliente.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            return cliente;
+        }
+
+        var sinToken = await Cliente(borde).GetAsync("/api/viajes");
+        var basura = await ConToken("no-es-un-jwt").GetAsync("/api/viajes");
+        var deOtroOperador = await ConToken(TokensDePrueba.Crear("sub-ajeno", "otro-operador")).GetAsync("/api/viajes");
+        var vencido = await ConToken(TokensDePrueba.Crear("sub-x", Tenant, expira: DateTime.UtcNow.AddMinutes(-5))).GetAsync("/api/viajes");
+        Assert.Equal(0, borde.Reenvios);
+
+        var valido = await Cliente(borde, conToken: true).GetAsync("/api/viajes");
+        var fueraDeLaApi = await Cliente(borde).GetAsync("/no-es-api");
+
+        Assert.All(new[] { sinToken, basura, deOtroOperador, vencido }, r =>
+        {
+            Assert.Equal(HttpStatusCode.Unauthorized, r.StatusCode);
+            Assert.Equal("Bearer", r.Headers.WwwAuthenticate.ToString());
+        });
+        Assert.Equal(HttpStatusCode.OK, valido.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, fueraDeLaApi.StatusCode);
+        Assert.Equal(2, borde.Reenvios);
+    }
+
+    [Fact]
     public async Task Proxy_LlevaCadaSubdominioSoloASuStack_ConCabecerasDeSeguridad()
     {
         await RegistrarRutaAsync();

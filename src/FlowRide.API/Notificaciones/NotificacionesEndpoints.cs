@@ -43,7 +43,7 @@ public static class NotificacionesEndpoints
         plantillas.MapPut("/{clave}", async (string clave, PlantillaPeticion peticion, ClaimsPrincipal usuario, INotificacionesPuertoEntrada puerto,
                 CancellationToken ct) =>
             Results.Ok(await puerto.ActualizarPlantillaAsync(clave, peticion, usuario.UsuarioActual(), ct)))
-            .RequireAuthorization(Politicas.Administrador);
+            .RequireAuthorization(Politicas.Administrador, Politicas.AutenticacionReciente);
 
         return app;
     }

@@ -1,0 +1,37 @@
+#!/bin/sh
+# Escaneo de secretos antes de cada push (ADR-0014; video del profesor sobre .env y secretos, 2026-10-20).
+# El CI vuelve a escanear todo el historial, pero así una clave nunca llega al repositorio.
+# Activar una vez por clon:  git config core.hooksPath .githooks
+# Usa gitleaks si está instalado; si no, la imagen oficial de Docker con versión fija.
+set -eu
+
+IMAGEN="zricethezav/gitleaks:v8.30.1"
+CERO="0000000000000000000000000000000000000000"
+RAIZ="$(git rev-parse --show-toplevel)"
+
+escanear() {
+    # $1: rango de commits para git log (solo lo que se va a publicar).
+    if command -v gitleaks >/dev/null 2>&1; then
+        gitleaks git "$RAIZ" --redact --no-banner --log-opts="$1"
+    elif command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+        MSYS_NO_PATHCONV=1 docker run --rm -v "$RAIZ:/repo" "$IMAGEN" git /repo --redact --no-banner --log-opts="$1"
+    else
+        echo "pre-push: no se encontró gitleaks ni Docker en ejecución; no se puede escanear en busca de secretos." >&2
+        echo "Instala gitleaks (winget install gitleaks) o abre Docker Desktop y vuelve a intentar." >&2
+        exit 1
+    fi
+}
+
+while read -r _ref_local sha_local _ref_remota sha_remota; do
+    [ "$sha_local" = "$CERO" ] && continue    # se está borrando una rama remota: no hay nada que escanear
+    if [ "$sha_remota" = "$CERO" ]; then
+        rango="$sha_local --not --remotes"    # rama nueva: solo sus commits que no están en el remoto
+    else
+        rango="$sha_remota..$sha_local"
+    fi
+    if ! escanear "$rango"; then
+        echo "pre-push: gitleaks encontró posibles secretos. No se publicó nada." >&2
+        echo "Quita el secreto del commit (y rótalo si ya salió de tu equipo) antes de volver a intentar." >&2
+        exit 1
+    fi
+done

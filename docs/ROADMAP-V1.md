@@ -143,17 +143,18 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 - RF relacionados: RF-14, RF-19 (escenarios OPLOG-SEG-02, ADM-SEG-02, COND-DISP-01).
 
 ### Requisitos del profesor (videos del 2026-10-20), antes de la Fase 11
-Fechas y horas (rama `feature/RF-09-fechas-con-zona`):
+Fechas y horas (PR #14 fusionada):
 - [x] Corregido: el motor y la disponibilidad sacaban el día del servicio de la hora UTC (un servicio a las 8 p. m. en Bogotá contaba como del día siguiente y descartaba licencias o SOAT que vencían ese día).
 - [x] Eventos futuros en hora local + nombre IANA de la zona (`FechaHoraLocal`): servicio de la solicitud, turnos, hora estimada de paradas e itinerarios. Instante UTC derivado y recalculado al arrancar (`RecalculoHorariosAlIniciar`). Migración `FechasConZona` con relleno desde los instantes existentes (America/Bogota).
 - [x] API: hora local sin desfase + `zonaHoraria` opcional (por defecto la del operador); desfase o `Z` → 400. Las respuestas devuelven el instante y la hora local con su zona.
 - Pruebas: 547 unitarias (94,1 % / 83,2 %), 17 de arquitectura, 140 de integración.
 
-Seguridad (OWASP: secretos, CSRF, autenticación rota; reverse proxy vs API gateway), rama siguiente:
-- [ ] Escaneo de secretos con gitleaks antes de cada push (hook versionado), además del CI.
-- [ ] Keycloak: política de contraseñas, fuerza bruta con valores explícitos y doble factor (TOTP) obligatorio para el Administrador.
-- [ ] Reautenticación reciente (≤ 5 min, claim `auth_time`) para las acciones sensibles.
-- [ ] El borde también valida el token del realm del operador antes de reenviar (parte AUTH del API gateway).
+Seguridad (OWASP: secretos, CSRF, autenticación rota; reverse proxy vs API gateway), rama `feature/RF-02-seguridad-owasp`:
+- [x] Escaneo de secretos con gitleaks antes de cada push (hook versionado `.githooks/pre-push`, gitleaks local o Docker), además del CI. Probado: bloquea un token falso.
+- [x] Keycloak: contraseña de 12+ (mayúscula, minúscula, número, historial de 5, argon2), bloqueo tras 5 intentos fallidos y TOTP obligatorio para el Administrador (al crearse o al pasar a ese rol).
+- [x] Reautenticación reciente (≤ 5 min, claim `auth_time`, RFC 9470) en crear, activar, desactivar y cambiar rol de usuarios, parámetros, plantillas y configuración del motor: 401 `insufficient_user_authentication` con `max_age`.
+- [x] El borde valida el token del realm del operador de ese subdominio antes de reenviar a `/api/` (parte AUTH del API gateway); el stack vuelve a validar.
+- Pruebas: 548 unitarias (94,1 % / 83,2 %), 17 de arquitectura, 142 de integración (Keycloak real con inicio de sesión tipo navegador para `auth_time`).
 - Notas: la API usa solo `Authorization: Bearer` (sin cookies), así que CSRF no aplica a la API; el Panel Web (Fase 11) no guardará tokens en cookies ni secretos en variables `VITE_*`.
 
 ### Fase 11 — Panel Web
@@ -257,3 +258,4 @@ Seguridad (OWASP: secretos, CSRF, autenticación rota; reverse proxy vs API gate
 | 2026-10-19 | Fase 10 (decisiones del usuario): la tabla de ruteo vive en el catálogo de plataforma y la llena la CLI; el borde y el stack validan la firma de Meta (defensa en profundidad); el WAF con OWASP CRS es el gestionado de Azure en la Fase 12; en local, HTTPS con `*.dev.localhost` (lo cubre el certificado de desarrollo de .NET 10). |
 | 2026-10-19 | Con una sola app de Meta, el `AppSecret` del stack de cada operador es el mismo de la app de la plataforma. El borde reenvía el cuerpo intacto a cada operador que aparece en el webhook (el stack ya ignora lo que no es de su número); un número sin operador se responde 200 para que Meta no reintente sin fin. |
 | 2026-10-20 | Requisitos del profesor (videos): lo que ya pasó se guarda en UTC; lo que va a pasar en un lugar, en hora local + nombre IANA de la zona, con el instante UTC derivado y recalculado al arrancar. Decisiones del usuario: refactor completo de fechas, TOTP obligatorio para el Administrador, reautenticación reciente en acciones sensibles y validación del token también en el borde. |
+| 2026-10-20 | El borde responde 401 sin llegar al stack si a `/api/` no llega un token del realm de ese operador; sin claves del realm, 503. La reautenticación usa el desafío estándar de RFC 9470 para que el panel repita el inicio de sesión con `max_age`. El hook de gitleaks bloquea el push si no hay gitleaks ni Docker. |

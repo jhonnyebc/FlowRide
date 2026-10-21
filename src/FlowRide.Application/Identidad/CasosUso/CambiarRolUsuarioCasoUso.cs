@@ -1,5 +1,6 @@
 using FlowRide.Application.Comun.CasosUso;
 using FlowRide.Application.Comun.Salida.Puertos;
+using FlowRide.Application.Identidad.Salida.Puertos;
 using FlowRide.Domain.Auditoria;
 using FlowRide.Domain.Auditoria.Repositorios;
 using FlowRide.Domain.Entidades;
@@ -18,6 +19,7 @@ public sealed class CambiarRolUsuarioCasoUso(
     IUsuarioRepositorio usuarios,
     IEventoAuditoriaRepositorio auditoria,
     IUnidadTrabajo unidadTrabajo,
+    IProveedorIdentidad proveedor,
     TimeProvider reloj) : ICasoUsoConRetorno<CambiarRolUsuarioDominio, Usuario>
 {
     public async Task<Usuario> EjecutarAsync(CambiarRolUsuarioDominio datos, CancellationToken ct)
@@ -40,6 +42,9 @@ public sealed class CambiarRolUsuarioCasoUso(
             valoresAntes: antes, valoresDespues: ValoresAuditables.De(usuario)), ct);
         await unidadTrabajo.GuardarCambiosAsync(ct);
 
+        // Quien pasa a un rol privilegiado configura su TOTP en el próximo inicio de sesión.
+        if (RolesSistema.ExigeDobleFactor(rol.Id) && usuario.IdentidadExternaId is { } externa)
+            await proveedor.ExigirDobleFactorAsync(externa, ct);
         return usuario;
     }
 }

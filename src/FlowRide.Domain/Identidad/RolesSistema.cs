@@ -37,4 +37,10 @@ public static class RolesSistema
         ?? throw new InvalidOperationException($"El rol {rolId} no es un rol del sistema.");
 
     public static bool EsDelPanel(Guid rolId) => rolId == AdministradorId || rolId == OperadorLogisticoId;
+
+    /// <summary>
+    /// Cuentas privilegiadas que inician sesión con doble factor (TOTP), decisión del 2026-10-20 tras los videos del
+    /// profesor (OWASP, autenticación rota): el Administrador gestiona usuarios, roles, parámetros y plantillas.
+    /// </summary>
+    public static bool ExigeDobleFactor(Guid rolId) => rolId == AdministradorId;
 }

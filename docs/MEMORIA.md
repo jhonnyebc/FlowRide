@@ -5,14 +5,13 @@
 > Última actualización: 2026-10-19.
 
 ## Estado actual
-- **Rama de trabajo:** `feature/RF-09-fechas-con-zona` (requisitos de fechas del profesor; sale de `develop` en `21cc8bb`; falta
-  commit y PR). Después, la rama de seguridad OWASP y luego la Fase 11.
+- **Rama de trabajo:** `feature/RF-02-seguridad-owasp` (sale de `develop` en `18039d9`; falta commit y PR). Luego la Fase 11.
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
   Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6), Fase 4
   Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9), Fase 7 Canal WhatsApp (PR #10), Fase 8 Notificaciones y alertas (PR #11), Fase 9 Reportes y vista operacional (PR #12) y Fase 10 Borde común (PR #13).
 - **Fase actual:** Fase 10 cerrada. Antes de la Fase 11 se atienden los requisitos de los videos del profesor (2026-10-20):
-  fechas (implementado en su rama) y seguridad OWASP (pendiente).
-- **Tests:** 547 unitarios (94,1 % líneas / 83,2 % ramas en Domain + Application), 17 de arquitectura, 140 de integración
+  fechas (PR #14, cerrado) y seguridad OWASP (implementado en su rama, con los gates en verde).
+- **Tests:** 548 unitarios (94,1 % líneas / 83,2 % ramas en Domain + Application), 17 de arquitectura, 142 de integración
   (Keycloak, Mailpit y Azurite reales con Testcontainers).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
   Azurite (10000). Los secretos viven en el AppData **real** del usuario (`flowride-aprovisionamiento` y
@@ -355,10 +354,26 @@
 - Gates: build sin advertencias, formato OK, 547 unitarias (94,1 % / 83,2 %), 17 arquitectura, 140 integración.
 - **Pendiente en el entorno local (lo corre el usuario):** `dotnet run --project src/FlowRide.Aprovisionamiento -- migrar --id tenant-a`
   (migraciones `Notificaciones` si faltaba y `FechasConZona`).
+- Commit `46cb4bd` → PR #14 fusionada en `develop` el 2026-10-20 (merge `18039d9`) con el CI en verde. **Fechas cerradas.**
+
+## Sesión 2026-10-20 (continuación): seguridad OWASP
+- Rama `feature/RF-02-seguridad-owasp` (lleva la documentación que cerraba las fechas).
+- Hook `.githooks/pre-push` con gitleaks (local o Docker, imagen fija v8.30.1) y `.gitattributes` con LF para los hooks.
+  Probado en un repo desechable: bloquea un token falso. `core.hooksPath` ya activado en el clon del usuario.
+- Keycloak: política de contraseñas (12+, argon2, historial 5), bloqueo tras 5 fallos, TOTP; `CONFIGURE_TOTP` para el
+  Administrador al crearse o al cambiar a ese rol (`RolesSistema.ExigeDobleFactor`, `IProveedorIdentidad.ExigirDobleFactorAsync`).
+- API: `Politicas.AutenticacionReciente` (claim `auth_time` ≤ 5 min) con el desafío 401 de RFC 9470 en las acciones
+  sensibles del Administrador. Hallazgo: el token del grant de contraseña directa no trae `auth_time`; se agregó el mapper
+  `auth_time` al cliente del panel y un inicio de sesión tipo navegador (código + PKCE) en `KeycloakFixture`; Keycloak
+  marca sus cookies como Secure y por http se reenvían a mano.
+- Borde: `ValidadorTokensBorde` + `UseTokenDelOperador` en el pipeline de YARP (metadato `operador` en cada ruta).
+- Gates: build sin advertencias, formato OK, 548 unitarias (94,1 % / 83,2 %), 17 arquitectura, 142 integración.
+- **Pendiente en el entorno local (lo corre el usuario):** volver a correr `crear-operador` de tenant-a con las opciones
+  `--admin-*` (aplica la política nueva al realm y le exige TOTP al administrador existente) y, para el borde, nada nuevo
+  salvo que `FlowRide:Identidad:UrlKeycloak` ya está en `appsettings.Development.json` del borde.
 
 ## Próximos pasos
-1. Cerrar la rama de fechas (commit, PR, CI). Después, la rama de seguridad OWASP (hook de gitleaks, política de
-   contraseñas y fuerza bruta, TOTP para el Administrador, reautenticación reciente, validación del token en el borde).
+1. Cerrar la rama de seguridad (commit, PR, CI).
 2. Fase 11 (Panel Web en React + TypeScript): sin tokens en cookies ni secretos en `VITE_*`; reautenticación con
    `max_age`/`prompt=login` para las acciones sensibles.
    **Recordatorio (2026-10-18):** itinerarios en PDF o Word por WhatsApp quedan fuera de V1; el bot responde que solo

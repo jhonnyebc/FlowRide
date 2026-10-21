@@ -69,12 +69,17 @@ public class KeycloakTests(PostgresFixture postgres, KeycloakFixture keycloak) :
         Assert.Equal(300, configuracion!["accessTokenLifespan"]!.GetValue<int>());
         Assert.False(configuracion["registrationAllowed"]!.GetValue<bool>());
         Assert.True(configuracion["resetPasswordAllowed"]!.GetValue<bool>());
+        // Autenticación rota (OWASP): contraseñas largas con hash lento y salt, bloqueo por intentos y TOTP de 6 dígitos.
+        Assert.Contains("hashAlgorithm(argon2)", configuracion["passwordPolicy"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.Contains("length(12)", configuracion["passwordPolicy"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.Equal((true, 5), (configuracion["bruteForceProtected"]!.GetValue<bool>(), configuracion["failureFactor"]!.GetValue<int>()));
+        Assert.Equal(("totp", 6), (configuracion["otpPolicyType"]!.GetValue<string>(), configuracion["otpPolicyDigits"]!.GetValue<int>()));
 
         var panel = (await keycloak.Administrador.ListarAsync($"admin/realms/{realm}/clients?clientId={ConstantesKeycloak.ClientePanel}", CancellationToken.None)).Single()!;
         Assert.True(panel["publicClient"]!.GetValue<bool>());
         Assert.Equal("S256", panel["attributes"]!["pkce.code.challenge.method"]!.GetValue<string>());
         var mappers = panel["protocolMappers"]!.AsArray();
-        Assert.Equal(2, mappers.Count);
+        Assert.Equal(3, mappers.Count);
         Assert.Equal(tenant, mappers.Single(m => m!["name"]!.GetValue<string>() == "tenant_id")!["config"]!["claim.value"]!.GetValue<string>());
 
         var servicio = (await keycloak.Administrador.ListarAsync($"admin/realms/{realm}/clients?clientId={ConstantesKeycloak.ClienteServicio}", CancellationToken.None)).Single()!;
@@ -99,6 +104,7 @@ public class KeycloakTests(PostgresFixture postgres, KeycloakFixture keycloak) :
         var cuenta = await keycloak.CuentaAsync($"flowride-{tenant}", correo);
         Assert.NotNull(cuenta);
         Assert.Contains("UPDATE_PASSWORD", cuenta["requiredActions"]!.AsArray().Select(a => a!.GetValue<string>()));
+        Assert.Contains("CONFIGURE_TOTP", cuenta["requiredActions"]!.AsArray().Select(a => a!.GetValue<string>()));
         Assert.Single(await keycloak.CorreosParaAsync(correo));
     }
 
@@ -131,7 +137,11 @@ public class KeycloakTests(PostgresFixture postgres, KeycloakFixture keycloak) :
         var correoOperador = $"laura@{tenant}.co";
         await CrearOperadorAsync(tenant, correoAdministrador);
         await using var api = await ApiDeAsync(tenant);
-        var administrador = Cliente(api, await keycloak.IniciarSesionAsync(realm, correoAdministrador));
+        // Como el Panel Web (código + PKCE): el token trae auth_time, que exigen las acciones sensibles.
+        var token = await keycloak.IniciarSesionConNavegadorAsync(realm, correoAdministrador);
+        var claims = System.Text.Encoding.UTF8.GetString(Microsoft.IdentityModel.Tokens.Base64UrlEncoder.DecodeBytes(token.Split('.')[1]));
+        Assert.Contains("\"auth_time\"", claims, StringComparison.Ordinal);
+        var administrador = Cliente(api, token);
 
         var creado = await administrador.PostAsJsonAsync("/api/usuarios", new CrearUsuarioPeticion
         {
