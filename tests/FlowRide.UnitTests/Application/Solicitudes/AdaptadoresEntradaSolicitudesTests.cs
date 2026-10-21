@@ -28,11 +28,11 @@ public class AdaptadoresEntradaSolicitudesTests
         }
     }
 
-    private static readonly SolicitudViaje Solicitud = new(Guid.NewGuid(), Guid.NewGuid(), "Hotel", "Aeropuerto", Ahora.AddDays(1),
+    private static readonly SolicitudViaje Solicitud = new(Guid.NewGuid(), Guid.NewGuid(), "Hotel", "Aeropuerto", Ahora.AddDays(1).Local(),
         TimeSpan.FromMinutes(45), 2, CanalSolicitud.PanelWeb, Ahora);
 
     private static SolicitudDetalleLectura Detalle(Guid id) => new(
-        new SolicitudLectura(id, Solicitud.PasajeroId, "Ana", null, null, null, null, null, Ahora.AddDays(1), TimeSpan.FromMinutes(44.6),
+        new SolicitudLectura(id, Solicitud.PasajeroId, "Ana", null, null, null, null, null, Ahora.AddDays(1), Ahora.AddDays(1).HoraLocal(), HorasDePrueba.Zona, TimeSpan.FromMinutes(44.6),
             2, false, true, CanalSolicitud.PanelWeb, EstadoSolicitud.Pendiente, Ahora, DetalleRestringido: true),
         [new CambioEstadoLectura(null, EstadoSolicitud.Pendiente, Ahora, Actor, null)]);
 
@@ -43,7 +43,7 @@ public class AdaptadoresEntradaSolicitudesTests
     private readonly Grabador<BuscarSolicitudesDominio, PaginaResultado<SolicitudLectura>> _buscar =
         new(d => new PaginaResultado<SolicitudLectura>([Detalle(Guid.NewGuid()).Solicitud], 1, d.Paginacion));
 
-    private SolicitudesAdaptadorEntrada Adaptador() => new(_registrar, _modificar, _cancelar, _consultar, _buscar);
+    private SolicitudesAdaptadorEntrada Adaptador() => new(_registrar, _modificar, _cancelar, _consultar, _buscar, HorasDePrueba.ZonaOperador);
 
     [Fact]
     public async Task Registrar_EsDelPanelWeb_YDevuelveElDetalleComoLoVeElLector()
@@ -53,7 +53,7 @@ public class AdaptadoresEntradaSolicitudesTests
             PasajeroId = Solicitud.PasajeroId,
             DireccionOrigen = " Hotel ",
             DireccionDestino = " ",
-            FechaHoraServicio = Ahora,
+            FechaHoraServicio = Ahora.HoraLocal(),
             DuracionMinutos = 45,
             CantidadPasajeros = 2
         }, Actor, RolesPanel.Administrador, default);
@@ -84,7 +84,7 @@ public class AdaptadoresEntradaSolicitudesTests
         {
             DireccionOrigen = "A",
             DireccionDestino = "B",
-            FechaHoraServicio = Ahora,
+            FechaHoraServicio = Ahora.HoraLocal(),
             DuracionMinutos = 30,
             CantidadPasajeros = 1,
             Urgente = true
@@ -126,9 +126,9 @@ public class AdaptadoresEntradaSolicitudesTests
     {
         var empresaId = Guid.NewGuid();
         var registrar = new Grabador<RegistrarItinerariosDominio, IReadOnlyList<Itinerario>>(d =>
-            [new Itinerario(Guid.NewGuid(), d.EmpresaClienteId, d.CodigoServicio, d.FechaDesde, d.Origen, d.Destino, d.HoraSalida, d.HoraLlegada)]);
+            [new Itinerario(Guid.NewGuid(), d.EmpresaClienteId, d.CodigoServicio, d.FechaDesde, d.Origen, d.Destino, d.HoraSalida, d.HoraLlegada, d.ZonaHoraria)]);
         var buscar = new Grabador<BuscarItinerariosDominio, PaginaResultado<Itinerario>>(d => new PaginaResultado<Itinerario>([], 0, d.Paginacion));
-        var adaptador = new ItinerariosAdaptadorEntrada(registrar, buscar);
+        var adaptador = new ItinerariosAdaptadorEntrada(registrar, buscar, HorasDePrueba.ZonaOperador);
         var peticion = new ItinerariosPeticion
         {
             EmpresaClienteId = empresaId,

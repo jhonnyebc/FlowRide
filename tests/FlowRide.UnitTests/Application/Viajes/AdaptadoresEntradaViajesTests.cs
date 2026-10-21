@@ -42,7 +42,7 @@ public class AdaptadoresEntradaViajesTests
     private readonly Grabador<IniciarViajeDominio, Viaje> _iniciar = new(_ => ViajeProgramado);
     private readonly Grabador<FinalizarViajeDominio, Viaje> _finalizar = new(_ => ViajeProgramado);
     private readonly Grabador<RegistrarParadaDominio, Parada> _parada = new(d => new Parada(Guid.NewGuid(), d.ViajeId, d.Orden, d.Direccion, d.HoraEstimada));
-    private readonly Grabador<RegistrarLlegadaDominio, Parada> _llegada = new(d => new Parada(d.ParadaId, d.ViajeId, 1, "Terminal", Ahora));
+    private readonly Grabador<RegistrarLlegadaDominio, Parada> _llegada = new(d => new Parada(d.ParadaId, d.ViajeId, 1, "Terminal", Ahora.Local()));
     private readonly Grabador<ReportarIncidenteDominio, Incidente> _incidente =
         new(d => new Incidente(Guid.NewGuid(), d.ViajeId, d.Tipo, d.Descripcion, Ahora, d.ActorId));
     private readonly Grabador<CalificarViajeDominio, Calificacion> _calificar =
@@ -54,7 +54,7 @@ public class AdaptadoresEntradaViajesTests
         EstadoSolicitud.Pendiente, []));
 
     private ViajesAdaptadorEntrada Adaptador() => new(_aceptar, _rechazar, _sinRespuesta, _vencer, _iniciar, _finalizar, _parada, _llegada,
-        _incidente, _calificar, _buscar, _consultar, _monitorear, _trazabilidad);
+        _incidente, _calificar, _buscar, _consultar, _monitorear, _trazabilidad, HorasDePrueba.ZonaOperador);
 
     [Fact]
     public async Task AccionesDelConductor_ExigenActorYMotivo()
@@ -103,15 +103,15 @@ public class AdaptadoresEntradaViajesTests
         var viajeId = Guid.NewGuid();
 
         var parada = await adaptador.RegistrarParadaAsync(viajeId,
-            new ParadaPeticion { Direccion = " Terminal 2 ", Orden = 1, HoraEstimada = Ahora }, Actor, default);
+            new ParadaPeticion { Direccion = " Terminal 2 ", Orden = 1, HoraEstimada = Ahora.HoraLocal() }, Actor, default);
         var llegada = await adaptador.RegistrarLlegadaAsync(viajeId, parada.Id, Actor, default);
 
         Assert.Equal(("Terminal 2", 1, viajeId), (parada.Direccion, parada.Orden, parada.ViajeId));
         Assert.Equal(parada.Id, llegada.Id);
-        await Assert.ThrowsAsync<FlowRideExcepcion>(() => adaptador.RegistrarParadaAsync(viajeId, new ParadaPeticion { Orden = 1, HoraEstimada = Ahora },
+        await Assert.ThrowsAsync<FlowRideExcepcion>(() => adaptador.RegistrarParadaAsync(viajeId, new ParadaPeticion { Orden = 1, HoraEstimada = Ahora.HoraLocal() },
             Actor, default));
         await Assert.ThrowsAsync<FlowRideExcepcion>(() => adaptador.RegistrarParadaAsync(viajeId,
-            new ParadaPeticion { Direccion = "X", Orden = 0, HoraEstimada = Ahora }, Actor, default));
+            new ParadaPeticion { Direccion = "X", Orden = 0, HoraEstimada = Ahora.HoraLocal() }, Actor, default));
     }
 
     [Theory]

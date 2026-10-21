@@ -10,6 +10,7 @@ using FlowRide.Domain.Comun.Consultas;
 using FlowRide.Domain.Entidades;
 using FlowRide.Domain.Enumeraciones;
 using FlowRide.Domain.Solicitudes.GestionSolicitudes;
+using FlowRide.Domain.ValoresObjeto;
 using FlowRide.Domain.Viajes.GestionViajes;
 
 namespace FlowRide.Application.Canal.Bot;
@@ -111,10 +112,11 @@ public sealed class BotWhatsApp(
                 var hoy = DateOnly.FromDateTime(zona.Local(ahora).DateTime);
                 if (EntradaConversacion.FechaHora(texto, hoy) is not { } fechaHora)
                     return Repetir(c, ahora, "No entendí la fecha. Escríbela así: *mañana 7:30*, *hoy 14:00* o *25/10 06:15*.");
-                var servicio = zona.Instante(fechaHora.Fecha, fechaHora.Hora);
-                if (servicio <= ahora)
+                // Evento futuro en un lugar: se guarda la hora local que escribió la persona, en la zona del operador.
+                var servicio = new FechaHoraLocal(fechaHora.Fecha.ToDateTime(fechaHora.Hora, DateTimeKind.Unspecified), zona.Zona.Id);
+                if (servicio.Instante() <= ahora)
                     return Repetir(c, ahora, "Esa hora ya pasó. Escribe una fecha y hora futuras.");
-                return Guardar(c, "servicio", servicio.ToString("O", CultureInfo.InvariantCulture), PasoConversacion.PedirPasajeros, ahora,
+                return Guardar(c, "servicio", servicio.Hora.ToString(FormatoHoraLocal, CultureInfo.InvariantCulture), PasoConversacion.PedirPasajeros, ahora,
                     $"¿Cuántas personas viajan? (1 a {MaximoPasajeros})");
 
             case PasoConversacion.PedirPasajeros:
@@ -126,7 +128,7 @@ public sealed class BotWhatsApp(
                     Revisa tu solicitud:
                     Recogida: {c.Requerido("origen")}
                     Destino: {c.Requerido("destino")}
-                    Fecha y hora: {TextosBot.Fecha(zona.Local(Servicio(c)))}
+                    Fecha y hora: {TextosBot.Fecha(zona.Local(Servicio(c).Instante()))}
                     Pasajeros: {cantidad}
                     1. Confirmar
                     2. Descartar
@@ -408,8 +410,16 @@ public sealed class BotWhatsApp(
 
     private static string? Direccion(string texto) => texto.Trim().Length >= 3 ? texto.Trim() : null;
 
-    private static DateTimeOffset Servicio(Conversacion c) =>
-        DateTimeOffset.Parse(c.Requerido("servicio"), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+    private const string FormatoHoraLocal = "yyyy-MM-ddTHH:mm";
+
+    /// <summary>Hora local del servicio guardada en la conversación (las anteriores guardaban el instante: se pasa a hora local).</summary>
+    private FechaHoraLocal Servicio(Conversacion c)
+    {
+        var valor = c.Requerido("servicio");
+        return DateTime.TryParseExact(valor, FormatoHoraLocal, CultureInfo.InvariantCulture, DateTimeStyles.None, out var hora)
+            ? new FechaHoraLocal(hora, zona.Zona.Id)
+            : FechaHoraLocal.De(DateTimeOffset.Parse(valor, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind), zona.Zona.Id);
+    }
 }
 
 /// <summary>Tipos de mensaje que entiende el bot.</summary>

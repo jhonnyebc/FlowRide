@@ -38,7 +38,7 @@ public interface IConductoresPuertoEntrada
 
     Task<TurnoRespuesta> ProgramarTurnoAsync(Guid conductorId, TurnoPeticion peticion, Guid? actorId, CancellationToken ct);
 
-    Task<IReadOnlyList<ConductorDisponibleRespuesta>> ConsultarDisponiblesAsync(DateTimeOffset? inicio, DateTimeOffset? fin, CancellationToken ct);
+    Task<IReadOnlyList<ConductorDisponibleRespuesta>> ConsultarDisponiblesAsync(DateTime? inicio, DateTime? fin, string? zonaHoraria, CancellationToken ct);
 }
 
 public interface IDocumentosConductorPuertoEntrada

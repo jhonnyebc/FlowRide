@@ -123,6 +123,7 @@ Transacciones PostgreSQL, concurrencia optimista con token de versión, restricc
 ## Convenciones
 - `Nullable` y `TreatWarningsAsErrors` habilitados (Directory.Build.props).
 - async/await de punta a punta.
+- **Fechas y horas** (requisito del profesor, 2026-10-20): lo que ya pasó se guarda como instante UTC (`timestamptz`) y se convierte a la zona del usuario solo al mostrarlo. Lo que va a pasar en un lugar (servicio de la solicitud, turnos, hora estimada de paradas, itinerarios) se guarda como hora local + **nombre** IANA de la zona (`FechaHoraLocal`; columnas `timestamp without time zone` + `zona_horaria`), nunca el desfase. El instante UTC de esos eventos es derivado (para consultar e indexar) y `RecalculoHorariosAlIniciar` lo recalcula al arrancar. La API recibe la hora local sin desfase y `zonaHoraria` opcional (por defecto la del operador); una hora con desfase o `Z` da 400. El día de un servicio es el día local (`SolicitudViaje.FechaServicio`), nunca el día UTC.
 - Sin secretos en `appsettings.json` ni en el código (usar user-secrets / variables de entorno; `.env` no se versiona).
 
 ## Flujo de trabajo (ADR-0018)

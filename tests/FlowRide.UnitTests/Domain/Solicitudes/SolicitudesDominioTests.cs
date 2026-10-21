@@ -14,7 +14,7 @@ public class SolicitudModificableTests
     private static readonly Guid Operador = Guid.NewGuid();
 
     private static SolicitudViaje Solicitud(Guid? registradaPor = null) => new(Guid.NewGuid(), Guid.NewGuid(), "Hotel", "Aeropuerto",
-        Ahora.AddDays(1), TimeSpan.FromMinutes(45), 2, CanalSolicitud.PanelWeb, Ahora, registradaPorId: registradaPor);
+        Ahora.AddDays(1).Local(), TimeSpan.FromMinutes(45), 2, CanalSolicitud.PanelWeb, Ahora, registradaPorId: registradaPor);
 
     [Fact]
     public void ElHistorialInicial_RegistraQuienLaRegistro()
@@ -33,7 +33,7 @@ public class SolicitudModificableTests
     {
         var solicitud = Solicitud();
 
-        solicitud.Modificar("Oficina", "Planta", Ahora.AddDays(2), TimeSpan.FromHours(1), 3, true, Operador, Ahora);
+        solicitud.Modificar("Oficina", "Planta", Ahora.AddDays(2).Local(), TimeSpan.FromHours(1), 3, true, Operador, Ahora);
 
         Assert.Equal(("Oficina", "Planta", 3, true), (solicitud.DireccionOrigen, solicitud.DireccionDestino, solicitud.CantidadPasajeros, solicitud.Urgente));
         Assert.Equal(EstadoSolicitud.Pendiente, solicitud.Estado);
@@ -46,7 +46,7 @@ public class SolicitudModificableTests
         var solicitud = Solicitud();
         solicitud.MarcarSinCandidatos("No hay conductores", Ahora);
 
-        solicitud.Modificar("Oficina", "Planta", Ahora.AddDays(2), TimeSpan.FromHours(1), 1, false, Operador, Ahora);
+        solicitud.Modificar("Oficina", "Planta", Ahora.AddDays(2).Local(), TimeSpan.FromHours(1), 1, false, Operador, Ahora);
 
         Assert.Equal(EstadoSolicitud.Pendiente, solicitud.Estado);
         Assert.Equal("Solicitud modificada.", solicitud.Historial[^1].Motivo);
@@ -57,9 +57,9 @@ public class SolicitudModificableTests
     {
         var solicitud = Solicitud();
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            solicitud.Modificar("A", "B", Ahora, TimeSpan.Zero, 1, false, Operador, Ahora));
+            solicitud.Modificar("A", "B", Ahora.Local(), TimeSpan.Zero, 1, false, Operador, Ahora));
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            solicitud.Modificar("A", "B", Ahora, TimeSpan.FromMinutes(1), 0, false, Operador, Ahora));
+            solicitud.Modificar("A", "B", Ahora.Local(), TimeSpan.FromMinutes(1), 0, false, Operador, Ahora));
 
         var asignacion = new Asignacion(Guid.NewGuid(), solicitud.Id, Guid.NewGuid(), Guid.NewGuid(), solicitud.Franja(),
             OrigenAsignacion.Automatica, Ahora, decisionId: Guid.NewGuid());
@@ -67,7 +67,7 @@ public class SolicitudModificableTests
 
         Assert.False(solicitud.EsModificable);
         Assert.Throws<InvalidOperationException>(() =>
-            solicitud.Modificar("A", "B", Ahora, TimeSpan.FromMinutes(10), 1, false, Operador, Ahora));
+            solicitud.Modificar("A", "B", Ahora.Local(), TimeSpan.FromMinutes(10), 1, false, Operador, Ahora));
         Assert.Throws<FlowRideExcepcion>(() => SolicitudDominio.ValidarModificable(solicitud));
     }
 }
@@ -140,7 +140,7 @@ public class ItinerarioDominioTests
     public void Horario_YEmpresa()
     {
         var empresaId = Guid.NewGuid();
-        var itinerario = new Itinerario(Guid.NewGuid(), empresaId, "S-1", new DateOnly(2026, 10, 19), "A", "B", new TimeOnly(6, 0), new TimeOnly(7, 0));
+        var itinerario = new Itinerario(Guid.NewGuid(), empresaId, "S-1", new DateOnly(2026, 10, 19), "A", "B", new TimeOnly(6, 0), new TimeOnly(7, 0), HorasDePrueba.Zona);
 
         ItinerarioDominio.ValidarHorario(new TimeOnly(6, 0), new TimeOnly(7, 0));
         Assert.Throws<FlowRideExcepcion>(() => ItinerarioDominio.ValidarHorario(new TimeOnly(7, 0), new TimeOnly(7, 0)));

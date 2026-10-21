@@ -160,7 +160,7 @@ public class CanalCasosUsoTests
     {
         PasajeroRegistrado();
         _bot.Lecturas.Solicitudes.Add(new(Guid.NewGuid(), _usuarios.Usuarios.Keys.Single(), "Ana", null, null, null, "Hotel", "Aeropuerto",
-            Ahora.AddMinutes(10), TimeSpan.FromMinutes(45), 1, false, false, CanalSolicitud.WhatsApp,
+            Ahora.AddMinutes(10), Ahora.AddMinutes(10).HoraLocal(), HorasDePrueba.Zona, TimeSpan.FromMinutes(45), 1, false, false, CanalSolicitud.WhatsApp,
             EstadoSolicitud.Asignada, Ahora));
         _bot.Cancelar.Falla = new FlowRideExcepcion("La ventana de cancelación ya cerró.");
         foreach (var texto in new[] { "3", "1" })

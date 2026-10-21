@@ -88,11 +88,11 @@ public class SolicitudViajeTests
     [Fact]
     public void DatosInvalidos_Fallan()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new SolicitudViaje(Id(30), Id(10), "O", "D", Ahora,
+        Assert.Throws<ArgumentOutOfRangeException>(() => new SolicitudViaje(Id(30), Id(10), "O", "D", Ahora.Local(),
             TimeSpan.Zero, 1, CanalSolicitud.PanelWeb, Ahora));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new SolicitudViaje(Id(30), Id(10), "O", "D", Ahora,
+        Assert.Throws<ArgumentOutOfRangeException>(() => new SolicitudViaje(Id(30), Id(10), "O", "D", Ahora.Local(),
             TimeSpan.FromMinutes(10), 0, CanalSolicitud.PanelWeb, Ahora));
-        Assert.Throws<ArgumentException>(() => new SolicitudViaje(Id(30), Guid.Empty, "O", "D", Ahora,
+        Assert.Throws<ArgumentException>(() => new SolicitudViaje(Id(30), Guid.Empty, "O", "D", Ahora.Local(),
             TimeSpan.FromMinutes(10), 1, CanalSolicitud.PanelWeb, Ahora));
     }
 }
@@ -201,7 +201,7 @@ public class ViajeTests
         parada.RegistrarLlegada(Ahora.AddHours(4.6));
         Assert.Equal(Ahora.AddHours(4.6), parada.HoraReal);
         Assert.Throws<InvalidOperationException>(() => parada.RegistrarLlegada(Ahora));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Parada(Id(73), viaje.Id, 0, "x", Ahora));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Parada(Id(73), viaje.Id, 0, "x", Ahora.Local()));
     }
 
     [Fact]

@@ -79,7 +79,7 @@ internal sealed class BotDePrueba
 
     public LecturasEnMemoria Lecturas { get; } = new();
     public Grabador<RegistrarSolicitudDominio, SolicitudViaje> Registrar { get; } = new(d => new SolicitudViaje(Guid.NewGuid(), d.PasajeroId,
-        d.DireccionOrigen!, d.DireccionDestino!, d.FechaHoraServicio!.Value, d.DuracionEstimada!.Value, d.CantidadPasajeros, d.Canal, Ahora));
+        d.DireccionOrigen!, d.DireccionDestino!, d.Servicio!, d.DuracionEstimada!.Value, d.CantidadPasajeros, d.Canal, Ahora));
     public Grabador<CancelarSolicitudDominio, SolicitudViaje> Cancelar { get; } = new(_ => null!);
     public Grabador<CalificarViajeDominio, Calificacion> Calificar { get; } =
         new(d => new Calificacion(Guid.NewGuid(), d.ViajeId, d.ActorId, d.Puntaje, d.Comentario, Ahora));
@@ -109,7 +109,7 @@ public class BotWhatsAppTests
     }
 
     private SolicitudLectura Solicitud(EstadoSolicitud estado, int horas = 24, Guid? pasajeroId = null) =>
-        new(Guid.NewGuid(), pasajeroId ?? _pasajero.Id, "Ana", null, null, null, "Hotel Centro", "Aeropuerto", Ahora.AddHours(horas),
+        new(Guid.NewGuid(), pasajeroId ?? _pasajero.Id, "Ana", null, null, null, "Hotel Centro", "Aeropuerto", Ahora.AddHours(horas), Ahora.AddHours(horas).HoraLocal(), HorasDePrueba.Zona,
             TimeSpan.FromMinutes(45), 2, false, false, CanalSolicitud.WhatsApp, estado, Ahora);
 
     private ViajeLectura Viaje(EstadoViaje estado, Guid? conductorId = null, Guid? pasajeroId = null, int? puntaje = null, int horas = 2) =>
@@ -136,7 +136,7 @@ public class BotWhatsAppTests
         var datos = Assert.Single(_prueba.Registrar.Recibidos);
         Assert.Equal((_pasajero.Id, "Hotel Centro", "Aeropuerto JMC", new DateTimeOffset(2026, 10, 19, 7, 30, 0, TimeSpan.Zero), 3, CanalSolicitud.WhatsApp,
                 BotWhatsApp.DuracionPorDefecto, _pasajero.Id),
-            (datos.PasajeroId, datos.DireccionOrigen, datos.DireccionDestino, datos.FechaHoraServicio, datos.CantidadPasajeros, datos.Canal,
+            (datos.PasajeroId, datos.DireccionOrigen, datos.DireccionDestino, datos.Servicio!.Instante(), datos.CantidadPasajeros, datos.Canal,
                 datos.DuracionEstimada, datos.ActorId));
         Assert.Equal(PasoConversacion.Menu, _conversacion.Paso);
     }

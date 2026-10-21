@@ -1059,6 +1059,12 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                         .HasColumnType("character varying(200)")
                         .HasColumnName("origen");
 
+                    b.Property<string>("ZonaHoraria")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("zona_horaria");
+
                     b.HasKey("Id")
                         .HasName("pk_itinerario");
 
@@ -1085,6 +1091,10 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("hora_estimada");
 
+                    b.Property<DateTime>("HoraEstimadaLocal")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("hora_estimada_local");
+
                     b.Property<DateTimeOffset?>("HoraReal")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("hora_real");
@@ -1096,6 +1106,12 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                     b.Property<Guid>("ViajeId")
                         .HasColumnType("uuid")
                         .HasColumnName("viaje_id");
+
+                    b.Property<string>("ZonaHoraria")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("zona_horaria");
 
                     b.HasKey("Id")
                         .HasName("pk_parada");
@@ -1211,6 +1227,10 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("fecha_hora_servicio");
 
+                    b.Property<DateTime>("HoraLocalServicio")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("hora_local_servicio");
+
                     b.Property<Guid?>("ItinerarioId")
                         .HasColumnType("uuid")
                         .HasColumnName("itinerario_id");
@@ -1232,6 +1252,12 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
+
+                    b.Property<string>("ZonaHoraria")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("zona_horaria");
 
                     b.HasKey("Id")
                         .HasName("pk_solicitud_viaje");
@@ -1270,6 +1296,14 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                         .HasColumnType("character varying(20)")
                         .HasColumnName("estado");
 
+                    b.Property<DateTime>("FinLocal")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("fin_local");
+
+                    b.Property<DateTime>("InicioLocal")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("inicio_local");
+
                     b.Property<string>("MotivoAbandono")
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)")
@@ -1280,6 +1314,12 @@ namespace FlowRide.Infrastructure.Persistencia.Migraciones
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
+
+                    b.Property<string>("ZonaHoraria")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("zona_horaria");
 
                     b.ComplexProperty(typeof(Dictionary<string, object>), "Franja", "FlowRide.Domain.Entidades.Turno.Franja#FranjaHoraria", b1 =>
                         {

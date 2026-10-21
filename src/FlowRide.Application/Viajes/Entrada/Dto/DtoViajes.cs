@@ -6,7 +6,10 @@ public sealed record ParadaPeticion
 {
     public string? Direccion { get; init; }
     public int? Orden { get; init; }
-    public DateTimeOffset? HoraEstimada { get; init; }
+    /// <summary>Hora local estimada, sin desfase; la zona IANA es opcional (por defecto, la del operador).</summary>
+    public DateTime? HoraEstimada { get; init; }
+
+    public string? ZonaHoraria { get; init; }
 }
 
 public sealed record IncidentePeticion
@@ -44,7 +47,8 @@ public sealed record BusquedaViajesPeticion
 
 public sealed record ViajeRespuesta(Guid Id, Guid AsignacionId, string Estado, DateTimeOffset? FechaHoraInicio, DateTimeOffset? FechaHoraFin);
 
-public sealed record ParadaRespuesta(Guid Id, Guid ViajeId, int Orden, string Direccion, DateTimeOffset HoraEstimada, DateTimeOffset? HoraReal);
+public sealed record ParadaRespuesta(
+    Guid Id, Guid ViajeId, int Orden, string Direccion, DateTimeOffset HoraEstimada, DateTimeOffset? HoraReal, DateTime HoraEstimadaLocal, string ZonaHoraria);
 
 public sealed record IncidenteRespuesta(Guid Id, Guid ViajeId, string Tipo, string Descripcion, DateTimeOffset FechaHora, Guid ReportadoPorId);
 

@@ -31,7 +31,6 @@ public sealed class RegistrarSolicitudCasoUso(
     SolicitudDominio solicitudDominio,
     IItinerarioRepositorio itinerarios,
     ISolicitudRepositorio solicitudes,
-    ZonaHorariaOperador zona,
     IEventoAuditoriaRepositorio auditoria,
     IUnidadTrabajo unidadTrabajo,
     TimeProvider reloj) : ICasoUsoConRetorno<RegistrarSolicitudDominio, SolicitudViaje>
@@ -47,7 +46,7 @@ public sealed class RegistrarSolicitudCasoUso(
 
         // Servicio programado: origen, destino y horario salen del itinerario de la empresa.
         string? origen = datos.DireccionOrigen, destino = datos.DireccionDestino;
-        DateTimeOffset? fechaHora = datos.FechaHoraServicio;
+        var servicio = datos.Servicio;
         TimeSpan? duracion = datos.DuracionEstimada;
         if (datos.ItinerarioId is { } itinerarioId)
         {
@@ -56,17 +55,17 @@ public sealed class RegistrarSolicitudCasoUso(
             ItinerarioDominio.ValidarDeLaEmpresa(itinerario, empresa.Id);
             origen = itinerario.Origen;
             destino = itinerario.Destino;
-            fechaHora = zona.Instante(itinerario.Fecha, itinerario.HoraSalida);
-            duracion = zona.Instante(itinerario.Fecha, itinerario.HoraLlegada) - fechaHora;
+            servicio = itinerario.Salida();
+            duracion = itinerario.Llegada().Instante() - servicio.Instante();
         }
 
-        if (string.IsNullOrWhiteSpace(origen) || string.IsNullOrWhiteSpace(destino) || fechaHora is null || duracion is null)
+        if (string.IsNullOrWhiteSpace(origen) || string.IsNullOrWhiteSpace(destino) || servicio is null || duracion is null)
             throw new FlowRideExcepcion("Sin itinerario, direccionOrigen, direccionDestino, fechaHoraServicio y duracionMinutos son obligatorios.");
-        SolicitudDominio.ValidarDatosMinimos(fechaHora.Value, duracion.Value, datos.CantidadPasajeros, ahora);
-        await solicitudDominio.ValidarSinSolapamientoAsync(pasajero.Id,
-            new FranjaHoraria(fechaHora.Value, fechaHora.Value + duracion.Value), null, ct);
+        var instante = servicio.Instante();
+        SolicitudDominio.ValidarDatosMinimos(instante, duracion.Value, datos.CantidadPasajeros, ahora);
+        await solicitudDominio.ValidarSinSolapamientoAsync(pasajero.Id, new FranjaHoraria(instante, instante + duracion.Value), null, ct);
 
-        var solicitud = new SolicitudViaje(Guid.CreateVersion7(ahora), pasajero.Id, origen, destino, fechaHora.Value, duracion.Value,
+        var solicitud = new SolicitudViaje(Guid.CreateVersion7(ahora), pasajero.Id, origen, destino, servicio, duracion.Value,
             datos.CantidadPasajeros, datos.Canal, ahora, datos.Urgente, datos.EsPersonal, empresa.Id, datos.ItinerarioId, datos.ActorId);
         await solicitudes.CrearAsync(solicitud, ct);
         await auditoria.CrearAsync(Auditar.Exito(datos.ActorId, AccionesAuditoria.RecursoSolicitud, AccionesAuditoria.Crear,
@@ -95,12 +94,13 @@ public sealed class ModificarSolicitudCasoUso(
         var solicitud = await solicitudDominio.ValidarExistaAsync(datos.SolicitudId, ct);
         SolicitudDominio.ValidarModificable(solicitud);
         await solicitudDominio.ValidarDentroDeVentanaAsync(solicitud, ahora, puedeSaltarVentana: false, ct);
-        SolicitudDominio.ValidarDatosMinimos(datos.FechaHoraServicio, datos.DuracionEstimada, datos.CantidadPasajeros, ahora);
+        var instante = datos.Servicio.Instante();
+        SolicitudDominio.ValidarDatosMinimos(instante, datos.DuracionEstimada, datos.CantidadPasajeros, ahora);
         await solicitudDominio.ValidarSinSolapamientoAsync(solicitud.PasajeroId,
-            new FranjaHoraria(datos.FechaHoraServicio, datos.FechaHoraServicio + datos.DuracionEstimada), solicitud.Id, ct);
+            new FranjaHoraria(instante, instante + datos.DuracionEstimada), solicitud.Id, ct);
 
         var antes = Auditar.Valores(("estado", solicitud.Estado), ("urgente", solicitud.Urgente));
-        solicitud.Modificar(datos.DireccionOrigen, datos.DireccionDestino, datos.FechaHoraServicio, datos.DuracionEstimada,
+        solicitud.Modificar(datos.DireccionOrigen, datos.DireccionDestino, datos.Servicio, datos.DuracionEstimada,
             datos.CantidadPasajeros, datos.Urgente, datos.ActorId, ahora);
         await solicitudes.ModificarAsync(solicitud.Id, solicitud, ct);
         await auditoria.CrearAsync(Auditar.Exito(datos.ActorId, AccionesAuditoria.RecursoSolicitud, AccionesAuditoria.Modificar,
@@ -228,7 +228,7 @@ public sealed class RegistrarItinerariosCasoUso(
         foreach (var fecha in fechas)
         {
             var itinerario = new Itinerario(Guid.CreateVersion7(ahora), empresa.Id, datos.CodigoServicio, fecha, datos.Origen,
-                datos.Destino, datos.HoraSalida, datos.HoraLlegada);
+                datos.Destino, datos.HoraSalida, datos.HoraLlegada, datos.ZonaHoraria);
             await itinerarios.CrearAsync(itinerario, ct);
             await auditoria.CrearAsync(Auditar.Exito(datos.ActorId, AccionesAuditoria.RecursoItinerario, AccionesAuditoria.Crear,
                 itinerario.Id, ahora, despues: Auditar.Valores(("codigo_servicio", itinerario.CodigoServicio), ("fecha", fecha))), ct);

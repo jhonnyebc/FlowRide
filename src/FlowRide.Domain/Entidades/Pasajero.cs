@@ -1,4 +1,5 @@
 using FlowRide.Domain.Enumeraciones;
+using FlowRide.Domain.ValoresObjeto;
 
 namespace FlowRide.Domain.Entidades;
 
@@ -28,7 +29,7 @@ public sealed class Pasajero : Usuario
         Guid solicitudId,
         string direccionOrigen,
         string direccionDestino,
-        DateTimeOffset fechaHoraServicio,
+        FechaHoraLocal servicio,
         TimeSpan duracionEstimada,
         int cantidadPasajeros,
         CanalSolicitud canal,
@@ -41,7 +42,7 @@ public sealed class Pasajero : Usuario
             throw new InvalidOperationException("Un pasajero inactivo no puede solicitar viajes.");
 
         return new SolicitudViaje(
-            solicitudId, Id, direccionOrigen, direccionDestino, fechaHoraServicio, duracionEstimada,
+            solicitudId, Id, direccionOrigen, direccionDestino, servicio, duracionEstimada,
             cantidadPasajeros, canal, ahora, urgente, esPersonal, EmpresaClienteId, itinerarioId);
     }
 

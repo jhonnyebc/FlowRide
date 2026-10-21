@@ -55,7 +55,7 @@ public class AsignacionDominioTests
     private static readonly DateTimeOffset Servicio = new(2026, 10, 19, 9, 0, 0, TimeSpan.Zero);
     private static readonly DateOnly Vigente = new(2030, 1, 1);
 
-    private static readonly SolicitudViaje Solicitud = new(Guid.NewGuid(), Guid.NewGuid(), "A", "B", Servicio, TimeSpan.FromMinutes(45), 2,
+    private static readonly SolicitudViaje Solicitud = new(Guid.NewGuid(), Guid.NewGuid(), "A", "B", Servicio.Local(), TimeSpan.FromMinutes(45), 2,
         CanalSolicitud.PanelWeb, Servicio.AddDays(-1));
 
     private static Conductor Conductor(bool conTurno = true)

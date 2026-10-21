@@ -95,6 +95,9 @@ internal sealed class TurnoConfiguracion : IEntityTypeConfiguration<Turno>
         entidad.HasKey(turno => turno.Id);
         entidad.Property(turno => turno.Id).ValueGeneratedNever();
         entidad.Property(turno => turno.ConductorId);
+        entidad.Property(turno => turno.InicioLocal).HasColumnType(HorasLocalesEf.TipoHoraLocal);
+        entidad.Property(turno => turno.FinLocal).HasColumnType(HorasLocalesEf.TipoHoraLocal);
+        entidad.Property(turno => turno.ZonaHoraria).HasMaxLength(HorasLocalesEf.LargoZona).IsRequired();
         entidad.ComplexProperty(turno => turno.Franja, franja =>
         {
             franja.Property(valor => valor.Inicio).HasColumnName("inicio");
@@ -173,6 +176,7 @@ internal sealed class ItinerarioConfiguracion : IEntityTypeConfiguration<Itinera
         entidad.Property(itinerario => itinerario.Destino).HasMaxLength(200).IsRequired();
         entidad.Property(itinerario => itinerario.HoraSalida);
         entidad.Property(itinerario => itinerario.HoraLlegada);
+        entidad.Property(itinerario => itinerario.ZonaHoraria).HasMaxLength(HorasLocalesEf.LargoZona).IsRequired();
 
         entidad.HasIndex(itinerario => new { itinerario.EmpresaClienteId, itinerario.CodigoServicio, itinerario.Fecha })
             .IsUnique();

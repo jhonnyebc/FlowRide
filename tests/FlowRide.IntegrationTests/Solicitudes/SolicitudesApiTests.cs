@@ -86,7 +86,7 @@ public class SolicitudesApiTests(PostgresFixture postgres) : IAsyncLifetime
         PasajeroId = pasajeroId,
         DireccionOrigen = "Hotel Central",
         DireccionDestino = "Aeropuerto",
-        FechaHoraServicio = servicio,
+        FechaHoraServicio = servicio.HoraLocal(),
         DuracionMinutos = 45,
         CantidadPasajeros = 1,
         EsPersonal = personal,
@@ -98,6 +98,34 @@ public class SolicitudesApiTests(PostgresFixture postgres) : IAsyncLifetime
         var respuesta = await (cliente ?? _operador).PostAsJsonAsync("/api/solicitudes", peticion);
         Assert.Equal(HttpStatusCode.Created, respuesta.StatusCode);
         return (await respuesta.Content.ReadFromJsonAsync<SolicitudDetalleRespuesta>())!;
+    }
+
+    [Fact]
+    public async Task ElServicio_SeGuardaEnHoraLocalConElNombreDeLaZona()
+    {
+        var local = new DateTime(Manana.Year, Manana.Month, Manana.Day, 20, 30, 0);
+        var conZona = await RegistrarAsync(Peticion(_pasajeroId, Manana) with { FechaHoraServicio = local, ZonaHoraria = "America/Bogota" });
+        var conDesfase = await _operador.PostAsync("/api/solicitudes", JsonContent.Create(new
+        {
+            pasajeroId = await PasajeroAsync(),
+            direccionOrigen = "Hotel",
+            direccionDestino = "Aeropuerto",
+            fechaHoraServicio = $"{local:yyyy-MM-ddTHH:mm:ss}-05:00",
+            duracionMinutos = 45,
+            cantidadPasajeros = 1
+        }));
+        var zonaInvalida = await _operador.PostAsJsonAsync("/api/solicitudes",
+            Peticion(await PasajeroAsync(), Manana) with { FechaHoraServicio = local, ZonaHoraria = "-05:00" });
+
+        var s = conZona.Solicitud;
+        Assert.Equal((local, "America/Bogota"), (s.HoraLocalServicio, s.ZonaHoraria));
+        Assert.Equal(new DateTimeOffset(local, TimeSpan.FromHours(-5)), s.FechaHoraServicio);
+        Assert.Equal(HttpStatusCode.BadRequest, conDesfase.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, zonaInvalida.StatusCode);
+        await using var silo = await _entorno.AbrirSiloAsync(_tenant);
+        var guardada = await silo.Contexto.Solicitudes.AsNoTracking().SingleAsync(x => x.Id == s.Id);
+        Assert.Equal((local, "America/Bogota", DateTimeKind.Unspecified),
+            (guardada.HoraLocalServicio, guardada.ZonaHoraria, guardada.HoraLocalServicio.Kind));
     }
 
     [Fact]

@@ -39,7 +39,7 @@ public class ViajesApiTests(PostgresFixture postgres) : PruebasAsignacionBase(po
         var porAdministrador = await Administrador.PostAsync($"/api/asignaciones/{asignacion.AsignacionId}/aceptar", null);
         var viaje = await AceptarAsync(asignacion.AsignacionId!.Value);
         var parada = await Operador.PostAsJsonAsync($"/api/viajes/{viaje.Id}/paradas",
-            new ParadaPeticion { Direccion = "Portería norte", Orden = 1, HoraEstimada = Servicio.AddMinutes(20) });
+            new ParadaPeticion { Direccion = "Portería norte", Orden = 1, HoraEstimada = Servicio.AddMinutes(20).HoraLocal() });
         var retraso = await Operador.PostAsJsonAsync($"/api/viajes/{viaje.Id}/incidentes",
             new IncidentePeticion { Tipo = "Retraso", Descripcion = "Vía cerrada por derrumbe" });
         var iniciado = await Operador.PostAsync($"/api/viajes/{viaje.Id}/iniciar", null);

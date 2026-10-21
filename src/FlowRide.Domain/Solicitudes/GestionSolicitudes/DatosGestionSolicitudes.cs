@@ -1,4 +1,5 @@
 using FlowRide.Domain.Enumeraciones;
+using FlowRide.Domain.ValoresObjeto;
 
 namespace FlowRide.Domain.Solicitudes.GestionSolicitudes;
 
@@ -13,7 +14,7 @@ public sealed record RegistrarSolicitudDominio(
     Guid? ItinerarioId,
     string? DireccionOrigen,
     string? DireccionDestino,
-    DateTimeOffset? FechaHoraServicio,
+    FechaHoraLocal? Servicio,
     TimeSpan? DuracionEstimada,
     int CantidadPasajeros,
     bool Urgente,
@@ -25,7 +26,7 @@ public sealed record ModificarSolicitudDominio(
     Guid SolicitudId,
     string DireccionOrigen,
     string DireccionDestino,
-    DateTimeOffset FechaHoraServicio,
+    FechaHoraLocal Servicio,
     TimeSpan DuracionEstimada,
     int CantidadPasajeros,
     bool Urgente,
@@ -41,6 +42,7 @@ public sealed record RegistrarItinerariosDominio(
     string Destino,
     TimeOnly HoraSalida,
     TimeOnly HoraLlegada,
+    string ZonaHoraria,
     DateOnly FechaDesde,
     DateOnly FechaHasta,
     IReadOnlyCollection<DayOfWeek> Dias,

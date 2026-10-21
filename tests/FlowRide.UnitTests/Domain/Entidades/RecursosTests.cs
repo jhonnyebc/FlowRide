@@ -83,7 +83,7 @@ public class ConductorTests
     public void AbandonarTurnoAjeno_Falla()
     {
         var conductor = Conductor();
-        var ajeno = new Turno(Id(100), Id(99), Ahora, Ahora.AddHours(8));
+        var ajeno = new Turno(Id(100), Id(99), Ahora.Local(), Ahora.AddHours(8).Local());
 
         Assert.Throws<InvalidOperationException>(() => conductor.AbandonarTurno(ajeno, "x"));
     }
@@ -136,7 +136,7 @@ public class TurnoTests
     [Fact]
     public void CicloProgramadoActivoFinalizado()
     {
-        var turno = new Turno(Id(100), Id(20), Ahora, Ahora.AddHours(8));
+        var turno = new Turno(Id(100), Id(20), Ahora.Local(), Ahora.AddHours(8).Local());
 
         turno.Iniciar();
         Assert.Equal(EstadoTurno.Activo, turno.Estado);
@@ -151,7 +151,7 @@ public class TurnoTests
     [Fact]
     public void CubreUnaFranjaSoloSiCabeCompleta()
     {
-        var turno = new Turno(Id(100), Id(20), Ahora, Ahora.AddHours(8));
+        var turno = new Turno(Id(100), Id(20), Ahora.Local(), Ahora.AddHours(8).Local());
 
         Assert.True(turno.Cubre(Franja(1, 2)));
         Assert.False(turno.Cubre(Franja(7, 9)));
@@ -160,7 +160,7 @@ public class TurnoTests
     [Fact]
     public void MarcarAbandonado_GuardaElMotivo()
     {
-        var turno = new Turno(Id(100), Id(20), Ahora, Ahora.AddHours(8));
+        var turno = new Turno(Id(100), Id(20), Ahora.Local(), Ahora.AddHours(8).Local());
 
         turno.MarcarAbandonado("Emergencia familiar");
 

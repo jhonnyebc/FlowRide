@@ -113,7 +113,7 @@ public class AsignacionCasosUsoTests : CasosUsoOperacionBase
 
     private SolicitudViaje Solicitud(int pasajeros = 2, bool urgente = false)
     {
-        var solicitud = new SolicitudViaje(Guid.NewGuid(), _pasajero.Id, "Hotel", "Aeropuerto", Servicio, TimeSpan.FromMinutes(45), pasajeros,
+        var solicitud = new SolicitudViaje(Guid.NewGuid(), _pasajero.Id, "Hotel", "Aeropuerto", Servicio.Local(), TimeSpan.FromMinutes(45), pasajeros,
             CanalSolicitud.PanelWeb, Ahora, urgente, empresaClienteId: _pasajero.EmpresaClienteId);
         _solicitudes.Solicitudes[solicitud.Id] = solicitud;
         return solicitud;
@@ -179,7 +179,7 @@ public class AsignacionCasosUsoTests : CasosUsoOperacionBase
         var invalida = ConfiguracionesEnMemoria.Nueva(2, ConfiguracionInicial.Reglas.Where(r => r.Codigo != AvailabilityRule.RuleName), activa: true);
         _configuraciones.Con(invalida);
         var pendiente = Solicitud();
-        pendiente.Modificar("Hotel", "Aeropuerto", Servicio.AddHours(3), TimeSpan.FromMinutes(30), 1, false, null, Ahora);
+        pendiente.Modificar("Hotel", "Aeropuerto", Servicio.AddHours(3).Local(), TimeSpan.FromMinutes(30), 1, false, null, Ahora);
         var resultado = await Asignar().EjecutarAsync(new AsignarSolicitudDominio(pendiente.Id), CancellationToken.None);
         Assert.Equal(AssignmentOutcome.InvalidConfiguration, resultado.Resultado);
         Assert.Equal(EstadoSolicitud.Pendiente, pendiente.Estado);

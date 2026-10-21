@@ -110,7 +110,8 @@ public sealed class ConsultasSolicitudesEf(FlowRideDbContext contexto) : IConsul
         join e in contexto.EmpresasCliente on s.EmpresaClienteId equals e.Id into empresas
         from e in empresas.DefaultIfEmpty()
         select new SolicitudLectura(s.Id, s.PasajeroId, p.Nombre, s.EmpresaClienteId, e == null ? null : e.Nombre, s.ItinerarioId,
-            s.DireccionOrigen, s.DireccionDestino, s.FechaHoraServicio, s.DuracionEstimada, s.CantidadPasajeros, s.Urgente,
+            s.DireccionOrigen, s.DireccionDestino, s.FechaHoraServicio, s.HoraLocalServicio, s.ZonaHoraria, s.DuracionEstimada,
+            s.CantidadPasajeros, s.Urgente,
             s.EsPersonal, s.Canal, s.Estado, s.RegistradaEn, false);
 }
 
