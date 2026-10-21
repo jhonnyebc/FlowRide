@@ -1,10 +1,12 @@
 using FlowRide.Application.Asignaciones.Entrada.Dto;
+using FlowRide.Application.Comun;
 using FlowRide.Application.Comun.CasosUso;
 using FlowRide.Application.Identidad.Entrada.Dto;
 using FlowRide.Application.Operacion.Entrada.Dto;
 using FlowRide.Application.Viajes.Entrada.Dto;
 using FlowRide.Application.Viajes.Entrada.Puertos;
 using FlowRide.Application.Viajes.Salida.Puertos;
+using FlowRide.Domain.Comun;
 using FlowRide.Domain.Comun.Consultas;
 using FlowRide.Domain.Entidades;
 using FlowRide.Domain.Enumeraciones;
@@ -28,7 +30,8 @@ public sealed class ViajesAdaptadorEntrada(
     ICasoUsoConRetorno<BuscarViajesDominio, PaginaResultado<ViajeLectura>> buscar,
     ICasoUsoConRetorno<ConsultarViajeDominio, ViajeDetalleLectura> consultar,
     ICasoUsoConRetorno<MonitorearViajesDominio, IReadOnlyList<MonitoreoViajeLectura>> monitorear,
-    ICasoUsoConRetorno<TrazabilidadSolicitudDominio, TrazabilidadLectura> trazabilidad) : IViajesPuertoEntrada
+    ICasoUsoConRetorno<TrazabilidadSolicitudDominio, TrazabilidadLectura> trazabilidad,
+    ZonaHorariaOperador zona) : IViajesPuertoEntrada
 {
     public async Task<ViajeRespuesta> AceptarAsignacionAsync(Guid asignacionId, Guid? actorId, CancellationToken ct) =>
         Respuesta(await aceptar.EjecutarAsync(new AceptarAsignacionDominio(asignacionId, Actor(actorId)), ct));
@@ -55,7 +58,8 @@ public sealed class ViajesAdaptadorEntrada(
 
     public async Task<ParadaRespuesta> RegistrarParadaAsync(Guid viajeId, ParadaPeticion peticion, Guid? actorId, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(peticion?.Direccion) || peticion.Orden is not { } orden || peticion.HoraEstimada is not { } hora)
+        if (string.IsNullOrWhiteSpace(peticion?.Direccion) || peticion.Orden is not { } orden
+            || HorasLocales.Opcional(peticion.HoraEstimada, peticion.ZonaHoraria, zona) is not { } hora)
             throw new FlowRideExcepcion("direccion, orden y horaEstimada son obligatorios.");
         if (orden <= 0)
             throw new FlowRideExcepcion("orden debe ser mayor que cero.");
@@ -124,5 +128,6 @@ public sealed class ViajesAdaptadorEntrada(
 
     private static ViajeRespuesta Respuesta(Viaje v) => new(v.Id, v.AsignacionId, v.Estado.ToString(), v.FechaHoraInicio, v.FechaHoraFin);
 
-    private static ParadaRespuesta Respuesta(Parada p) => new(p.Id, p.ViajeId, p.Orden, p.Direccion, p.HoraEstimada, p.HoraReal);
+    private static ParadaRespuesta Respuesta(Parada p) =>
+        new(p.Id, p.ViajeId, p.Orden, p.Direccion, p.HoraEstimada, p.HoraReal, p.HoraEstimadaLocal, p.ZonaHoraria);
 }

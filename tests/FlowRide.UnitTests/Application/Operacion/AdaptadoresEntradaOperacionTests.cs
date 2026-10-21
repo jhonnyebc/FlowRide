@@ -109,7 +109,7 @@ public class AdaptadoresEntradaOperacionTests
         var turno = new Grabador<ProgramarTurnoDominio, Turno>(_ => conductor.Turnos[0]);
         var disponibles = new Grabador<ConsultarDisponibilidadDominio, IReadOnlyList<Conductor>>(_ => [conductor]);
         var adaptador = new ConductoresAdaptadorEntrada(registrar, new Grabador<ActualizarConductorDominio, Conductor>(_ => conductor), estado,
-            new Grabador<Guid, Conductor>(_ => conductor), buscar, turno, disponibles);
+            new Grabador<Guid, Conductor>(_ => conductor), buscar, turno, disponibles, HorasDePrueba.ZonaOperador);
         var peticion = new ConductorPeticion
         {
             Nombre = "Luis",
@@ -124,8 +124,8 @@ public class AdaptadoresEntradaOperacionTests
         await adaptador.CambiarEstadoAsync(conductor.Id, new EstadoConductorPeticion { Estado = "suspendido" }, Actor, default);
         var detalle = await adaptador.ConsultarAsync(conductor.Id, default);
         await adaptador.BuscarAsync(new BusquedaPeticion { Estado = "Inactivo" }, default);
-        var programado = await adaptador.ProgramarTurnoAsync(conductor.Id, new TurnoPeticion { Inicio = Ahora, Fin = Ahora.AddHours(8) }, Actor, default);
-        var libres = await adaptador.ConsultarDisponiblesAsync(Ahora, Ahora.AddHours(1), default);
+        var programado = await adaptador.ProgramarTurnoAsync(conductor.Id, new TurnoPeticion { Inicio = Ahora.HoraLocal(), Fin = Ahora.AddHours(8).HoraLocal() }, Actor, default);
+        var libres = await adaptador.ConsultarDisponiblesAsync(Ahora.HoraLocal(), Ahora.AddHours(1).HoraLocal(), null, default);
 
         Assert.Equal("1001", Assert.Single(registrar.Recibidos).NumeroLicencia);
         Assert.Equal("Activo", registrado.Estado);
@@ -140,8 +140,8 @@ public class AdaptadoresEntradaOperacionTests
         await Assert.ThrowsAsync<FlowRideExcepcion>(() =>
             adaptador.CambiarEstadoAsync(conductor.Id, new EstadoConductorPeticion { Estado = "Feliz" }, Actor, default));
         await Assert.ThrowsAsync<FlowRideExcepcion>(() => adaptador.BuscarAsync(new BusquedaPeticion { Estado = "Feliz" }, default));
-        await Assert.ThrowsAsync<FlowRideExcepcion>(() => adaptador.ProgramarTurnoAsync(conductor.Id, new TurnoPeticion { Inicio = Ahora }, Actor, default));
-        await Assert.ThrowsAsync<FlowRideExcepcion>(() => adaptador.ConsultarDisponiblesAsync(null, Ahora, default));
+        await Assert.ThrowsAsync<FlowRideExcepcion>(() => adaptador.ProgramarTurnoAsync(conductor.Id, new TurnoPeticion { Inicio = Ahora.HoraLocal() }, Actor, default));
+        await Assert.ThrowsAsync<FlowRideExcepcion>(() => adaptador.ConsultarDisponiblesAsync(null, Ahora.HoraLocal(), null, default));
     }
 
     public static TheoryData<string, byte[], string> ArchivosValidos => new()

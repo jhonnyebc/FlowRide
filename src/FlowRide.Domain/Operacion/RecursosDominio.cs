@@ -58,21 +58,27 @@ public sealed class ConductorDominio(IConductorRepositorio conductores)
             throw new FlowRideExcepcion("Ya existe un conductor con ese número de licencia.");
     }
 
-    public static void ValidarFranja(DateTimeOffset inicio, DateTimeOffset fin)
+    /// <summary>Una franja en hora local: misma zona y el fin después del inicio. Devuelve sus instantes UTC.</summary>
+    public static FranjaHoraria ValidarFranja(FechaHoraLocal inicio, FechaHoraLocal fin)
     {
-        if (fin <= inicio)
+        ArgumentNullException.ThrowIfNull(inicio);
+        ArgumentNullException.ThrowIfNull(fin);
+        if (inicio.Zona != fin.Zona)
+            throw new FlowRideExcepcion("El inicio y el fin van en la misma zona horaria.");
+        var (desde, hasta) = (inicio.Instante(), fin.Instante());
+        if (hasta <= desde)
             throw new FlowRideExcepcion("La franja debe terminar después de empezar.");
+        return new FranjaHoraria(desde, hasta);
     }
 
     /// <summary>
-    /// Disponibilidad programada (RF-07): conductor activo, con licencia vigente el día del servicio, con un turno
+    /// Disponibilidad programada (RF-07): conductor activo, con licencia vigente el día del servicio (en su zona, no el día UTC), con un turno
     /// vigente que cubre la franja y sin otra asignación vigente que se solape. Sin GPS: no hay cercanía dinámica.
     /// </summary>
     public static IReadOnlyList<Conductor> FiltrarDisponibles(
-        IEnumerable<Conductor> candidatos, IReadOnlySet<Guid> ocupados, FranjaHoraria franja)
+        IEnumerable<Conductor> candidatos, IReadOnlySet<Guid> ocupados, FranjaHoraria franja, DateOnly dia)
     {
         ArgumentNullException.ThrowIfNull(franja);
-        var dia = DateOnly.FromDateTime(franja.Inicio.UtcDateTime);
         return candidatos
             .Where(conductor => conductor.EstaActivo
                                 && conductor.LicenciaVigenteEn(dia)

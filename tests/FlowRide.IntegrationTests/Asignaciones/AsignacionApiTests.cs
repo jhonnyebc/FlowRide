@@ -85,7 +85,7 @@ public abstract class PruebasAsignacionBase(PostgresFixture postgres, AzuriteFix
             AptoServicioCritico = aptoCritico
         })).Content.ReadFromJsonAsync<ConductorRespuesta>())!;
         var turno = (await (await Administrador.PostAsJsonAsync($"/api/conductores/{conductor.Id}/turnos",
-            new TurnoPeticion { Inicio = Servicio.AddHours(-4), Fin = Servicio.AddHours(8) })).Content.ReadFromJsonAsync<TurnoRespuesta>())!;
+            new TurnoPeticion { Inicio = Servicio.AddHours(-4).HoraLocal(), Fin = Servicio.AddHours(8).HoraLocal() })).Content.ReadFromJsonAsync<TurnoRespuesta>())!;
         var vehiculo = (await (await Administrador.PostAsJsonAsync("/api/vehiculos", new VehiculoPeticion
         {
             Placa = $"T{Random.Shared.Next(10_000, 99_999)}",
@@ -113,7 +113,7 @@ public abstract class PruebasAsignacionBase(PostgresFixture postgres, AzuriteFix
             PasajeroId = pasajero.Id,
             DireccionOrigen = "Campamento",
             DireccionDestino = "Mina",
-            FechaHoraServicio = servicio ?? Servicio,
+            FechaHoraServicio = (servicio ?? Servicio).HoraLocal(),
             DuracionMinutos = 60,
             CantidadPasajeros = 2,
             Urgente = urgente

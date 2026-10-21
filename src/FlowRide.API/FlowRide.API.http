@@ -99,15 +99,17 @@ Content-Type: application/json
 
 { "estado": "Suspendido" }
 
+# Eventos futuros (turnos, servicios, paradas): hora local SIN desfase ("2026-10-22T06:00") y, opcional, el nombre IANA
+# de la zona en "zonaHoraria" (por defecto, la del operador). Un desfase como -05:00 o una Z se rechazan con 400.
 ### Turno del conductor
 POST {{host}}/api/conductores/00000000-0000-0000-0000-000000000000/turnos
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-{ "inicio": "2026-10-20T06:00:00-05:00", "fin": "2026-10-20T14:00:00-05:00" }
+{ "inicio": "2026-10-22T06:00", "fin": "2026-10-22T14:00", "zonaHoraria": "America/Bogota" }
 
 ### RF-07 — Conductores disponibles en una franja
-GET {{host}}/api/conductores/disponibles?inicio=2026-10-20T08:00:00-05:00&fin=2026-10-20T09:00:00-05:00
+GET {{host}}/api/conductores/disponibles?inicio=2026-10-22T08:00&fin=2026-10-22T09:00
 Authorization: Bearer {{token}}
 
 ### Documento del conductor (PDF/PNG/JPG ≤ 5 MB) al bucket del operador
@@ -173,7 +175,8 @@ Content-Type: application/json
   "pasajeroId": "00000000-0000-0000-0000-000000000000",
   "direccionOrigen": "Hotel Central",
   "direccionDestino": "Aeropuerto",
-  "fechaHoraServicio": "2026-10-20T06:00:00-05:00",
+  "fechaHoraServicio": "2026-10-22T06:00",
+  "zonaHoraria": "America/Bogota",
   "duracionMinutos": 45,
   "cantidadPasajeros": 1,
   "urgente": false,
@@ -200,7 +203,7 @@ PUT {{host}}/api/solicitudes/00000000-0000-0000-0000-000000000000
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-{ "direccionOrigen": "Hotel Central", "direccionDestino": "Terminal", "fechaHoraServicio": "2026-10-20T07:00:00-05:00", "duracionMinutos": 40, "cantidadPasajeros": 2 }
+{ "direccionOrigen": "Hotel Central", "direccionDestino": "Terminal", "fechaHoraServicio": "2026-10-22T07:00", "duracionMinutos": 40, "cantidadPasajeros": 2 }
 
 ### RF-32 — Cancelar con motivo (fuera del plazo, solo el Operador logístico)
 POST {{host}}/api/solicitudes/00000000-0000-0000-0000-000000000000/cancelar
@@ -269,7 +272,7 @@ POST {{host}}/api/viajes/00000000-0000-0000-0000-000000000000/paradas
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-{ "direccion": "Portería norte", "orden": 1, "horaEstimada": "2026-10-20T14:20:00Z" }
+{ "direccion": "Portería norte", "orden": 1, "horaEstimada": "2026-10-22T09:20" }
 
 ### Viaje — Novedad: Retraso, FallaMecanica, AbandonoTurno, Accidente u Otro (sale como alerta en la Fase 8)
 POST {{host}}/api/viajes/00000000-0000-0000-0000-000000000000/incidentes

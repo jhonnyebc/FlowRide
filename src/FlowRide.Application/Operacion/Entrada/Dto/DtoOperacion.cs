@@ -38,10 +38,12 @@ public sealed record EstadoConductorPeticion
     public string? Estado { get; init; }
 }
 
+/// <summary>Turno en hora local, sin desfase; la zona IANA es opcional (por defecto, la del operador).</summary>
 public sealed record TurnoPeticion
 {
-    public DateTimeOffset? Inicio { get; init; }
-    public DateTimeOffset? Fin { get; init; }
+    public DateTime? Inicio { get; init; }
+    public DateTime? Fin { get; init; }
+    public string? ZonaHoraria { get; init; }
 }
 
 public sealed record VehiculoPeticion
@@ -107,7 +109,8 @@ public sealed record ConductorRespuesta(
     bool Activo,
     bool AptoServicioCritico);
 
-public sealed record TurnoRespuesta(Guid Id, DateTimeOffset Inicio, DateTimeOffset Fin, string Estado);
+public sealed record TurnoRespuesta(
+    Guid Id, DateTimeOffset Inicio, DateTimeOffset Fin, string Estado, DateTime InicioLocal, DateTime FinLocal, string ZonaHoraria);
 
 public sealed record DocumentoConductorRespuesta(Guid Id, string Tipo, DateOnly? FechaVencimiento);
 

@@ -27,7 +27,7 @@ internal static class Datos
             estado: estado);
 
     public static SolicitudViaje Solicitud(bool urgente = false) =>
-        new(Id(30), Id(10), "Aeropuerto JMC", "Hotel Centro", Ahora.AddHours(4), TimeSpan.FromMinutes(45),
+        new(Id(30), Id(10), "Aeropuerto JMC", "Hotel Centro", Ahora.AddHours(4).Local(), TimeSpan.FromMinutes(45),
             3, CanalSolicitud.WhatsApp, Ahora, urgente, esPersonal: false, empresaClienteId: EmpresaId);
 
     public static Asignacion Asignacion(SolicitudViaje? solicitud = null, OrigenAsignacion origen = OrigenAsignacion.Automatica)

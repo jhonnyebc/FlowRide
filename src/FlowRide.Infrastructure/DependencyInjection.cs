@@ -17,6 +17,10 @@ using FlowRide.Application.Canal.Entrada.Puertos;
 using FlowRide.Application.Canal.Salida.Puertos;
 using FlowRide.Application.Comun.CasosUso;
 using FlowRide.Application.Comun.Salida.Puertos;
+using FlowRide.Application.Horarios.CasosUso;
+using FlowRide.Application.Horarios.Entrada.Adaptadores;
+using FlowRide.Application.Horarios.Entrada.Puertos;
+using FlowRide.Application.Horarios.Salida.Puertos;
 using FlowRide.Application.Identidad.CasosUso;
 using FlowRide.Application.Identidad.Entrada.Adaptadores;
 using FlowRide.Application.Identidad.Entrada.Puertos;
@@ -65,6 +69,7 @@ using FlowRide.Domain.Canal.Repositorios;
 using FlowRide.Domain.Comun;
 using FlowRide.Domain.Comun.Consultas;
 using FlowRide.Domain.Entidades;
+using FlowRide.Domain.Horarios;
 using FlowRide.Domain.Identidad;
 using FlowRide.Domain.Identidad.GestionUsuarios;
 using FlowRide.Domain.Identidad.Repositorios;
@@ -92,6 +97,7 @@ using FlowRide.Infrastructure.Asignaciones;
 using FlowRide.Infrastructure.Auditoria;
 using FlowRide.Infrastructure.Borde;
 using FlowRide.Infrastructure.Canal;
+using FlowRide.Infrastructure.Horarios;
 using FlowRide.Infrastructure.Identidad;
 using FlowRide.Infrastructure.Identidad.Keycloak;
 using FlowRide.Infrastructure.Notificaciones;
@@ -385,6 +391,12 @@ public static class DependencyInjection
         services.AddScoped<ICasoUsoConRetorno<BuscarItinerariosDominio, PaginaResultado<Itinerario>>, BuscarItinerariosCasoUso>();
         services.AddScoped<ISolicitudesPuertoEntrada, SolicitudesAdaptadorEntrada>();
         services.AddScoped<IItinerariosPuertoEntrada, ItinerariosAdaptadorEntrada>();
+
+        // Eventos futuros en hora local + zona: al arrancar se recalculan sus instantes con las reglas vigentes.
+        services.AddScoped<IHorariosFuturos, HorariosFuturosEf>();
+        services.AddScoped<ICasoUsoConRetorno<RecalcularHorariosDominio, ResultadoRecalculoHorarios>, RecalcularHorariosCasoUso>();
+        services.AddScoped<IHorariosPuertoEntrada, HorariosAdaptadorEntrada>();
+        services.AddHostedService<RecalculoHorariosAlIniciar>();
 
         return services;
     }

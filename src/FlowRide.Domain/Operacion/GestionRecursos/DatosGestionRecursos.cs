@@ -1,6 +1,7 @@
 using FlowRide.Domain.Comun.Consultas;
 using FlowRide.Domain.Enumeraciones;
 using FlowRide.Domain.Operacion.Repositorios;
+using FlowRide.Domain.ValoresObjeto;
 
 namespace FlowRide.Domain.Operacion.GestionRecursos;
 
@@ -46,7 +47,7 @@ public sealed record ActualizarConductorDominio(
 
 public sealed record CambiarEstadoConductorDominio(Guid ConductorId, EstadoConductor Estado, Guid? ActorId);
 
-public sealed record ProgramarTurnoDominio(Guid ConductorId, DateTimeOffset Inicio, DateTimeOffset Fin, Guid? ActorId);
+public sealed record ProgramarTurnoDominio(Guid ConductorId, FechaHoraLocal Inicio, FechaHoraLocal Fin, Guid? ActorId);
 
 /// <summary>Archivo ya validado por el adaptador de entrada (tipo de contenido y tamaño).</summary>
 public sealed record SubirDocumentoConductorDominio(
@@ -82,7 +83,7 @@ public sealed record CambiarEstadoVehiculoDominio(Guid VehiculoId, bool Activo, 
 
 public sealed record AsignarConductorHabitualDominio(Guid VehiculoId, Guid? ConductorId, Guid? ActorId);
 
-public sealed record ConsultarDisponibilidadDominio(DateTimeOffset Inicio, DateTimeOffset Fin);
+public sealed record ConsultarDisponibilidadDominio(FechaHoraLocal Inicio, FechaHoraLocal Fin);
 
 public sealed record BuscarEmpresasClienteDominio(FiltroRecursos Filtro, Paginacion Paginacion);
 

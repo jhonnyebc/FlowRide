@@ -167,7 +167,7 @@ public class OperacionApiTests(PostgresFixture postgres, AzuriteFixture azurite)
         Assert.Equal(HttpStatusCode.OK, (await _operador.GetAsync("/api/conductores")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await _operador.GetAsync($"/api/conductores/{conductor.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.Created, (await _operador.PostAsJsonAsync($"/api/conductores/{conductor.Id}/turnos",
-            new TurnoPeticion { Inicio = Manana.AddHours(6), Fin = Manana.AddHours(14) })).StatusCode);
+            new TurnoPeticion { Inicio = Manana.AddHours(6).HoraLocal(), Fin = Manana.AddHours(14).HoraLocal() })).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await _operador.PostAsJsonAsync("/api/vehiculos", new VehiculoPeticion())).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await _operador.PutAsJsonAsync($"/api/conductores/{conductor.Id}/estado",
             new EstadoConductorPeticion { Estado = "Inactivo" })).StatusCode);
@@ -180,11 +180,11 @@ public class OperacionApiTests(PostgresFixture postgres, AzuriteFixture azurite)
     {
         var conductor = await RegistrarConductorAsync();
         await _administrador.PostAsJsonAsync($"/api/conductores/{conductor.Id}/turnos",
-            new TurnoPeticion { Inicio = Manana.AddHours(6), Fin = Manana.AddHours(14) });
+            new TurnoPeticion { Inicio = Manana.AddHours(6).HoraLocal(), Fin = Manana.AddHours(14).HoraLocal() });
         var solapado = await _administrador.PostAsJsonAsync($"/api/conductores/{conductor.Id}/turnos",
-            new TurnoPeticion { Inicio = Manana.AddHours(10), Fin = Manana.AddHours(18) });
-        var consulta = $"/api/conductores/disponibles?inicio={Uri.EscapeDataString(Manana.AddHours(8).ToString("O"))}" +
-                       $"&fin={Uri.EscapeDataString(Manana.AddHours(9).ToString("O"))}";
+            new TurnoPeticion { Inicio = Manana.AddHours(10).HoraLocal(), Fin = Manana.AddHours(18).HoraLocal() });
+        var consulta = $"/api/conductores/disponibles?inicio={Manana.AddHours(8).HoraLocal():yyyy-MM-ddTHH:mm}" +
+                       $"&fin={Manana.AddHours(9).HoraLocal():yyyy-MM-ddTHH:mm}&zonaHoraria={Uri.EscapeDataString(HorasDePrueba.Zona)}";
 
         var antes = await _operador.GetFromJsonAsync<List<ConductorDisponibleRespuesta>>(consulta);
         await _administrador.PutAsJsonAsync($"/api/conductores/{conductor.Id}/estado", new EstadoConductorPeticion { Estado = "Suspendido" });

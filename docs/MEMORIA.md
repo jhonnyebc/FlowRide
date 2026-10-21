@@ -5,13 +5,14 @@
 > Última actualización: 2026-10-19.
 
 ## Estado actual
-- **Rama de trabajo:** `feature/RF-19-borde-comun` (Fase 10, sale de `develop` en `9e0c74e`; falta commit y PR).
+- **Rama de trabajo:** `feature/RF-09-fechas-con-zona` (requisitos de fechas del profesor; sale de `develop` en `21cc8bb`; falta
+  commit y PR). Después, la rama de seguridad OWASP y luego la Fase 11.
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
   Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6), Fase 4
-  Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9), Fase 7 Canal WhatsApp (PR #10), Fase 8 Notificaciones y alertas (PR #11) y Fase 9 Reportes y vista operacional (PR #12).
-- **Fase actual:** Fase 10 (Borde común) implementada en su rama, con los gates en verde; falta el commit y la PR. La
-  siguiente es la Fase 11 (Panel Web).
-- **Tests:** 532 unitarios (94,1 % líneas / 83,2 % ramas en Domain + Application), 17 de arquitectura, 139 de integración
+  Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9), Fase 7 Canal WhatsApp (PR #10), Fase 8 Notificaciones y alertas (PR #11), Fase 9 Reportes y vista operacional (PR #12) y Fase 10 Borde común (PR #13).
+- **Fase actual:** Fase 10 cerrada. Antes de la Fase 11 se atienden los requisitos de los videos del profesor (2026-10-20):
+  fechas (implementado en su rama) y seguridad OWASP (pendiente).
+- **Tests:** 547 unitarios (94,1 % líneas / 83,2 % ramas en Domain + Application), 17 de arquitectura, 140 de integración
   (Keycloak, Mailpit y Azurite reales con Testcontainers).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
   Azurite (10000). Los secretos viven en el AppData **real** del usuario (`flowride-aprovisionamiento` y
@@ -59,6 +60,7 @@
 | 2026-10-19 | CSV para Excel en español: `;`, decimales con coma, UTF-8 con BOM, hora local del operador y apóstrofo delante de los textos que parecen fórmula. Una asignación "aceptada" es la que generó viaje; la vencida se detecta por el evento de auditoría `asignacion.vencer`. |
 | 2026-10-19 | **Fase 10 (respuestas del usuario):** rutas del borde en el catálogo (las registra la CLI); la firma de Meta la validan el borde y el stack; WAF gestionado en la Fase 12; HTTPS local con `*.dev.localhost`. |
 | 2026-10-19 | Una sola app de Meta para todos los operadores: el `AppSecret` y el `VerifyToken` del borde son los de esa app, y el `AppSecret` de cada stack es el mismo. El borde lee el catálogo con la cadena de `flowride_catalogo` (rol de solo lectura propio: Fase 12). |
+| 2026-10-20 | **Videos del profesor:** fechas (UTC para lo pasado; hora local + nombre IANA para eventos futuros en un lugar), secretos y `.env`, CSRF, autenticación rota (OWASP) y reverse proxy vs load balancer vs API gateway. Decisiones del usuario: refactor completo de fechas, TOTP para el Administrador, reautenticación reciente en acciones sensibles, el borde también valida el token. Los videos se revisaron extrayendo cuadros y transcribiendo el audio en local (faster-whisper en un venv temporal). |
 
 ## Modelo de dominio (`src/FlowRide.Domain`)
 - **Entidades del Silo:** Usuario, Rol, Pasajero, Conductor, Turno, DocumentoConductor, Vehiculo, EmpresaCliente,
@@ -335,13 +337,34 @@
   (`BordeApiTests`: borde real → API real del stack → Silo).
 - **Pendiente en el entorno local (lo corre el usuario):** cualquier comando de la CLI migra el catálogo; después,
   `registrar-ruta` y los secretos del borde (guía §7).
+- Commit `3ec3a87` → PR #13 fusionada en `develop` el 2026-10-19 (merge `21cc8bb`) con el CI en verde. **Fase 10 cerrada.**
+
+## Sesión 2026-10-20: requisitos de los videos del profesor — fechas con zona
+- El profesor envió 5 videos: fechas y horas, `.env` y secretos, CSRF, autenticación rota (serie OWASP "las 5
+  vulnerabilidades") y reverse proxy vs load balancer vs API gateway. Revisión punto por punto en ROADMAP ("Requisitos
+  del profesor").
+- Rama `feature/RF-09-fechas-con-zona` (lleva la documentación que cerraba la Fase 10).
+- Error encontrado y corregido: el día del servicio salía de la hora UTC (`SolicitudViaje.FechaServicio` y
+  `FiltrarDisponibles`), así que la regla regulatoria del motor descartaba licencias o SOAT que vencían esa noche.
+- `FechaHoraLocal` (Domain, hora local al minuto + nombre IANA; rechaza desfases y horas que no existen; en horas
+  repetidas toma la primera). Solicitud, turno, parada e itinerario guardan hora local + zona; el instante UTC es
+  derivado. `RecalcularHorariosCasoUso` + `RecalculoHorariosAlIniciar` (Infrastructure) lo ponen al día al arrancar;
+  las asignaciones vigentes siguen a su servicio. `HorasLocales` (Application) toma la zona del operador por defecto.
+- API: horas locales sin desfase + `zonaHoraria`; respuestas con instante y hora local. Migración `FechasConZona` con
+  relleno de datos (America/Bogota). En pruebas, `HorasDePrueba` (`.Local()`, `.HoraLocal()`).
+- Gates: build sin advertencias, formato OK, 547 unitarias (94,1 % / 83,2 %), 17 arquitectura, 140 integración.
+- **Pendiente en el entorno local (lo corre el usuario):** `dotnet run --project src/FlowRide.Aprovisionamiento -- migrar --id tenant-a`
+  (migraciones `Notificaciones` si faltaba y `FechasConZona`).
 
 ## Próximos pasos
-1. Cerrar la Fase 10: commit, PR a `develop` y CI. Después, Fase 11 (Panel Web en React + TypeScript).
+1. Cerrar la rama de fechas (commit, PR, CI). Después, la rama de seguridad OWASP (hook de gitleaks, política de
+   contraseñas y fuerza bruta, TOTP para el Administrador, reautenticación reciente, validación del token en el borde).
+2. Fase 11 (Panel Web en React + TypeScript): sin tokens en cookies ni secretos en `VITE_*`; reautenticación con
+   `max_age`/`prompt=login` para las acciones sensibles.
    **Recordatorio (2026-10-18):** itinerarios en PDF o Word por WhatsApp quedan fuera de V1; el bot responde que solo
    entiende texto y los itinerarios se registran desde el panel (RF-08). Opciones para después: recibir el archivo y
    alertar al operador, o extracción automática (requeriría ADR nuevo).
-2. Panel Web: sigue en la Fase 11. El usuario decidió (2026-10-18) desarrollarlo completo más adelante, no adelantar un panel básico.
-3. RF-23: probar "Olvidé mi contraseña" con la pantalla de login cuando exista el Panel Web (Fase 11).
-4. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).
-5. Opcional: SonarCloud (crear el proyecto y el secreto `SONAR_TOKEN`).
+3. Panel Web: el usuario decidió (2026-10-18) desarrollarlo completo en la Fase 11, no adelantar un panel básico.
+4. RF-23: probar "Olvidé mi contraseña" con la pantalla de login cuando exista el Panel Web (Fase 11).
+5. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).
+6. Opcional: SonarCloud (crear el proyecto y el secreto `SONAR_TOKEN`).

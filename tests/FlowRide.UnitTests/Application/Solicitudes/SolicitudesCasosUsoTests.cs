@@ -56,7 +56,7 @@ internal sealed class SolicitudesEnMemoria(PasajerosEnMemoria pasajeros, Empresa
 
     private SolicitudLectura Lectura(SolicitudViaje s) => new(s.Id, s.PasajeroId, pasajeros.Elementos[s.PasajeroId].Nombre,
         s.EmpresaClienteId, s.EmpresaClienteId is { } e ? empresas.Elementos[e].Nombre : null, s.ItinerarioId, s.DireccionOrigen,
-        s.DireccionDestino, s.FechaHoraServicio, s.DuracionEstimada, s.CantidadPasajeros, s.Urgente, s.EsPersonal, s.Canal, s.Estado,
+        s.DireccionDestino, s.FechaHoraServicio, s.HoraLocalServicio, s.ZonaHoraria, s.DuracionEstimada, s.CantidadPasajeros, s.Urgente, s.EsPersonal, s.Canal, s.Estado,
         s.RegistradaEn);
 }
 
@@ -111,11 +111,11 @@ public class SolicitudesCasosUsoTests : CasosUsoOperacionBase
     private SolicitudDominio SolicitudDominio => new(_solicitudes, Parametros);
 
     private RegistrarSolicitudCasoUso Registrar() => new(new PasajeroDominio(Pasajeros), new EmpresaClienteDominio(Empresas),
-        SolicitudDominio, _itinerarios, _solicitudes, Zona, Auditoria, UnidadTrabajo, Reloj);
+        SolicitudDominio, _itinerarios, _solicitudes, Auditoria, UnidadTrabajo, Reloj);
 
     private RegistrarSolicitudDominio Datos(DateTimeOffset? servicio = null, Guid? itinerarioId = null, bool personal = false) =>
         new(_pasajero.Id, itinerarioId, itinerarioId is null ? "Hotel" : null, itinerarioId is null ? "Aeropuerto" : null,
-            itinerarioId is null ? servicio ?? Servicio : null, itinerarioId is null ? TimeSpan.FromMinutes(45) : null, 2, false, personal,
+            itinerarioId is null ? (servicio ?? Servicio).Local() : null, itinerarioId is null ? TimeSpan.FromMinutes(45) : null, 2, false, personal,
             CanalSolicitud.PanelWeb, Actor);
 
     internal FlowRide.UnitTests.Application.Asignaciones.BandejaEnMemoria Bandeja { get; } = new();
@@ -138,7 +138,7 @@ public class SolicitudesCasosUsoTests : CasosUsoOperacionBase
     public async Task Registrar_DesdeUnItinerarioTomaSusDatosEnLaHoraLocal()
     {
         var itinerario = new Itinerario(Guid.NewGuid(), _empresa.Id, "S-1", DateOnly.FromDateTime(Ahora.AddDays(2).Date), "Base",
-            "Mina", new TimeOnly(6, 0), new TimeOnly(7, 30));
+            "Mina", new TimeOnly(6, 0), new TimeOnly(7, 30), Zona.Zona.Id);
         _itinerarios.Itinerarios[itinerario.Id] = itinerario;
 
         var solicitud = await Registrar().EjecutarAsync(Datos(itinerarioId: itinerario.Id), CancellationToken.None);
@@ -153,7 +153,7 @@ public class SolicitudesCasosUsoTests : CasosUsoOperacionBase
     public async Task Registrar_RechazaDatosIncompletosPasadosSolapadosOItinerarioAjeno()
     {
         var ajeno = new Itinerario(Guid.NewGuid(), Guid.NewGuid(), "S-9", DateOnly.FromDateTime(Ahora.AddDays(2).Date), "A", "B",
-            new TimeOnly(6, 0), new TimeOnly(7, 0));
+            new TimeOnly(6, 0), new TimeOnly(7, 0), Zona.Zona.Id);
         _itinerarios.Itinerarios[ajeno.Id] = ajeno;
         await Registrar().EjecutarAsync(Datos(), CancellationToken.None);
 
@@ -162,7 +162,7 @@ public class SolicitudesCasosUsoTests : CasosUsoOperacionBase
         await Assert.ThrowsAsync<FlowRideExcepcion>(() => Registrar().EjecutarAsync(Datos(itinerarioId: ajeno.Id), CancellationToken.None));
         await Assert.ThrowsAsync<FlowRideExcepcion>(() => Registrar().EjecutarAsync(Datos(itinerarioId: Guid.NewGuid()), CancellationToken.None));
         await Assert.ThrowsAsync<FlowRideExcepcion>(() => Registrar().EjecutarAsync(
-            Datos() with { DireccionOrigen = null, FechaHoraServicio = Servicio.AddDays(3) }, CancellationToken.None));
+            Datos() with { DireccionOrigen = null, Servicio = Servicio.AddDays(3).Local() }, CancellationToken.None));
         await Assert.ThrowsAsync<FlowRideExcepcion>(() => Registrar().EjecutarAsync(Datos() with { PasajeroId = Guid.NewGuid() }, CancellationToken.None));
         Assert.Single(_solicitudes.Solicitudes);
     }
@@ -173,7 +173,7 @@ public class SolicitudesCasosUsoTests : CasosUsoOperacionBase
         var solicitud = await Registrar().EjecutarAsync(Datos(), CancellationToken.None);
         var modificar = new ModificarSolicitudCasoUso(SolicitudDominio, _solicitudes, Auditoria, UnidadTrabajo, Reloj);
 
-        await modificar.EjecutarAsync(new ModificarSolicitudDominio(solicitud.Id, "Casa", "Oficina", Servicio.AddHours(1),
+        await modificar.EjecutarAsync(new ModificarSolicitudDominio(solicitud.Id, "Casa", "Oficina", Servicio.AddHours(1).Local(),
             TimeSpan.FromMinutes(30), 1, true, Actor), CancellationToken.None);
 
         Assert.Equal(("Casa", true), (solicitud.DireccionOrigen, solicitud.Urgente));
@@ -187,7 +187,7 @@ public class SolicitudesCasosUsoTests : CasosUsoOperacionBase
 
         await Assert.ThrowsAsync<FlowRideExcepcion>(() => new ModificarSolicitudCasoUso(SolicitudDominio, _solicitudes, Auditoria,
                 UnidadTrabajo, Reloj)
-            .EjecutarAsync(new ModificarSolicitudDominio(solicitud.Id, "A", "B", Servicio, TimeSpan.FromMinutes(30), 1, false, Actor),
+            .EjecutarAsync(new ModificarSolicitudDominio(solicitud.Id, "A", "B", Servicio.Local(), TimeSpan.FromMinutes(30), 1, false, Actor),
                 CancellationToken.None));
     }
 
@@ -259,7 +259,7 @@ public class SolicitudesCasosUsoTests : CasosUsoOperacionBase
     public async Task Itinerarios_RangoConDias_YSinRepetirFechas()
     {
         var registrar = new RegistrarItinerariosCasoUso(new EmpresaClienteDominio(Empresas), _itinerarios, Auditoria, UnidadTrabajo, Reloj);
-        var datos = new RegistrarItinerariosDominio(_empresa.Id, "S-1", "Base", "Mina", new TimeOnly(6, 0), new TimeOnly(7, 0),
+        var datos = new RegistrarItinerariosDominio(_empresa.Id, "S-1", "Base", "Mina", new TimeOnly(6, 0), new TimeOnly(7, 0), Zona.Zona.Id,
             new DateOnly(2026, 10, 19), new DateOnly(2026, 10, 30), [DayOfWeek.Monday, DayOfWeek.Friday], Actor);
 
         var creados = await registrar.EjecutarAsync(datos, CancellationToken.None);
