@@ -1,0 +1,58 @@
+{
+  "name": "flowride-panel",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Panel Web de FlowRide (ADR-0019): SPA en React + TypeScript para el Administrador y el Operador logístico.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "typecheck": "tsc -b --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "api:tipos": "openapi-typescript src/api/openapi.json -o src/api/esquema.d.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "5.2.8",
+    "@mantine/charts": "8.3.18",
+    "@mantine/core": "8.3.18",
+    "@mantine/hooks": "8.3.18",
+    "@mantine/notifications": "8.3.18",
+    "@tabler/icons-react": "3.49.0",
+    "@tanstack/react-query": "5.104.1",
+    "oidc-client-ts": "3.5.0",
+    "openapi-fetch": "0.14.1",
+    "react": "19.1.9",
+    "react-dom": "19.1.9",
+    "react-oidc-context": "3.3.1",
+    "react-router": "7.18.4",
+    "recharts": "2.15.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@testing-library/jest-dom": "6.10.0",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.7",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "5.2.0",
+    "axe-core": "4.14.0",
+    "eslint": "9.39.5",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "globals": "16.5.0",
+    "jsdom": "26.1.0",
+    "openapi-typescript": "7.13.0",
+    "postcss": "8.5.6",
+    "postcss-preset-mantine": "1.18.0",
+    "postcss-simple-vars": "7.0.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.1",
+    "vite": "7.3.7",
+    "vitest": "3.2.7"
+  }
+}

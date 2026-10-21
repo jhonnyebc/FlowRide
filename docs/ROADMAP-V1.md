@@ -26,7 +26,7 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 8 | Notificaciones y alertas | Notificaciones | 0007, 0015, 0016 | ✅ PR #11 fusionada |
 | 9 | Reportes y vista operacional | Reportes | 0006, 0013 | ✅ PR #12 fusionada |
 | 10 | Borde común | Plataforma | 0012, 0014 | ✅ PR #13 fusionada |
-| 11 | Panel Web | Web | 0003, 0015, 0016, 0019 | ⬜ |
+| 11 | Panel Web | Web | 0003, 0015, 0016, 0019 | 🟡 11a en rama `feature/RF-36-panel-web` |
 | 12 | Operación: despliegue, backups y retención | Plataforma | 0010, 0011, 0013 | ⬜ |
 
 ## Detalle por fase
@@ -149,7 +149,7 @@ Fechas y horas (PR #14 fusionada):
 - [x] API: hora local sin desfase + `zonaHoraria` opcional (por defecto la del operador); desfase o `Z` → 400. Las respuestas devuelven el instante y la hora local con su zona.
 - Pruebas: 547 unitarias (94,1 % / 83,2 %), 17 de arquitectura, 140 de integración.
 
-Seguridad (OWASP: secretos, CSRF, autenticación rota; reverse proxy vs API gateway), rama `feature/RF-02-seguridad-owasp`:
+Seguridad (OWASP: secretos, CSRF, autenticación rota; reverse proxy vs API gateway), PR #15 fusionada:
 - [x] Escaneo de secretos con gitleaks antes de cada push (hook versionado `.githooks/pre-push`, gitleaks local o Docker), además del CI. Probado: bloquea un token falso.
 - [x] Keycloak: contraseña de 12+ (mayúscula, minúscula, número, historial de 5, argon2), bloqueo tras 5 intentos fallidos y TOTP obligatorio para el Administrador (al crearse o al pasar a ese rol).
 - [x] Reautenticación reciente (≤ 5 min, claim `auth_time`, RFC 9470) en crear, activar, desactivar y cambiar rol de usuarios, parámetros, plantillas y configuración del motor: 401 `insufficient_user_authentication` con `max_age`.
@@ -158,7 +158,21 @@ Seguridad (OWASP: secretos, CSRF, autenticación rota; reverse proxy vs API gate
 - Notas: la API usa solo `Authorization: Bearer` (sin cookies), así que CSRF no aplica a la API; el Panel Web (Fase 11) no guardará tokens en cookies ni secretos en variables `VITE_*`.
 
 ### Fase 11 — Panel Web
-- [ ] SPA en React + TypeScript (`web/`): OIDC + PKCE, cliente generado desde OpenAPI, alertas por SSE, WCAG 2.1 AA.
+Decisiones del usuario (2026-10-20): Mantine, tres entregas, pruebas unitarias con axe, tema claro y oscuro.
+
+11a — base + Operación (rama `feature/RF-36-panel-web`):
+- [x] Contrato OpenAPI tipado: `TypedResults`, enums como texto, números estrictos y `ContratoOpenApiTests` (el contrato del frontend no se desincroniza).
+- [x] SPA en `web/` (Vite + React + TypeScript + Mantine): OIDC código + PKCE con tokens en memoria, reautenticación con `max_age=0` ante el desafío de RFC 9470, cliente generado con `openapi-fetch`, alertas en vivo por SSE con `fetch`.
+- [x] Pantallas: vista del día con semáforo (RF-36), solicitudes (lista, nueva, detalle con trazabilidad, asignar ya, cancelar, devolver a la cola), viajes en curso y su detalle (iniciar, finalizar, incidentes) y alertas (RF-45).
+- [x] Accesibilidad WCAG 2.1 AA verificada con axe en cada pantalla; job "Frontend" en el CI.
+- [x] Rediseño tras la prueba local (2026-10-21): tablero con indicadores y gráficas (`@mantine/charts`), marco con contadores, detalles completos (conductor asignado, decisiones del motor, etapas, puntualidad, calificación) y "aceptar o rechazar en nombre del conductor" para el Operador logístico.
+- Pruebas: 41 del frontend; backend 548 unitarias, 17 de arquitectura, 143 de integración.
+
+11b — administración:
+- [ ] Usuarios (RF-05, RF-24, RF-25), empresas, pasajeros, conductores (turnos y documentos), vehículos e itinerarios.
+
+11c — configuración y reportes:
+- [ ] Parámetros, plantillas de WhatsApp, configuración del motor, indicadores y reportes con exporte (RF-42, RF-46 a RF-49).
 
 ### Fase 12 — Operación
 - [ ] Dockerfile con versión fija, imagen semver+SHA, dos stacks locales (uno por operador).

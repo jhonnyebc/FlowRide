@@ -1,0 +1,124 @@
+/* Enlace "saltar al contenido": oculto hasta recibir el foco con el teclado (WCAG 2.4.1). */
+.saltar-al-contenido {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  z-index: 1000;
+}
+
+.saltar-al-contenido:focus {
+  left: 8px;
+  top: 8px;
+  padding: 8px 12px;
+  background: var(--mantine-color-body);
+  border: 2px solid var(--mantine-primary-color-filled);
+  border-radius: var(--mantine-radius-sm);
+}
+
+/* Respeta a quien pidió menos animación (WCAG 2.3.3). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Superficies del estilo "quiosco": página blanca, tarjetas gris niebla, bandas negras. Sin sombras. */
+:root {
+  --fr-superficie: #f6f6f6;
+  --fr-borde: #767676;
+  --fr-hairline: #e2e2e2;
+  --fr-banda: #000000;
+  --fr-texto-suave: #5e5e5e;
+}
+
+:root[data-mantine-color-scheme='dark'] {
+  --fr-superficie: #1c1c1c;
+  --fr-borde: #8a8a8a;
+  --fr-hairline: #2e2e2e;
+  --fr-texto-suave: #afafaf;
+}
+
+body {
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+.superficie {
+  background: var(--fr-superficie);
+  border-radius: var(--mantine-radius-md);
+}
+
+/* Campos: borde fino gris hierro de 1 px y radio de 8 px. */
+.mantine-Input-input {
+  --input-bd: var(--fr-borde);
+}
+
+/* Cabecera: la banda negra que enmarca el contenido, en ambos temas. */
+.marco-cabecera {
+  background: var(--fr-banda);
+  border-bottom: none;
+  color: #ffffff;
+}
+
+.marco-accion {
+  color: #ffffff;
+}
+
+.marco-accion:hover {
+  background: #222222;
+}
+
+.marco-usuario {
+  padding: 4px 6px 4px 4px;
+  border-radius: 9999px;
+  color: #ffffff;
+}
+
+.marco-usuario:hover {
+  background: #222222;
+}
+
+.marco-contenido {
+  min-height: 100dvh;
+}
+
+/* Contenido alineado a la izquierda dentro de un ancho máximo de 1200 px. */
+.marco-pagina {
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-block: 8px 48px;
+}
+
+.marco-navbar {
+  border-right: 1px solid var(--fr-hairline);
+}
+
+.marco-enlace {
+  border-radius: var(--mantine-radius-md);
+  margin-bottom: 2px;
+}
+
+.marco-enlace[data-active] {
+  background: var(--fr-superficie);
+  color: var(--mantine-color-text);
+  font-weight: 600;
+}
+
+@media (max-width: 36em) {
+  .marco-usuario-texto {
+    display: none;
+  }
+}
+
+/* Cifras grandes con números tabulares para que no "bailen" al refrescar. */
+.cifra {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* Filas de las listas del tablero: separador fino entre elementos. */
+.fila-lista + .fila-lista {
+  border-top: 1px solid var(--fr-hairline);
+}

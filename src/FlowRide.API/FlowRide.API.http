@@ -436,3 +436,53 @@ GET https://otro.dev.localhost:8443/api/viajes
 
 ### Borde — handshake del webhook de Meta (responde el reto si el token es el de Borde:WhatsApp:VerifyToken)
 GET https://localhost:8443/api/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=pega-aqui-tu-token&hub.challenge=reto-123
+
+# ---------------------------------------------------------------------------------------------------------------
+# Preparar un conductor para probar la asignación de punta a punta (entorno "local" de Rider: inicia sesión solo).
+# Correr en orden: cada petición guarda el id que usa la siguiente. Ajusta la fecha del turno al día de la prueba.
+
+### 1. Conductor de pruebas (teléfono ficticio: el aviso por WhatsApp fallará y saldrá como alerta en el panel)
+POST {{host}}/api/conductores
+Authorization: Bearer {{$auth.token("panel")}}
+Content-Type: application/json
+
+{ "nombre": "Conductor de pruebas", "telefonoWhatsApp": "+573000000002", "numeroLicencia": "90000001", "categoriaLicencia": "C2", "vencimientoLicencia": "2028-12-31" }
+
+> {% client.global.set("conductorId", response.body.id); %}
+
+### 2. Su turno de hoy (hora local de Bogotá)
+POST {{host}}/api/conductores/{{conductorId}}/turnos
+Authorization: Bearer {{$auth.token("panel")}}
+Content-Type: application/json
+
+{ "inicio": "2026-10-21T12:00", "fin": "2026-10-21T23:30" }
+
+### 3. Vehículo
+POST {{host}}/api/vehiculos
+Authorization: Bearer {{$auth.token("panel")}}
+Content-Type: application/json
+
+{ "placa": "PRU001", "marca": "Toyota", "modelo": "Hiace", "capacidad": 12, "vencimientoRtm": "2027-06-30", "vencimientoSoat": "2027-06-30" }
+
+> {% client.global.set("vehiculoId", response.body.id); %}
+
+### 4. El vehículo queda como el habitual del conductor
+PUT {{host}}/api/vehiculos/{{vehiculoId}}/conductor-habitual
+Authorization: Bearer {{$auth.token("panel")}}
+Content-Type: application/json
+
+{ "conductorId": "{{conductorId}}" }
+
+### Buscar el conductor de pruebas y guardar su id
+GET {{host}}/api/conductores?texto=pruebas
+Authorization: Bearer {{$auth.token("panel")}}
+
+> {% client.global.set("conductorId", response.body.elementos[0].id); %}
+
+
+### Cambiar el teléfono del conductor de pruebas por uno real
+PUT {{host}}/api/conductores/{{conductorId}}
+Authorization: Bearer {{$auth.token("panel")}}
+Content-Type: application/json
+
+{ "nombre": "Conductor de pruebas", "telefonoWhatsApp": "+57XXXXXXXXXX", "numeroLicencia": "90000001", "categoriaLicencia": "C2", "vencimientoLicencia": "2028-12-31" }
