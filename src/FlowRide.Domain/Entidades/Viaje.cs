@@ -1,4 +1,5 @@
 using FlowRide.Domain.Enumeraciones;
+using FlowRide.Domain.ValoresObjeto;
 
 namespace FlowRide.Domain.Entidades;
 
@@ -51,7 +52,7 @@ public sealed class Viaje
         Estado = EstadoViaje.Cancelado;
     }
 
-    public Parada RegistrarParada(Guid paradaId, string direccion, int orden, DateTimeOffset horaEstimada)
+    public Parada RegistrarParada(Guid paradaId, string direccion, int orden, FechaHoraLocal horaEstimada)
     {
         ExigirAbierto("registrar paradas en");
         if (_paradas.Any(parada => parada.Orden == orden))

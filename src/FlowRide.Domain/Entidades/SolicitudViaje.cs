@@ -20,7 +20,7 @@ public sealed class SolicitudViaje
         Guid pasajeroId,
         string direccionOrigen,
         string direccionDestino,
-        DateTimeOffset fechaHoraServicio,
+        FechaHoraLocal servicio,
         TimeSpan duracionEstimada,
         int cantidadPasajeros,
         CanalSolicitud canal,
@@ -39,7 +39,7 @@ public sealed class SolicitudViaje
             throw new ArgumentOutOfRangeException(nameof(duracionEstimada), "La duración estimada debe ser positiva.");
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cantidadPasajeros);
 
-        FechaHoraServicio = fechaHoraServicio;
+        ProgramarServicio(servicio);
         DuracionEstimada = duracionEstimada;
         CantidadPasajeros = cantidadPasajeros;
         Canal = canal;
@@ -60,6 +60,16 @@ public sealed class SolicitudViaje
     public Guid? ItinerarioId { get; }
     public string DireccionOrigen { get; private set; }
     public string DireccionDestino { get; private set; }
+    /// <summary>Hora local del servicio, tal como se pidió (evento futuro en un lugar: hora local + zona).</summary>
+    public DateTime HoraLocalServicio { get; private set; }
+
+    /// <summary>Nombre IANA de la zona del servicio (por defecto, la del operador).</summary>
+    public string ZonaHoraria { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// Instante UTC del servicio, derivado de la hora local y la zona con las reglas vigentes. Se guarda para consultar y
+    /// ordenar; si las reglas de la zona cambian, <see cref="RecalcularInstante"/> lo pone al día.
+    /// </summary>
     public DateTimeOffset FechaHoraServicio { get; private set; }
     public TimeSpan DuracionEstimada { get; private set; }
     public int CantidadPasajeros { get; private set; }
@@ -76,7 +86,10 @@ public sealed class SolicitudViaje
     public CancelacionSolicitud? Cancelacion { get; private set; }
     public IReadOnlyList<EstadoSolicitudHistorial> Historial => _historial;
 
-    public DateOnly FechaServicio => DateOnly.FromDateTime(FechaHoraServicio.DateTime);
+    public FechaHoraLocal Servicio => new(HoraLocalServicio, ZonaHoraria);
+
+    /// <summary>El día del servicio en su zona (no el día UTC: a las 8 p. m. en Bogotá ya es el día siguiente en UTC).</summary>
+    public DateOnly FechaServicio => DateOnly.FromDateTime(HoraLocalServicio);
 
     public FranjaHoraria Franja() => new(FechaHoraServicio, FechaHoraServicio + DuracionEstimada);
 
@@ -95,7 +108,7 @@ public sealed class SolicitudViaje
     public void Modificar(
         string direccionOrigen,
         string direccionDestino,
-        DateTimeOffset fechaHoraServicio,
+        FechaHoraLocal servicio,
         TimeSpan duracionEstimada,
         int cantidadPasajeros,
         bool urgente,
@@ -110,7 +123,7 @@ public sealed class SolicitudViaje
 
         DireccionOrigen = Guardas.Texto(direccionOrigen, nameof(direccionOrigen));
         DireccionDestino = Guardas.Texto(direccionDestino, nameof(direccionDestino));
-        FechaHoraServicio = fechaHoraServicio;
+        ProgramarServicio(servicio);
         DuracionEstimada = duracionEstimada;
         CantidadPasajeros = cantidadPasajeros;
         Urgente = urgente;
@@ -169,6 +182,27 @@ public sealed class SolicitudViaje
     {
         if (Estado != esperado)
             throw Guardas.TransicionInvalida(accion, "la solicitud", Estado);
+    }
+
+    /// <summary>
+    /// Vuelve a calcular el instante con las reglas vigentes de la zona (por ejemplo, tras una actualización de la base de
+    /// zonas horarias). Devuelve true si cambió.
+    /// </summary>
+    public bool RecalcularInstante()
+    {
+        var instante = Servicio.Instante();
+        if (instante == FechaHoraServicio)
+            return false;
+        FechaHoraServicio = instante;
+        return true;
+    }
+
+    private void ProgramarServicio(FechaHoraLocal servicio)
+    {
+        ArgumentNullException.ThrowIfNull(servicio);
+        HoraLocalServicio = servicio.Hora;
+        ZonaHoraria = servicio.Zona;
+        FechaHoraServicio = servicio.Instante();
     }
 
     private void CambiarEstado(EstadoSolicitud nuevo, Guid? actorId, string? motivo, DateTimeOffset ahora)

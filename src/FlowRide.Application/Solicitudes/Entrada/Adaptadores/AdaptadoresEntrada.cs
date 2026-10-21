@@ -1,9 +1,11 @@
+using FlowRide.Application.Comun;
 using FlowRide.Application.Comun.CasosUso;
 using FlowRide.Application.Identidad.Entrada.Dto;
 using FlowRide.Application.Operacion.Entrada.Dto;
 using FlowRide.Application.Solicitudes.Entrada.Dto;
 using FlowRide.Application.Solicitudes.Entrada.Puertos;
 using FlowRide.Application.Solicitudes.Salida.Puertos;
+using FlowRide.Domain.Comun;
 using FlowRide.Domain.Comun.Consultas;
 using FlowRide.Domain.Entidades;
 using FlowRide.Domain.Enumeraciones;
@@ -23,7 +25,8 @@ public sealed class SolicitudesAdaptadorEntrada(
     ICasoUsoConRetorno<ModificarSolicitudDominio, SolicitudViaje> modificar,
     ICasoUsoConRetorno<CancelarSolicitudDominio, SolicitudViaje> cancelar,
     ICasoUsoConRetorno<ConsultarSolicitudDominio, SolicitudDetalleLectura> consultar,
-    ICasoUsoConRetorno<BuscarSolicitudesDominio, PaginaResultado<SolicitudLectura>> buscar) : ISolicitudesPuertoEntrada
+    ICasoUsoConRetorno<BuscarSolicitudesDominio, PaginaResultado<SolicitudLectura>> buscar,
+    ZonaHorariaOperador zona) : ISolicitudesPuertoEntrada
 {
     public async Task<SolicitudDetalleRespuesta> RegistrarAsync(SolicitudPeticion peticion, Guid? actorId, string rol, CancellationToken ct)
     {
@@ -32,7 +35,7 @@ public sealed class SolicitudesAdaptadorEntrada(
 
         var solicitud = await registrar.EjecutarAsync(new RegistrarSolicitudDominio(
             pasajeroId, peticion.ItinerarioId, Texto(peticion.DireccionOrigen), Texto(peticion.DireccionDestino),
-            peticion.FechaHoraServicio, Minutos(peticion.DuracionMinutos), cantidad, peticion.Urgente ?? false,
+            HorasLocales.Opcional(peticion.FechaHoraServicio, peticion.ZonaHoraria, zona), Minutos(peticion.DuracionMinutos), cantidad, peticion.Urgente ?? false,
             peticion.EsPersonal ?? false, CanalSolicitud.PanelWeb, Actor(actorId)), ct);
         return await ConsultarAsync(solicitud.Id, rol, ct);
     }
@@ -46,7 +49,7 @@ public sealed class SolicitudesAdaptadorEntrada(
                 "direccionOrigen, direccionDestino, fechaHoraServicio, duracionMinutos y cantidadPasajeros son obligatorios.");
 
         await modificar.EjecutarAsync(new ModificarSolicitudDominio(solicitudId, peticion.DireccionOrigen.Trim(),
-            peticion.DireccionDestino.Trim(), peticion.FechaHoraServicio.Value, Minutos(peticion.DuracionMinutos)!.Value,
+            peticion.DireccionDestino.Trim(), HorasLocales.Opcional(peticion.FechaHoraServicio, peticion.ZonaHoraria, zona)!, Minutos(peticion.DuracionMinutos)!.Value,
             peticion.CantidadPasajeros.Value, peticion.Urgente ?? false, Actor(actorId)), ct);
         return await ConsultarAsync(solicitudId, rol, ct);
     }
@@ -102,7 +105,8 @@ public sealed class SolicitudesAdaptadorEntrada(
 
 public sealed class ItinerariosAdaptadorEntrada(
     ICasoUsoConRetorno<RegistrarItinerariosDominio, IReadOnlyList<Itinerario>> registrar,
-    ICasoUsoConRetorno<BuscarItinerariosDominio, PaginaResultado<Itinerario>> buscar) : IItinerariosPuertoEntrada
+    ICasoUsoConRetorno<BuscarItinerariosDominio, PaginaResultado<Itinerario>> buscar,
+    ZonaHorariaOperador zona) : IItinerariosPuertoEntrada
 {
     private static readonly Dictionary<string, DayOfWeek> Dias = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -130,7 +134,8 @@ public sealed class ItinerariosAdaptadorEntrada(
             : throw new FlowRideExcepcion($"El día '{dia}' no es válido: usa lunes, martes, … domingo.")).ToHashSet();
 
         var creados = await registrar.EjecutarAsync(new RegistrarItinerariosDominio(empresaId, peticion.CodigoServicio.Trim(),
-            peticion.Origen.Trim(), peticion.Destino.Trim(), salida, llegada, desde, peticion.FechaHasta ?? desde, dias, actorId), ct);
+            peticion.Origen.Trim(), peticion.Destino.Trim(), salida, llegada,
+            string.IsNullOrWhiteSpace(peticion.ZonaHoraria) ? zona.Zona.Id : peticion.ZonaHoraria.Trim(), desde, peticion.FechaHasta ?? desde, dias, actorId), ct);
         return creados.Select(MapeoSolicitudes.Itinerario).ToList();
     }
 
@@ -149,9 +154,10 @@ internal static class MapeoSolicitudes
 {
     public static SolicitudRespuesta Respuesta(SolicitudLectura s) => new(s.Id, s.PasajeroId, s.PasajeroNombre, s.EmpresaClienteId,
         s.EmpresaClienteNombre, s.ItinerarioId, s.DireccionOrigen, s.DireccionDestino, s.FechaHoraServicio,
+        s.HoraLocalServicio, s.ZonaHoraria,
         (int)Math.Round(s.DuracionEstimada.TotalMinutes, MidpointRounding.AwayFromZero), s.CantidadPasajeros, s.Urgente, s.EsPersonal,
         s.Canal.ToString(), s.Estado.ToString(), s.RegistradaEn, s.DetalleRestringido);
 
     public static ItinerarioRespuesta Itinerario(Itinerario i) =>
-        new(i.Id, i.EmpresaClienteId, i.CodigoServicio, i.Fecha, i.Origen, i.Destino, i.HoraSalida, i.HoraLlegada);
+        new(i.Id, i.EmpresaClienteId, i.CodigoServicio, i.Fecha, i.Origen, i.Destino, i.HoraSalida, i.HoraLlegada, i.ZonaHoraria);
 }

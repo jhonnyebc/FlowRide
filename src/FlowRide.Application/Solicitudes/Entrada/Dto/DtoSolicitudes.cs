@@ -11,7 +11,12 @@ public sealed record SolicitudPeticion
 
     public string? DireccionOrigen { get; init; }
     public string? DireccionDestino { get; init; }
-    public DateTimeOffset? FechaHoraServicio { get; init; }
+    /// <summary>Hora local del servicio, sin desfase (por ejemplo 2026-10-21T08:00).</summary>
+    public DateTime? FechaHoraServicio { get; init; }
+
+    /// <summary>Nombre IANA de la zona (por ejemplo America/Bogota); si se omite, la del operador.</summary>
+    public string? ZonaHoraria { get; init; }
+
     public int? DuracionMinutos { get; init; }
     public int? CantidadPasajeros { get; init; }
     public bool? Urgente { get; init; }
@@ -45,6 +50,10 @@ public sealed record ItinerariosPeticion
     public string? Destino { get; init; }
     public TimeOnly? HoraSalida { get; init; }
     public TimeOnly? HoraLlegada { get; init; }
+
+    /// <summary>Zona IANA de las horas; si se omite, la del operador.</summary>
+    public string? ZonaHoraria { get; init; }
+
     public DateOnly? FechaDesde { get; init; }
 
     /// <summary>Si se omite, solo la fecha inicial.</summary>
@@ -77,6 +86,8 @@ public sealed record SolicitudRespuesta(
     string? DireccionOrigen,
     string? DireccionDestino,
     DateTimeOffset FechaHoraServicio,
+    DateTime HoraLocalServicio,
+    string ZonaHoraria,
     int DuracionMinutos,
     int CantidadPasajeros,
     bool Urgente,
@@ -98,4 +109,5 @@ public sealed record ItinerarioRespuesta(
     string Origen,
     string Destino,
     TimeOnly HoraSalida,
-    TimeOnly HoraLlegada);
+    TimeOnly HoraLlegada,
+    string ZonaHoraria);

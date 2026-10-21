@@ -44,7 +44,7 @@ public sealed class Asignacion
     public Guid SolicitudId { get; }
     public Guid ConductorId { get; }
     public Guid VehiculoId { get; }
-    public FranjaHoraria Franja { get; }
+    public FranjaHoraria Franja { get; private set; }
     public OrigenAsignacion Origen { get; }
     public DateTimeOffset AsignadaEn { get; }
 
@@ -94,6 +94,19 @@ public sealed class Asignacion
         Exigir(EstadoAsignacion.EnCurso, "finalizar");
         viaje.Finalizar(ahora);
         Estado = EstadoAsignacion.Finalizada;
+    }
+
+    /// <summary>
+    /// La franja es la del servicio: si su instante se recalculó (cambio de reglas de la zona), la asignación vigente la
+    /// sigue. Devuelve true si cambió.
+    /// </summary>
+    public bool SeguirServicio(FranjaHoraria franjaServicio)
+    {
+        ArgumentNullException.ThrowIfNull(franjaServicio);
+        if (!EstaVigente || franjaServicio == Franja)
+            return false;
+        Franja = franjaServicio;
+        return true;
     }
 
     public void Cancelar(string motivo)

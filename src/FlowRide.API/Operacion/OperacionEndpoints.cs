@@ -68,9 +68,9 @@ public static class OperacionEndpoints
         var consulta = grupo.MapGroup(string.Empty).RequireAuthorization(Politicas.PanelWeb);
         consulta.MapGet("/", async ([AsParameters] BusquedaPeticion busqueda, IConductoresPuertoEntrada puerto, CancellationToken ct) =>
             Results.Ok(await puerto.BuscarAsync(busqueda, ct)));
-        consulta.MapGet("/disponibles", async (DateTimeOffset? inicio, DateTimeOffset? fin,
+        consulta.MapGet("/disponibles", async (DateTime? inicio, DateTime? fin, string? zonaHoraria,
             IConductoresPuertoEntrada puerto, CancellationToken ct) =>
-            Results.Ok(await puerto.ConsultarDisponiblesAsync(inicio, fin, ct)));
+            Results.Ok(await puerto.ConsultarDisponiblesAsync(inicio, fin, zonaHoraria, ct)));
         consulta.MapGet("/{id:guid}", async (Guid id, IConductoresPuertoEntrada puerto, CancellationToken ct) =>
             Results.Ok(await puerto.ConsultarAsync(id, ct)));
         consulta.MapPost("/{id:guid}/turnos", async (Guid id, TurnoPeticion peticion, ClaimsPrincipal usuario,

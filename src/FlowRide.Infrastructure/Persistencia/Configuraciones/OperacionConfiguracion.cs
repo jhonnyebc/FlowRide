@@ -19,6 +19,9 @@ internal sealed class SolicitudViajeConfiguracion : IEntityTypeConfiguration<Sol
         entidad.Property(solicitud => solicitud.ItinerarioId);
         entidad.Property(solicitud => solicitud.DireccionOrigen).HasMaxLength(200).IsRequired();
         entidad.Property(solicitud => solicitud.DireccionDestino).HasMaxLength(200).IsRequired();
+        // Evento futuro en un lugar: hora local y nombre de la zona; el instante UTC es derivado (para consultar e indexar).
+        entidad.Property(solicitud => solicitud.HoraLocalServicio).HasColumnType(HorasLocalesEf.TipoHoraLocal);
+        entidad.Property(solicitud => solicitud.ZonaHoraria).HasMaxLength(HorasLocalesEf.LargoZona).IsRequired();
         entidad.Property(solicitud => solicitud.FechaHoraServicio);
         entidad.Property(solicitud => solicitud.DuracionEstimada);
         entidad.Property(solicitud => solicitud.CantidadPasajeros);
@@ -168,6 +171,8 @@ internal sealed class ParadaConfiguracion : IEntityTypeConfiguration<Parada>
         entidad.Property(parada => parada.ViajeId);
         entidad.Property(parada => parada.Orden);
         entidad.Property(parada => parada.Direccion).HasMaxLength(200).IsRequired();
+        entidad.Property(parada => parada.HoraEstimadaLocal).HasColumnType(HorasLocalesEf.TipoHoraLocal);
+        entidad.Property(parada => parada.ZonaHoraria).HasMaxLength(HorasLocalesEf.LargoZona).IsRequired();
         entidad.Property(parada => parada.HoraEstimada);
         entidad.Property(parada => parada.HoraReal);
         entidad.HasIndex(parada => new { parada.ViajeId, parada.Orden }).IsUnique();
@@ -213,4 +218,11 @@ internal sealed class CalificacionConfiguracion : IEntityTypeConfiguration<Calif
         entidad.HasOne<Pasajero>().WithMany()
             .HasForeignKey(calificacion => calificacion.PasajeroId).OnDelete(DeleteBehavior.Restrict);
     }
+}
+
+/// <summary>Columnas de los eventos futuros: hora local sin zona y nombre IANA de la zona (nunca el desfase).</summary>
+internal static class HorasLocalesEf
+{
+    public const string TipoHoraLocal = "timestamp without time zone";
+    public const int LargoZona = 64;
 }

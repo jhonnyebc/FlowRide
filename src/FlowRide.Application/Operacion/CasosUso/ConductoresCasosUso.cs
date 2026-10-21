@@ -148,7 +148,7 @@ public sealed class ProgramarTurnoCasoUso(
         Turno turno;
         try
         {
-            turno = conductor.ProgramarTurno(Guid.CreateVersion7(ahora), new FranjaHoraria(datos.Inicio, datos.Fin));
+            turno = conductor.ProgramarTurno(Guid.CreateVersion7(ahora), datos.Inicio, datos.Fin);
         }
         catch (InvalidOperationException error)
         {
@@ -158,7 +158,7 @@ public sealed class ProgramarTurnoCasoUso(
         await conductores.ModificarAsync(conductor.Id, conductor, ct);
         await auditoria.CrearAsync(Auditar.Exito(datos.ActorId, AccionesAuditoria.RecursoTurno,
             AccionesAuditoria.Programar, turno.Id, ahora,
-            despues: Auditar.Valores(("conductor_id", conductor.Id), ("inicio", turno.Inicio), ("fin", turno.Fin))), ct);
+            despues: Auditar.Valores(("conductor_id", conductor.Id), ("inicio", turno.Inicio), ("fin", turno.Fin), ("zona", turno.ZonaHoraria))), ct);
         await unidadTrabajo.GuardarCambiosAsync(ct);
         return turno;
     }
@@ -171,12 +171,11 @@ public sealed class ConsultarDisponibilidadCasoUso(IConductorRepositorio conduct
     public async Task<IReadOnlyList<Conductor>> EjecutarAsync(ConsultarDisponibilidadDominio datos, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(datos);
-        ConductorDominio.ValidarFranja(datos.Inicio, datos.Fin);
-        var franja = new FranjaHoraria(datos.Inicio, datos.Fin);
+        var franja = ConductorDominio.ValidarFranja(datos.Inicio, datos.Fin);
 
         var candidatos = await conductores.ConsultarConTurnoQueCubreAsync(franja, ct);
         var ocupados = await asignaciones.ConsultarConductoresOcupadosAsync(franja, ct);
-        return ConductorDominio.FiltrarDisponibles(candidatos, ocupados, franja);
+        return ConductorDominio.FiltrarDisponibles(candidatos, ocupados, franja, datos.Inicio.Fecha);
     }
 }
 

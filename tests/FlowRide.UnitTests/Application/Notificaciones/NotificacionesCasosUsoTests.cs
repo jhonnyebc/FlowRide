@@ -132,7 +132,7 @@ public class NotificacionesCasosUsoTests : CasosUsoOperacionBase
         Usuarios.Usuarios[_conductor.Id] = _conductor;
         _vehiculo = new Vehiculo(Guid.NewGuid(), "ABC123", "Toyota", "Hiace", 10, Vigente, Vigente);
         Vehiculos.Elementos[_vehiculo.Id] = _vehiculo;
-        _solicitud = new SolicitudViaje(Guid.NewGuid(), _pasajero.Id, "Hotel Centro", "Aeropuerto", Servicio, TimeSpan.FromMinutes(45), 2,
+        _solicitud = new SolicitudViaje(Guid.NewGuid(), _pasajero.Id, "Hotel Centro", "Aeropuerto", Servicio.Local(), TimeSpan.FromMinutes(45), 2,
             CanalSolicitud.WhatsApp, Ahora, empresaClienteId: empresa.Id);
         _solicitudes.Solicitudes[_solicitud.Id] = _solicitud;
         _asignacion = Asignar(_conductor);

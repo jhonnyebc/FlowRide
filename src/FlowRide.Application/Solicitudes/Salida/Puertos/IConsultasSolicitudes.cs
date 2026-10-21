@@ -26,6 +26,8 @@ public sealed record SolicitudLectura(
     string? DireccionOrigen,
     string? DireccionDestino,
     DateTimeOffset FechaHoraServicio,
+    DateTime HoraLocalServicio,
+    string ZonaHoraria,
     TimeSpan DuracionEstimada,
     int CantidadPasajeros,
     bool Urgente,

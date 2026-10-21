@@ -25,7 +25,7 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 7 | Canal WhatsApp | Mensajeria | 0003, 0008, 0012 | ✅ PR #10 fusionada |
 | 8 | Notificaciones y alertas | Notificaciones | 0007, 0015, 0016 | ✅ PR #11 fusionada |
 | 9 | Reportes y vista operacional | Reportes | 0006, 0013 | ✅ PR #12 fusionada |
-| 10 | Borde común | Plataforma | 0012, 0014 | 🟡 rama `feature/RF-19-borde-comun` (falta PR) |
+| 10 | Borde común | Plataforma | 0012, 0014 | ✅ PR #13 fusionada |
 | 11 | Panel Web | Web | 0003, 0015, 0016, 0019 | ⬜ |
 | 12 | Operación: despliegue, backups y retención | Plataforma | 0010, 0011, 0013 | ⬜ |
 
@@ -142,6 +142,20 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 - Pruebas: 532 unitarias (94,1 % líneas / 83,2 % ramas), 17 de arquitectura, 139 de integración (el borde reenvía a la API real del stack).
 - RF relacionados: RF-14, RF-19 (escenarios OPLOG-SEG-02, ADM-SEG-02, COND-DISP-01).
 
+### Requisitos del profesor (videos del 2026-10-20), antes de la Fase 11
+Fechas y horas (rama `feature/RF-09-fechas-con-zona`):
+- [x] Corregido: el motor y la disponibilidad sacaban el día del servicio de la hora UTC (un servicio a las 8 p. m. en Bogotá contaba como del día siguiente y descartaba licencias o SOAT que vencían ese día).
+- [x] Eventos futuros en hora local + nombre IANA de la zona (`FechaHoraLocal`): servicio de la solicitud, turnos, hora estimada de paradas e itinerarios. Instante UTC derivado y recalculado al arrancar (`RecalculoHorariosAlIniciar`). Migración `FechasConZona` con relleno desde los instantes existentes (America/Bogota).
+- [x] API: hora local sin desfase + `zonaHoraria` opcional (por defecto la del operador); desfase o `Z` → 400. Las respuestas devuelven el instante y la hora local con su zona.
+- Pruebas: 547 unitarias (94,1 % / 83,2 %), 17 de arquitectura, 140 de integración.
+
+Seguridad (OWASP: secretos, CSRF, autenticación rota; reverse proxy vs API gateway), rama siguiente:
+- [ ] Escaneo de secretos con gitleaks antes de cada push (hook versionado), además del CI.
+- [ ] Keycloak: política de contraseñas, fuerza bruta con valores explícitos y doble factor (TOTP) obligatorio para el Administrador.
+- [ ] Reautenticación reciente (≤ 5 min, claim `auth_time`) para las acciones sensibles.
+- [ ] El borde también valida el token del realm del operador antes de reenviar (parte AUTH del API gateway).
+- Notas: la API usa solo `Authorization: Bearer` (sin cookies), así que CSRF no aplica a la API; el Panel Web (Fase 11) no guardará tokens en cookies ni secretos en variables `VITE_*`.
+
 ### Fase 11 — Panel Web
 - [ ] SPA en React + TypeScript (`web/`): OIDC + PKCE, cliente generado desde OpenAPI, alertas por SSE, WCAG 2.1 AA.
 
@@ -242,3 +256,4 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 2026-10-19 | La puntualidad usa una tolerancia configurable (`reporte.tolerancia_puntualidad_minutos`, 10 min); una asignación vencida cuenta aparte del rechazo; solo los indicadores de periodos cerrados se cachean (TTL ≤ 10 min), lo demás va siempre a PostgreSQL. |
 | 2026-10-19 | Fase 10 (decisiones del usuario): la tabla de ruteo vive en el catálogo de plataforma y la llena la CLI; el borde y el stack validan la firma de Meta (defensa en profundidad); el WAF con OWASP CRS es el gestionado de Azure en la Fase 12; en local, HTTPS con `*.dev.localhost` (lo cubre el certificado de desarrollo de .NET 10). |
 | 2026-10-19 | Con una sola app de Meta, el `AppSecret` del stack de cada operador es el mismo de la app de la plataforma. El borde reenvía el cuerpo intacto a cada operador que aparece en el webhook (el stack ya ignora lo que no es de su número); un número sin operador se responde 200 para que Meta no reintente sin fin. |
+| 2026-10-20 | Requisitos del profesor (videos): lo que ya pasó se guarda en UTC; lo que va a pasar en un lugar, en hora local + nombre IANA de la zona, con el instante UTC derivado y recalculado al arrancar. Decisiones del usuario: refactor completo de fechas, TOTP obligatorio para el Administrador, reautenticación reciente en acciones sensibles y validación del token también en el borde. |

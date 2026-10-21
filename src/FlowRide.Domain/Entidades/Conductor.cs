@@ -58,13 +58,12 @@ public sealed class Conductor : Usuario
     public bool TieneTurnoQueCubre(FranjaHoraria franja) => _turnos.Any(turno => turno.Cubre(franja));
 
     /// <summary>Programa un turno; dos turnos vigentes del mismo conductor no pueden solaparse.</summary>
-    public Turno ProgramarTurno(Guid turnoId, FranjaHoraria franja)
+    public Turno ProgramarTurno(Guid turnoId, FechaHoraLocal inicio, FechaHoraLocal fin)
     {
-        ArgumentNullException.ThrowIfNull(franja);
-        if (_turnos.Any(turno => turno.EstaVigente && turno.Franja.SeSolapaCon(franja)))
+        var turno = new Turno(turnoId, Id, inicio, fin);
+        if (_turnos.Any(otro => otro.EstaVigente && otro.Franja.SeSolapaCon(turno.Franja)))
             throw new InvalidOperationException("El turno se solapa con otro turno vigente del conductor.");
 
-        var turno = new Turno(turnoId, Id, franja.Inicio, franja.Fin);
         _turnos.Add(turno);
         return turno;
     }

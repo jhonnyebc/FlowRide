@@ -67,7 +67,7 @@ public class ViajesCasosUsoTests : CasosUsoOperacionBase
 
     private SolicitudViaje Solicitud()
     {
-        var solicitud = new SolicitudViaje(Guid.NewGuid(), _pasajero.Id, "Hotel", "Aeropuerto", Servicio, TimeSpan.FromMinutes(45), 2,
+        var solicitud = new SolicitudViaje(Guid.NewGuid(), _pasajero.Id, "Hotel", "Aeropuerto", Servicio.Local(), TimeSpan.FromMinutes(45), 2,
             CanalSolicitud.PanelWeb, Ahora, empresaClienteId: _pasajero.EmpresaClienteId);
         _solicitudes.Solicitudes[solicitud.Id] = solicitud;
         return solicitud;
@@ -247,7 +247,7 @@ public class ViajesCasosUsoTests : CasosUsoOperacionBase
     {
         var (solicitud, asignacion, viaje) = await AceptadaAsync();
         var parada = await new RegistrarParadaCasoUso(ViajeDominio, Auditoria, UnidadTrabajo, Reloj)
-            .EjecutarAsync(new RegistrarParadaDominio(viaje.Id, "Terminal 2", 1, Servicio.AddMinutes(20), Actor), CancellationToken.None);
+            .EjecutarAsync(new RegistrarParadaDominio(viaje.Id, "Terminal 2", 1, Servicio.AddMinutes(20).Local(), Actor), CancellationToken.None);
         var incidente = await new ReportarIncidenteCasoUso(ViajeDominio, Asignaciones, Auditoria, _bandeja, UnidadTrabajo, Reloj)
             .EjecutarAsync(new ReportarIncidenteDominio(viaje.Id, TipoIncidente.Retraso, "Trancón en la autopista", Actor), CancellationToken.None);
 
@@ -267,7 +267,7 @@ public class ViajesCasosUsoTests : CasosUsoOperacionBase
 
         // Orden repetido: regla de negocio.
         await Assert.ThrowsAsync<FlowRideExcepcion>(() => new RegistrarParadaCasoUso(ViajeDominio, Auditoria, UnidadTrabajo, Reloj)
-            .EjecutarAsync(new RegistrarParadaDominio(viaje.Id, "Otra", 1, Servicio, Actor), CancellationToken.None));
+            .EjecutarAsync(new RegistrarParadaDominio(viaje.Id, "Otra", 1, Servicio.Local(), Actor), CancellationToken.None));
     }
 
     [Fact]

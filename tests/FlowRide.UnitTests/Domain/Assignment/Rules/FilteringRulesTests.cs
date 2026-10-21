@@ -72,6 +72,17 @@ public class RegulatoryRestrictionRuleTests
         Assert.True(Evaluar(Candidato(1, vencimientoLicencia: DateOnly.FromDateTime(HoraServicio.DateTime))));
 
     [Fact]
+    public void ServicioEnLaNoche_UsaElDiaLocal_NoElDiaUtc()
+    {
+        // 8 p. m. del 31 en Bogotá ya es el 1 de noviembre en UTC: la licencia y el SOAT que vencen el 31 siguen vigentes.
+        var nocheDel31 = Solicitud(hora: new DateTimeOffset(2026, 10, 31, 20, 0, 0, TimeSpan.FromHours(-5)));
+        var candidato = Candidato(1, vencimientoLicencia: new DateOnly(2026, 10, 31), vencimientoSoat: new DateOnly(2026, 10, 31));
+
+        Assert.Equal(new DateOnly(2026, 10, 31), nocheDel31.FechaServicio);
+        Assert.True(_rule.Evaluate(Contexto(nocheDel31, Configuracion(), candidato), candidato).Passed);
+    }
+
+    [Fact]
     public void LicenciaVencida_Falla() =>
         Assert.False(Evaluar(Candidato(1, vencimientoLicencia: new DateOnly(2026, 10, 7))));
 

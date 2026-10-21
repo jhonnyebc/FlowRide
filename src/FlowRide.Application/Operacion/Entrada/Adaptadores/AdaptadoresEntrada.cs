@@ -1,8 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
+using FlowRide.Application.Comun;
 using FlowRide.Application.Comun.CasosUso;
 using FlowRide.Application.Operacion.CasosUso;
 using FlowRide.Application.Operacion.Entrada.Dto;
 using FlowRide.Application.Operacion.Entrada.Puertos;
+using FlowRide.Domain.Comun;
 using FlowRide.Domain.Comun.Consultas;
 using FlowRide.Domain.Entidades;
 using FlowRide.Domain.Enumeraciones;
@@ -82,7 +84,8 @@ public sealed class ConductoresAdaptadorEntrada(
     ICasoUsoConRetorno<Guid, Conductor> consultar,
     ICasoUsoConRetorno<BuscarConductoresDominio, PaginaResultado<Conductor>> buscar,
     ICasoUsoConRetorno<ProgramarTurnoDominio, Turno> programarTurno,
-    ICasoUsoConRetorno<ConsultarDisponibilidadDominio, IReadOnlyList<Conductor>> disponibles) : IConductoresPuertoEntrada
+    ICasoUsoConRetorno<ConsultarDisponibilidadDominio, IReadOnlyList<Conductor>> disponibles,
+    ZonaHorariaOperador zona) : IConductoresPuertoEntrada
 {
     private const string MensajeRequeridos =
         "nombre, telefonoWhatsApp, numeroLicencia, categoriaLicencia y vencimientoLicencia son obligatorios.";
@@ -127,17 +130,18 @@ public sealed class ConductoresAdaptadorEntrada(
 
     public async Task<TurnoRespuesta> ProgramarTurnoAsync(Guid conductorId, TurnoPeticion peticion, Guid? actorId, CancellationToken ct)
     {
-        if (peticion?.Inicio is not { } inicio || peticion.Fin is not { } fin)
+        if (HorasLocales.Opcional(peticion?.Inicio, peticion?.ZonaHoraria, zona) is not { } inicio
+            || HorasLocales.Opcional(peticion?.Fin, peticion?.ZonaHoraria, zona) is not { } fin)
             throw new FlowRideExcepcion("inicio y fin son obligatorios.");
         return Mapeo.Turno(await programarTurno.EjecutarAsync(new ProgramarTurnoDominio(conductorId, inicio, fin, actorId), ct));
     }
 
     public async Task<IReadOnlyList<ConductorDisponibleRespuesta>> ConsultarDisponiblesAsync(
-        DateTimeOffset? inicio, DateTimeOffset? fin, CancellationToken ct)
+        DateTime? inicio, DateTime? fin, string? zonaHoraria, CancellationToken ct)
     {
-        if (inicio is null || fin is null)
+        if (HorasLocales.Opcional(inicio, zonaHoraria, zona) is not { } desde || HorasLocales.Opcional(fin, zonaHoraria, zona) is not { } hasta)
             throw new FlowRideExcepcion("inicio y fin son obligatorios.");
-        var conductores = await disponibles.EjecutarAsync(new ConsultarDisponibilidadDominio(inicio.Value, fin.Value), ct);
+        var conductores = await disponibles.EjecutarAsync(new ConsultarDisponibilidadDominio(desde, hasta), ct);
         return conductores
             .Select(c => new ConductorDisponibleRespuesta(c.Id, c.Nombre, c.CategoriaLicencia, c.VencimientoLicencia))
             .ToList();
@@ -279,7 +283,7 @@ internal static class Mapeo
     public static ConductorRespuesta Conductor(Conductor c) => new(c.Id, c.Nombre, c.TelefonoWhatsApp, c.Correo,
         c.NumeroLicencia, c.CategoriaLicencia, c.VencimientoLicencia, c.Estado.ToString(), c.Activo, c.AptoServicioCritico);
 
-    public static TurnoRespuesta Turno(Turno t) => new(t.Id, t.Inicio, t.Fin, t.Estado.ToString());
+    public static TurnoRespuesta Turno(Turno t) => new(t.Id, t.Inicio, t.Fin, t.Estado.ToString(), t.InicioLocal, t.FinLocal, t.ZonaHoraria);
 
     public static VehiculoRespuesta Vehiculo(Vehiculo v) => new(v.Id, v.Placa, v.Marca, v.Modelo, v.Capacidad,
         v.VencimientoRtm, v.VencimientoSoat, v.Activo, v.ConductorHabitualId);

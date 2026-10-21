@@ -18,7 +18,7 @@ public class RechazosEnElMotorTests
     private static readonly DateTimeOffset Servicio = new(2026, 10, 20, 9, 0, 0, TimeSpan.Zero);
     private static readonly DateOnly Vigente = new(2027, 12, 31);
 
-    private static readonly SolicitudViaje SolicitudDePrueba = new(Guid.NewGuid(), Guid.NewGuid(), "Hotel", "Aeropuerto", Servicio,
+    private static readonly SolicitudViaje SolicitudDePrueba = new(Guid.NewGuid(), Guid.NewGuid(), "Hotel", "Aeropuerto", Servicio.Local(),
         TimeSpan.FromMinutes(45), 2, CanalSolicitud.PanelWeb, Servicio.AddDays(-1));
 
     [Fact]
