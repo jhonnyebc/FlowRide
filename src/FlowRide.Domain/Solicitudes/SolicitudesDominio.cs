@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using FlowRide.Domain.Entidades;
 using FlowRide.Domain.Parametros;
 using FlowRide.Domain.Solicitudes.Repositorios;
@@ -106,6 +107,7 @@ public static class ItinerarioDominio
 }
 
 /// <summary>Quién lee una solicitud desde el Panel Web o el canal.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum LectorSolicitud
 {
     Pasajero,

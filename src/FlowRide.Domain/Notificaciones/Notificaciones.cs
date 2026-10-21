@@ -1,7 +1,9 @@
+using System.Text.Json.Serialization;
 using FlowRide.Domain.Entidades;
 
 namespace FlowRide.Domain.Notificaciones;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum SeveridadAlerta
 {
     Info,
@@ -66,6 +68,7 @@ public sealed class Alerta
     }
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum EstadoCorreo
 {
     Pendiente,
@@ -137,6 +140,7 @@ public sealed class CorreoSaliente
     }
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum EstadoPlantilla
 {
     Pendiente,

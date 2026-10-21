@@ -1,0 +1,192 @@
+import type { Esquemas } from '../api/cliente';
+
+// Datos de ejemplo con la forma exacta del contrato OpenAPI (si la API cambia, estas pruebas dejan de compilar).
+
+export function servicioVista(
+  id: string,
+  estado: Esquemas['EstadoSolicitud'],
+  extra: Partial<Esquemas['SolicitudReporteLectura']> = {},
+): Esquemas['SolicitudReporteLectura'] {
+  return {
+    id,
+    pasajeroId: `p-${id}`,
+    pasajeroNombre: `Pasajero ${id}`,
+    empresaClienteId: 'e-1',
+    empresaClienteNombre: 'Minera del Sur',
+    direccionOrigen: 'Campamento',
+    direccionDestino: 'Mina',
+    fechaHoraServicio: '2026-10-21T13:00:00Z',
+    cantidadPasajeros: 2,
+    urgente: false,
+    esPersonal: false,
+    canal: 'WhatsApp',
+    estado,
+    registradaEn: '2026-10-20T12:00:00Z',
+    asignacionId: null,
+    estadoAsignacion: null,
+    conductorId: null,
+    conductorNombre: null,
+    placa: null,
+    viajeId: null,
+    estadoViaje: null,
+    inicioReal: null,
+    finReal: null,
+    incidentes: 0,
+    puntaje: null,
+    detalleRestringido: false,
+    ...extra,
+  };
+}
+
+export function solicitud(id: string, estado: string, extra: Partial<Esquemas['SolicitudRespuesta']> = {}): Esquemas['SolicitudRespuesta'] {
+  return {
+    id,
+    pasajeroId: 'p-1',
+    pasajeroNombre: 'Ana Gómez',
+    empresaClienteId: 'e-1',
+    empresaClienteNombre: 'Minera del Sur',
+    itinerarioId: null,
+    direccionOrigen: 'Hotel Central',
+    direccionDestino: 'Aeropuerto',
+    fechaHoraServicio: '2026-10-22T11:00:00Z',
+    horaLocalServicio: '2026-10-22T06:00:00',
+    zonaHoraria: 'America/Bogota',
+    duracionMinutos: 45,
+    cantidadPasajeros: 1,
+    urgente: false,
+    esPersonal: false,
+    canal: 'PanelWeb',
+    estado,
+    registradaEn: '2026-10-20T12:00:00Z',
+    detalleRestringido: false,
+    ...extra,
+  };
+}
+
+export function viaje(id: string, estado: Esquemas['EstadoViaje'], extra: Partial<Esquemas['ViajeLectura']> = {}): Esquemas['ViajeLectura'] {
+  return {
+    id,
+    asignacionId: `a-${id}`,
+    solicitudId: `s-${id}`,
+    estado,
+    conductorId: 'c-1',
+    conductorNombre: 'Carlos Pérez',
+    vehiculoId: 'v-1',
+    placa: 'ABC123',
+    pasajeroId: 'p-1',
+    pasajeroNombre: 'Ana Gómez',
+    empresaClienteId: null,
+    empresaClienteNombre: null,
+    direccionOrigen: 'Hotel',
+    direccionDestino: 'Aeropuerto',
+    urgente: false,
+    esPersonal: false,
+    inicioProgramado: '2026-10-21T13:00:00Z',
+    finProgramado: '2026-10-21T13:45:00Z',
+    fechaHoraInicio: null,
+    fechaHoraFin: null,
+    incidentes: 0,
+    puntaje: null,
+    detalleRestringido: false,
+    ...extra,
+  };
+}
+
+export function alerta(id: string, severidad: Esquemas['SeveridadAlerta'], leida = false): Esquemas['AlertaLectura'] {
+  return {
+    id,
+    secuencia: 1,
+    tipo: 'solicitud.sin_candidatos',
+    severidad,
+    titulo: `Alerta ${id}`,
+    detalle: 'Detalle de la alerta.',
+    creadaEn: '2026-10-21T12:00:00Z',
+    referenciaId: null,
+    leidaEn: leida ? '2026-10-21T12:05:00Z' : null,
+  };
+}
+
+export const pagina = <T,>(elementos: T[], total = elementos.length) => ({ elementos, total, pagina: 1, tamanoPagina: 25 });
+
+export function asignacion(
+  id: string,
+  estado: Esquemas['EstadoAsignacion'],
+  extra: Partial<Esquemas['AsignacionLectura']> = {},
+): Esquemas['AsignacionLectura'] {
+  return {
+    id,
+    solicitudId: 's-1',
+    conductorId: 'c-1',
+    conductorNombre: 'Carlos Pérez',
+    vehiculoId: 'v-1',
+    placa: 'ABC123',
+    inicio: '2026-10-22T11:00:00Z',
+    fin: '2026-10-22T11:45:00Z',
+    estado,
+    origen: 'Automatica',
+    asignadaEn: '2026-10-21T16:34:00Z',
+    motivoCierre: null,
+    asignacionReemplazadaId: null,
+    ...extra,
+  };
+}
+
+export function indicadores(extra: Partial<Esquemas['IndicadoresLectura']> = {}): Esquemas['IndicadoresLectura'] {
+  return {
+    desde: '2026-10-21T05:00:00Z',
+    hasta: '2026-10-22T05:00:00Z',
+    volumen: {
+      solicitudes: 12,
+      atendidas: 9,
+      pendientes: 2,
+      canceladas: 1,
+      urgentes: 3,
+      solicitudesPorEstado: { Completada: 9, Pendiente: 2, Cancelada: 1 },
+      viajesRealizados: 9,
+      viajesCancelados: 0,
+    },
+    cumplimiento: { viajesIniciados: 10, puntuales: 8, porcentajePuntualidad: 80, retrasoPromedioMinutos: 4, incidentes: 1, toleranciaMinutos: 10 },
+    conductores: {
+      conductoresConAsignaciones: 3,
+      asignaciones: 11,
+      porcentajeAceptacion: 90.9,
+      porcentajeRechazo: 9.1,
+      porcentajeVencidas: 0,
+      calificacionPromedio: 4.6,
+      masViajes: [
+        {
+          conductorId: 'c-1',
+          nombre: 'Carlos Pérez',
+          placas: 'ABC123',
+          asignaciones: 5,
+          aceptadas: 5,
+          rechazadas: 0,
+          vencidas: 0,
+          sinRespuesta: 0,
+          porcentajeAceptacion: 100,
+          viajesRealizados: 5,
+          puntuales: 5,
+          porcentajePuntualidad: 100,
+          incidentes: 0,
+          calificacionPromedio: 4.8,
+        },
+      ],
+    },
+    empresas: [
+      {
+        empresaClienteId: 'e-1',
+        nombre: 'Minera del Sur',
+        solicitudes: 10,
+        atendidas: 8,
+        pendientes: 1,
+        canceladas: 1,
+        urgentes: 2,
+        pasajeros: 6,
+        viajesRealizados: 8,
+        incidentes: 1,
+        calificacionPromedio: 4.5,
+      },
+    ],
+    ...extra,
+  };
+}

@@ -9,7 +9,7 @@ public static class AuditoriaEndpoints
     public static IEndpointRouteBuilder MapAuditoria(this IEndpointRouteBuilder app)
     {
         app.MapGet("/auditoria/verificacion", async (IVerificarAuditoriaPuertoEntrada puerto, CancellationToken ct) =>
-                Results.Ok(await puerto.VerificarAsync(ct)))
+                TypedResults.Ok(await puerto.VerificarAsync(ct)))
             .WithTags("Auditoría")
             .RequireAuthorization(Politicas.Administrador);
 

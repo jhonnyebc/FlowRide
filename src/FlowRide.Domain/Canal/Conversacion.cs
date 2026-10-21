@@ -1,10 +1,12 @@
 using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using FlowRide.Domain.Entidades;
 
 namespace FlowRide.Domain.Canal;
 
 /// <summary>Paso en que está una conversación del bot (máquina de estados, menú numerado y pasos guiados).</summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum PasoConversacion
 {
     Menu,
