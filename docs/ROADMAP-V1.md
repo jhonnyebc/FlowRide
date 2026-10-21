@@ -26,7 +26,7 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 8 | Notificaciones y alertas | Notificaciones | 0007, 0015, 0016 | ✅ PR #11 fusionada |
 | 9 | Reportes y vista operacional | Reportes | 0006, 0013 | ✅ PR #12 fusionada |
 | 10 | Borde común | Plataforma | 0012, 0014 | ✅ PR #13 fusionada |
-| 11 | Panel Web | Web | 0003, 0015, 0016, 0019 | 🟡 11a en rama `feature/RF-36-panel-web` |
+| 11 | Panel Web | Web | 0003, 0015, 0016, 0019 | 🟡 11a cerrada (PR #16); 11b y 11c pendientes |
 | 12 | Operación: despliegue, backups y retención | Plataforma | 0010, 0011, 0013 | ⬜ |
 
 ## Detalle por fase
@@ -160,7 +160,7 @@ Seguridad (OWASP: secretos, CSRF, autenticación rota; reverse proxy vs API gate
 ### Fase 11 — Panel Web
 Decisiones del usuario (2026-10-20): Mantine, tres entregas, pruebas unitarias con axe, tema claro y oscuro.
 
-11a — base + Operación (rama `feature/RF-36-panel-web`):
+11a — base + Operación (PR #16, cerrada el 2026-10-21):
 - [x] Contrato OpenAPI tipado: `TypedResults`, enums como texto, números estrictos y `ContratoOpenApiTests` (el contrato del frontend no se desincroniza).
 - [x] SPA en `web/` (Vite + React + TypeScript + Mantine): OIDC código + PKCE con tokens en memoria, reautenticación con `max_age=0` ante el desafío de RFC 9470, cliente generado con `openapi-fetch`, alertas en vivo por SSE con `fetch`.
 - [x] Pantallas: vista del día con semáforo (RF-36), solicitudes (lista, nueva, detalle con trazabilidad, asignar ya, cancelar, devolver a la cola), viajes en curso y su detalle (iniciar, finalizar, incidentes) y alertas (RF-45).
@@ -168,8 +168,12 @@ Decisiones del usuario (2026-10-20): Mantine, tres entregas, pruebas unitarias c
 - [x] Rediseño tras la prueba local (2026-10-21): tablero con indicadores y gráficas (`@mantine/charts`), marco con contadores, detalles completos (conductor asignado, decisiones del motor, etapas, puntualidad, calificación) y "aceptar o rechazar en nombre del conductor" para el Operador logístico.
 - Pruebas: 41 del frontend; backend 548 unitarias, 17 de arquitectura, 143 de integración.
 
-11b — administración:
-- [ ] Usuarios (RF-05, RF-24, RF-25), empresas, pasajeros, conductores (turnos y documentos), vehículos e itinerarios.
+11b — administración (decisiones del usuario, 2026-10-21: lista con panel lateral para crear o editar; el Operador logístico
+consulta y programa turnos, Usuarios es solo del Administrador; dos entregas):
+- [x] 11b-1 (rama `feature/RF-24-panel-administracion`): RF-24 en el backend (`PUT /api/usuarios/{id}`: nombre, correo y
+  WhatsApp; el correo nuevo se sincroniza con Keycloak y queda pendiente de confirmar) y pantallas de usuarios, empresas
+  cliente y pasajeros. Pruebas: 553 unitarias, 17 de arquitectura, 50 del frontend.
+- [ ] 11b-2: conductores (turnos y documentos), vehículos e itinerarios.
 
 11c — configuración y reportes:
 - [ ] Parámetros, plantillas de WhatsApp, configuración del motor, indicadores y reportes con exporte (RF-42, RF-46 a RF-49).
@@ -205,8 +209,8 @@ Decisiones del usuario (2026-10-20): Mantine, tres entregas, pruebas unitarias c
 | RF-21 | Configuración avanzada de reglas | 5 | ✅ |
 | RF-22 | Cierre de sesión | 2 | ⬜ |
 | RF-23 | Recuperación de credenciales | 2 | 🟡 |
-| RF-24 | Actualización de información de usuarios | 2 | ⬜ |
-| RF-25 | Activación e inactivación de usuarios | 2 | ⬜ |
+| RF-24 | Actualización de información de usuarios | 2, 11b | ✅ API y panel (11b-1) |
+| RF-25 | Activación e inactivación de usuarios | 2, 11b | ✅ API con revocación en Keycloak (Fase 2) y panel (11b-1) |
 | RF-26 | Registro de conductores | 3 | ✅ |
 | RF-27 | Actualización de datos de conductores | 3 | ✅ |
 | RF-28 | Activación e inactivación de conductores | 3 | ✅ |

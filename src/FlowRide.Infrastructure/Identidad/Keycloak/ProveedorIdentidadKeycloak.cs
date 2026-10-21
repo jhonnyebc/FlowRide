@@ -15,6 +15,7 @@ public sealed class ProveedorIdentidadKeycloak(ClienteKeycloak keycloak, string 
 
     private const string AccionCambiarContrasena = "UPDATE_PASSWORD";
     private const string AccionConfigurarTotp = "CONFIGURE_TOTP";
+    private const string AccionVerificarCorreo = "VERIFY_EMAIL";
 
     private string Usuarios => $"admin/realms/{Uri.EscapeDataString(nombreRealm)}/users";
 
@@ -30,14 +31,13 @@ public sealed class ProveedorIdentidadKeycloak(ClienteKeycloak keycloak, string 
             return existente;
         }
 
-        // Keycloak pide nombre y apellido: el nombre completo se reparte entre los dos.
-        var partes = nombre.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var (primerNombre, apellido) = NombreYApellido(nombre);
         var cuenta = new JsonObject
         {
             ["username"] = correo,
             ["email"] = correo,
-            ["firstName"] = partes[0],
-            ["lastName"] = partes.Length > 1 ? partes[1] : partes[0],
+            ["firstName"] = primerNombre,
+            ["lastName"] = apellido,
             ["enabled"] = true,
             ["emailVerified"] = true,
             ["requiredActions"] = exigirDobleFactor
@@ -50,13 +50,55 @@ public sealed class ProveedorIdentidadKeycloak(ClienteKeycloak keycloak, string 
                ?? throw new InvalidOperationException($"Keycloak no creó la cuenta de {correo}.");
     }
 
-    public Task EnviarConfiguracionContrasenaAsync(string identidadExternaId, CancellationToken ct)
+    public Task EnviarConfiguracionContrasenaAsync(string identidadExternaId, CancellationToken ct) =>
+        EnviarAccionesAsync(identidadExternaId, new JsonArray(AccionCambiarContrasena), ct);
+
+    public async Task ActualizarCuentaAsync(string identidadExternaId, string correo, string nombre, CancellationToken ct)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(correo);
+        ArgumentException.ThrowIfNullOrWhiteSpace(nombre);
+
+        // Se envía la representación completa: una parcial puede borrar atributos del perfil.
+        var ruta = $"{Usuarios}/{Uri.EscapeDataString(identidadExternaId)}";
+        var cuenta = await keycloak.ObtenerAsync(ruta, ct)
+                     ?? throw new InvalidOperationException($"La cuenta {identidadExternaId} no existe en el realm {nombreRealm}.");
+        var (primerNombre, apellido) = NombreYApellido(nombre);
+        cuenta["firstName"] = primerNombre;
+        cuenta["lastName"] = apellido;
+
+        var correoCambio = !string.Equals(cuenta["email"]?.GetValue<string>(), correo, StringComparison.OrdinalIgnoreCase);
+        var acciones = cuenta["requiredActions"] as JsonArray ?? [];
+        if (correoCambio)
+        {
+            // El realm usa el correo como usuario: cambian juntos y el nuevo queda pendiente de confirmar.
+            cuenta["email"] = correo;
+            cuenta["username"] = correo;
+            cuenta["emailVerified"] = false;
+            if (!acciones.Any(a => a?.GetValue<string>() == AccionVerificarCorreo))
+                acciones.Add(AccionVerificarCorreo);
+            cuenta["requiredActions"] = acciones.DeepClone();
+        }
+        await keycloak.EjecutarAsync(HttpMethod.Put, ruta, cuenta, ct);
+
+        // Todo lo pendiente (confirmar el correo y, si aún no lo hizo, definir la contraseña) llega a la nueva dirección.
+        if (correoCambio)
+            await EnviarAccionesAsync(identidadExternaId, (JsonArray)acciones.DeepClone(), ct);
+    }
+
+    private Task EnviarAccionesAsync(string identidadExternaId, JsonArray acciones, CancellationToken ct)
     {
         var destino = Uri.EscapeDataString(opciones.UrlPanel.TrimEnd('/') + "/");
         return keycloak.EjecutarAsync(HttpMethod.Put,
             $"{Usuarios}/{Uri.EscapeDataString(identidadExternaId)}/execute-actions-email" +
             $"?client_id={ConstantesKeycloak.ClientePanel}&redirect_uri={destino}&lifespan={VigenciaEnlaceSegundos}",
-            new JsonArray(AccionCambiarContrasena), ct);
+            acciones, ct);
+    }
+
+    /// <summary>Keycloak pide nombre y apellido: el nombre completo se reparte entre los dos.</summary>
+    private static (string Nombre, string Apellido) NombreYApellido(string nombre)
+    {
+        var partes = nombre.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return (partes[0], partes.Length > 1 ? partes[1] : partes[0]);
     }
 
     /// <summary>

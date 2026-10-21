@@ -190,3 +190,33 @@ export function indicadores(extra: Partial<Esquemas['IndicadoresLectura']> = {})
     ...extra,
   };
 }
+
+export function usuarioPanel(id: string, rol: 'Administrador' | 'OperadorLogistico', extra: Partial<Esquemas['UsuarioRespuesta']> = {}): Esquemas['UsuarioRespuesta'] {
+  return {
+    id,
+    nombre: `Usuario ${id}`,
+    correo: `${id}@ops.co`,
+    telefonoWhatsApp: '+573001112233',
+    rol,
+    activo: true,
+    creadoEn: '2026-10-17T12:00:00Z',
+    ...extra,
+  };
+}
+
+export function empresa(id: string, extra: Partial<Esquemas['EmpresaClienteRespuesta']> = {}): Esquemas['EmpresaClienteRespuesta'] {
+  return { id, nombre: `Empresa ${id}`, nit: `900${id}-1`, correoContacto: `contacto@${id}.co`, activa: true, ...extra };
+}
+
+export function pasajero(id: string, extra: Partial<Esquemas['PasajeroRespuesta']> = {}): Esquemas['PasajeroRespuesta'] {
+  return {
+    id,
+    nombre: `Pasajero ${id}`,
+    telefonoWhatsApp: '+573005556677',
+    correo: null,
+    empresaClienteId: 'e-1',
+    codigoInterno: `COD-${id}`,
+    activo: true,
+    ...extra,
+  };
+}

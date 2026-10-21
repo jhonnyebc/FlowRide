@@ -269,6 +269,31 @@ public class AutorizacionApiTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ActualizarUnUsuario_EsDelAdministrador_YNoRepiteCorreos()
+    {
+        var (_, administrador) = await UsuarioConSesionAsync(RolesSistema.AdministradorId);
+        var (operador, clienteDelOperador) = await UsuarioConSesionAsync(RolesSistema.OperadorLogisticoId);
+        var (otro, _) = await UsuarioConSesionAsync(RolesSistema.OperadorLogisticoId);
+        var correo = $"{Guid.NewGuid():N}"[..10] + "@ops.co";
+        ActualizarUsuarioPeticion Peticion(string conCorreo) => new()
+        {
+            Nombre = "Laura Gómez",
+            Correo = conCorreo,
+            TelefonoWhatsApp = $"+57{Random.Shared.Next(100_000_000, 999_999_999)}"
+        };
+
+        var propio = await clienteDelOperador.PutAsJsonAsync($"/api/usuarios/{operador.Id}", Peticion(correo));
+        var repetido = await administrador.PutAsJsonAsync($"/api/usuarios/{operador.Id}", Peticion(otro.Correo!));
+        var actualizado = await administrador.PutAsJsonAsync($"/api/usuarios/{operador.Id}", Peticion(correo));
+
+        Assert.Equal(HttpStatusCode.Forbidden, propio.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, repetido.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, actualizado.StatusCode);
+        Assert.Equal(correo, (await actualizado.Content.ReadFromJsonAsync<UsuarioRespuesta>())!.Correo);
+        Assert.Contains((operador.IdentidadExternaId!, correo), _proveedor.Actualizadas);
+    }
+
+    [Fact]
     public async Task VerificarLaAuditoria_TrasLaGestionDeUsuarios_EstaIntegra()
     {
         var (_, administrador) = await UsuarioConSesionAsync(RolesSistema.AdministradorId);

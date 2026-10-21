@@ -163,4 +163,42 @@ public class KeycloakTests(PostgresFixture postgres, KeycloakFixture keycloak) :
         var cuenta = await keycloak.CuentaAsync(realm, correoOperador);
         Assert.False(cuenta!["enabled"]!.GetValue<bool>());
     }
+    [Fact]
+    public async Task ElAdministrador_CambiaElCorreoDeUnUsuario_YKeycloakLePideConfirmarlo()
+    {
+        var tenant = TenantNuevo();
+        var realm = $"flowride-{tenant}";
+        var correoAdministrador = $"admin@{tenant}.co";
+        var correoAnterior = $"laura@{tenant}.co";
+        var correoNuevo = $"laura.gomez@{tenant}.co";
+        await CrearOperadorAsync(tenant, correoAdministrador);
+        await using var api = await ApiDeAsync(tenant);
+        var administrador = Cliente(api, await keycloak.IniciarSesionConNavegadorAsync(realm, correoAdministrador));
+        var telefono = $"+57{Random.Shared.Next(100_000_000, 999_999_999)}";
+        var creado = await administrador.PostAsJsonAsync("/api/usuarios", new CrearUsuarioPeticion
+        {
+            Nombre = "Laura Gómez",
+            Correo = correoAnterior,
+            TelefonoWhatsApp = telefono,
+            Rol = RolesSistema.OperadorLogistico
+        });
+        var usuario = (await creado.Content.ReadFromJsonAsync<UsuarioRespuesta>())!;
+
+        var respuesta = await administrador.PutAsJsonAsync($"/api/usuarios/{usuario.Id}", new ActualizarUsuarioPeticion
+        {
+            Nombre = "Laura Gómez Ruiz",
+            Correo = correoNuevo,
+            TelefonoWhatsApp = telefono
+        });
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        var actualizado = (await respuesta.Content.ReadFromJsonAsync<UsuarioRespuesta>())!;
+        Assert.Equal(("Laura Gómez Ruiz", correoNuevo), (actualizado.Nombre, actualizado.Correo));
+        Assert.Null(await keycloak.CuentaAsync(realm, correoAnterior));
+        var cuenta = (await keycloak.CuentaAsync(realm, correoNuevo))!;
+        Assert.Equal(correoNuevo, cuenta["username"]!.GetValue<string>());
+        Assert.Equal(("Laura", "Gómez Ruiz"), (cuenta["firstName"]!.GetValue<string>(), cuenta["lastName"]!.GetValue<string>()));
+        Assert.False(cuenta["emailVerified"]!.GetValue<bool>());
+        Assert.Single(await keycloak.CorreosParaAsync(correoNuevo));
+    }
 }

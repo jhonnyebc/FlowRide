@@ -110,6 +110,7 @@ internal sealed class ProveedorEnMemoria : IProveedorIdentidad
     public Dictionary<string, bool> Habilitadas { get; } = new(StringComparer.Ordinal);
     public List<string> CorreosEnviados { get; } = [];
     public HashSet<string> ConDobleFactor { get; } = new(StringComparer.Ordinal);
+    public List<(string Id, string Correo, string Nombre)> Actualizadas { get; } = [];
     public int Llamadas { get; private set; }
 
     public Task<string> AsegurarUsuarioAsync(string correo, string nombre, bool exigirDobleFactor, CancellationToken ct)
@@ -123,6 +124,13 @@ internal sealed class ProveedorEnMemoria : IProveedorIdentidad
         }
         if (exigirDobleFactor) ConDobleFactor.Add(cuenta.Id);
         return Task.FromResult(cuenta.Id);
+    }
+
+    public Task ActualizarCuentaAsync(string identidadExternaId, string correo, string nombre, CancellationToken ct)
+    {
+        Llamadas++;
+        Actualizadas.Add((identidadExternaId, correo, nombre));
+        return Task.CompletedTask;
     }
 
     public Task ExigirDobleFactorAsync(string identidadExternaId, CancellationToken ct)

@@ -5,14 +5,14 @@
 > Última actualización: 2026-10-19.
 
 ## Estado actual
-- **Rama de trabajo:** `feature/RF-36-panel-web` (Fase 11a: base del panel + Operación, SIN commit). Hecho: contrato OpenAPI tipado (TypedResults, enums como texto, números estrictos, prueba ContratoOpenApiTests), `web/` (Vite + React + Mantine, OIDC PKCE en memoria, SSE con fetch, vista del día, solicitudes, viajes, alertas), job Frontend en CI; gates verdes (548/17/143 backend, 29 web). Falta: commit y PR; luego 11b y 11c.
+- **Rama de trabajo:** `feature/RF-24-panel-administracion` (Fase 11b-1: RF-24 + usuarios, empresas y pasajeros en el panel, SIN commit). Luego 11b-2 (conductores, vehículos e itinerarios).
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
   Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6), Fase 4
-  Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9), Fase 7 Canal WhatsApp (PR #10), Fase 8 Notificaciones y alertas (PR #11), Fase 9 Reportes y vista operacional (PR #12) y Fase 10 Borde común (PR #13).
-- **Fase actual:** Fase 10 cerrada. Antes de la Fase 11 se atienden los requisitos de los videos del profesor (2026-10-20):
-  fechas (PR #14, cerrado) y seguridad OWASP (PR #15, cerrado). Requisitos de los videos cubiertos.
-- **Tests:** 548 unitarios (94,1 % líneas / 83,2 % ramas en Domain + Application), 17 de arquitectura, 142 de integración
-  (Keycloak, Mailpit y Azurite reales con Testcontainers).
+  Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9), Fase 7 Canal WhatsApp (PR #10), Fase 8 Notificaciones y alertas (PR #11), Fase 9 Reportes y vista operacional (PR #12), Fase 10 Borde común (PR #13), fechas con zona (PR #14), seguridad OWASP
+  (PR #15) y Fase 11a Panel Web base y Operación (PR #16).
+- **Fase actual:** Fase 11a cerrada (PR #16, 2026-10-21). Siguen 11b (administración) y 11c (configuración y reportes).
+- **Tests:** 548 unitarios (94,1 % líneas / 83,2 % ramas en Domain + Application), 17 de arquitectura, 143 de integración
+  (Keycloak, Mailpit y Azurite reales con Testcontainers) y 41 del frontend (Vitest + axe).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
   Azurite (10000). Los secretos viven en el AppData **real** del usuario (`flowride-aprovisionamiento` y
   `flowride-tenant-a`, configurados por él el 2026-10-18). `tenant-a` se recreó ese día (base nueva con todas las
@@ -21,6 +21,13 @@
   +1 555 203 2563, token permanente de un usuario del sistema, webhook por ngrok `chummy-spree-clutter.ngrok-free.dev`).
   `tenant-b` existe en la base pero sus secretos solo estaban en la copia aislada de los procesos de Claude: para usarlo
   hay que recrearlo igual que tenant-a.
+- **Datos de prueba de tenant-a (2026-10-21):** "Conductor de pruebas" con un segundo celular del usuario (autorizado en
+  la lista de destinatarios de Meta), turno del 2026-10-21 y vehículo `PRU001`. El número no va en el repo (el `.http`
+  usa `+57XXXXXXXXXX`).
+- **Choques conocidos:** `uco-test-api-postgres` (otro proyecto del usuario) también usa el puerto 5433: solo uno de los
+  dos puede estar encendido. Si `flowride-postgres` arranca sin puerto publicado (`5432/tcp` sin `0.0.0.0:5433`), se
+  recrea con `docker compose up -d --force-recreate --no-deps postgres` (los datos están en el volumen). El login de Rider
+  regresa a `localhost:5173/callback`, el mismo puerto del panel. La red institucional del usuario bloquea ngrok.
 
 ## Contexto de trabajo
 - El equipo del curso (Sebastián, Andrés y Jhonny) trabajó junto **hasta el parcial**: los ADR, el DAS y los diagramas
@@ -396,14 +403,36 @@
   píldora solo en selectores de modo, pestaña activa `#9dcdd6`, Inter autohospedada (`@fontsource-variable/inter`
   5.2.8), títulos grandes en peso 400. Se mantienen los colores con significado (semáforo, severidad, estados) por
   OPLOG-UX-02 y ACC-02, y el tema oscuro. No se copió marca, nombre ni tipografía propietaria de la referencia.
+- Commit `f2988bf` → PR #16 fusionada en `develop` el 2026-10-21 (merge `67083ef`) con el CI en verde (Backend,
+  Frontend y escaneo de secretos). **Fase 11a cerrada.**
+
+## Sesión 2026-10-21 (continuación): Fase 11b-1 (administración: usuarios, empresas y pasajeros)
+- Decisiones del usuario: RF-24 edita nombre, WhatsApp y correo (el correo se sincroniza con Keycloak y se vuelve a
+  confirmar); pantallas con lista + panel lateral; el Operador logístico consulta y programa turnos, Usuarios es solo del
+  Administrador; la 11b se entrega en dos PR (11b-1 usuarios, empresas y pasajeros; 11b-2 conductores, vehículos e
+  itinerarios).
+- Backend RF-24: `ActualizarUsuarioCasoUso` (proveedor primero para que el reintento sea idempotente; la auditoría
+  `usuario.actualizar` guarda qué campos cambiaron, no sus valores, ADR-0013), `IProveedorIdentidad.ActualizarCuentaAsync`
+  (cambia `email` y `username` juntos porque el realm usa el correo como usuario, `emailVerified=false`, acción
+  `VERIFY_EMAIL` y correo a la nueva dirección con lo pendiente) y `PUT /api/usuarios/{id}` con autenticación reciente.
+  Pruebas: unitarias del caso de uso y del adaptador, Keycloak real (cambio de correo) y autorización de la API.
+- Panel: `web/src/administracion/` (piezas comunes `PanelLateral`, `Confirmacion`, `MenuAcciones`, `PiePagina`),
+  `PaginaUsuarios` (cifras por rol, crear, editar, cambiar rol y activar o desactivar con confirmación; uno mismo no se
+  cambia rol ni estado), `PaginaEmpresas` y `PaginaPasajeros` (solo lectura para el Operador logístico). El menú tiene el
+  grupo Administración y la ruta de Usuarios está protegida para otros roles.
+- Al correr la integración completa Docker Desktop estaba apagado (DockerUnavailableException); las pruebas de RF-24
+  (Keycloak y autorización) ya habían pasado antes con Docker encendido.
 
 ## Próximos pasos
-1. Fase 11 (Panel Web en React + TypeScript): sin tokens en cookies ni secretos en `VITE_*`; reautenticación con
-   `max_age`/`prompt=login` para las acciones sensibles.
+1. Fase 11b (administración): usuarios, empresas, pasajeros, conductores (turnos y documentos), vehículos e
+   itinerarios desde el panel, con el mismo estilo visual.
    **Recordatorio (2026-10-18):** itinerarios en PDF o Word por WhatsApp quedan fuera de V1; el bot responde que solo
    entiende texto y los itinerarios se registran desde el panel (RF-08). Opciones para después: recibir el archivo y
    alertar al operador, o extracción automática (requeriría ADR nuevo).
-3. Panel Web: el usuario decidió (2026-10-18) desarrollarlo completo en la Fase 11, no adelantar un panel básico.
-4. RF-23: probar "Olvidé mi contraseña" con la pantalla de login cuando exista el Panel Web (Fase 11).
-5. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).
-6. Opcional: SonarCloud (crear el proyecto y el secreto `SONAR_TOKEN`).
+2. Pendiente de la 11a: prueba de punta a punta por WhatsApp (el conductor de pruebas acepta desde su celular → el
+   pasajero recibe "ya tiene conductor"). Requiere ngrok en una red que no lo bloquee y un turno vigente el día de la prueba.
+   También: marcar el job "Frontend" como requerido en `develop` y actualizar las herramientas de pruebas con alertas de
+   `npm audit` (vitest, postcss, tinypool; solo desarrollo).
+3. RF-23: probar "Olvidé mi contraseña" con la pantalla de login cuando exista el Panel Web (Fase 11).
+4. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).
+5. Opcional: SonarCloud (crear el proyecto y el secreto `SONAR_TOKEN`).

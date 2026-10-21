@@ -17,3 +17,11 @@ public sealed record CambiarRolUsuarioPeticion
 {
     public string? Rol { get; init; }
 }
+
+/// <summary>Datos de contacto de un usuario del Panel Web (RF-24): los tres son obligatorios.</summary>
+public sealed record ActualizarUsuarioPeticion
+{
+    public string? Nombre { get; init; }
+    public string? Correo { get; init; }
+    public string? TelefonoWhatsApp { get; init; }
+}
