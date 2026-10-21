@@ -61,7 +61,7 @@ public class PasajeroTests
     {
         var pasajero = Pasajero();
 
-        var solicitud = pasajero.SolicitarViaje(Id(30), "Origen", "Destino", Ahora.AddHours(3), TimeSpan.FromMinutes(30),
+        var solicitud = pasajero.SolicitarViaje(Id(30), "Origen", "Destino", Ahora.AddHours(3).Local(), TimeSpan.FromMinutes(30),
             2, CanalSolicitud.WhatsApp, Ahora, urgente: true);
 
         Assert.Equal(EstadoSolicitud.Pendiente, solicitud.Estado);
@@ -76,7 +76,7 @@ public class PasajeroTests
         var pasajero = Pasajero();
         pasajero.Desactivar();
 
-        Assert.Throws<InvalidOperationException>(() => pasajero.SolicitarViaje(Id(30), "O", "D", Ahora,
+        Assert.Throws<InvalidOperationException>(() => pasajero.SolicitarViaje(Id(30), "O", "D", Ahora.Local(),
             TimeSpan.FromMinutes(30), 1, CanalSolicitud.WhatsApp, Ahora));
     }
 
@@ -131,10 +131,10 @@ public class CatalogosTests
     public void Itinerario_ConservaSusDatos()
     {
         var itinerario = new Itinerario(Id(5), EmpresaId, "AV-204", Hoy, "Base", "Aeropuerto",
-            new TimeOnly(4, 0), new TimeOnly(4, 45));
+            new TimeOnly(4, 0), new TimeOnly(4, 45), HorasDePrueba.Zona);
 
         Assert.Equal(("AV-204", EmpresaId), (itinerario.CodigoServicio, itinerario.EmpresaClienteId));
         Assert.Throws<ArgumentException>(() => new Itinerario(Id(5), Guid.Empty, "AV-204", Hoy, "B", "A",
-            new TimeOnly(4, 0), new TimeOnly(5, 0)));
+            new TimeOnly(4, 0), new TimeOnly(5, 0), HorasDePrueba.Zona));
     }
 }

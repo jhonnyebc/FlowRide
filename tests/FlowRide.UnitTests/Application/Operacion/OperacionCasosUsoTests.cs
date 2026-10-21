@@ -235,14 +235,14 @@ public class ConductoresCasosUsoTests : CasosUsoOperacionBase
         var conductor = ConductorRegistrado();
         var casoUso = new ProgramarTurnoCasoUso(ConductorDominio, Conductores, Auditoria, UnidadTrabajo, Reloj);
 
-        var turno = await casoUso.EjecutarAsync(new ProgramarTurnoDominio(conductor.Id, Ahora, Ahora.AddHours(8), Actor), CancellationToken.None);
+        var turno = await casoUso.EjecutarAsync(new ProgramarTurnoDominio(conductor.Id, Ahora.Local(), Ahora.AddHours(8).Local(), Actor), CancellationToken.None);
 
         Assert.Equal(EstadoTurno.Programado, turno.Estado);
         Assert.Equal("turno.programar", UltimaAccion);
         await Assert.ThrowsAsync<FlowRideExcepcion>(() => casoUso.EjecutarAsync(
-            new ProgramarTurnoDominio(conductor.Id, Ahora.AddHours(4), Ahora.AddHours(10), Actor), CancellationToken.None));
+            new ProgramarTurnoDominio(conductor.Id, Ahora.AddHours(4).Local(), Ahora.AddHours(10).Local(), Actor), CancellationToken.None));
         await Assert.ThrowsAsync<FlowRideExcepcion>(() => casoUso.EjecutarAsync(
-            new ProgramarTurnoDominio(conductor.Id, Ahora, Ahora, Actor), CancellationToken.None));
+            new ProgramarTurnoDominio(conductor.Id, Ahora.Local(), Ahora.Local(), Actor), CancellationToken.None));
     }
 
     [Fact]
@@ -260,11 +260,11 @@ public class ConductoresCasosUsoTests : CasosUsoOperacionBase
         Asignaciones.Ocupados.Add(ocupado.Id);
 
         var resultado = await new ConsultarDisponibilidadCasoUso(Conductores, Asignaciones)
-            .EjecutarAsync(new ConsultarDisponibilidadDominio(franja.Inicio, franja.Fin), CancellationToken.None);
+            .EjecutarAsync(new ConsultarDisponibilidadDominio(franja.Inicio.Local(), franja.Fin.Local()), CancellationToken.None);
 
         Assert.Equal(disponible.Id, Assert.Single(resultado).Id);
         await Assert.ThrowsAsync<FlowRideExcepcion>(() => new ConsultarDisponibilidadCasoUso(Conductores, Asignaciones)
-            .EjecutarAsync(new ConsultarDisponibilidadDominio(franja.Fin, franja.Inicio), CancellationToken.None));
+            .EjecutarAsync(new ConsultarDisponibilidadDominio(franja.Fin.Local(), franja.Inicio.Local()), CancellationToken.None));
     }
 
     [Fact]

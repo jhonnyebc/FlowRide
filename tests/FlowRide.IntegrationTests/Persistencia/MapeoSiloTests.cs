@@ -33,7 +33,7 @@ public class MapeoSiloTests(PostgresFixture postgres) : IAsyncLifetime
     public async Task Solicitud_SeReconstruyeConSuHistorialYCancelacion_SinDuplicarElHistorial()
     {
         var datos = await SembrarAsync();
-        var solicitud = datos.Pasajero.SolicitarViaje(Guid.NewGuid(), "Hotel", "Aeropuerto", Ahora.AddHours(2),
+        var solicitud = datos.Pasajero.SolicitarViaje(Guid.NewGuid(), "Hotel", "Aeropuerto", Ahora.AddHours(2).Local(),
             TimeSpan.FromMinutes(45), 2, CanalSolicitud.WhatsApp, Ahora, urgente: true);
         solicitud.Cancelar(Guid.NewGuid(), "Vuelo reprogramado", datos.Pasajero.Id, Ahora.AddMinutes(5));
         await GuardarAsync(solicitud);
@@ -90,7 +90,7 @@ public class MapeoSiloTests(PostgresFixture postgres) : IAsyncLifetime
 
         await using var silo = await _entorno.AbrirSiloAsync(Tenant);
         // Se salta la validación del agregado para comprobar la última línea de defensa: la restricción EXCLUDE.
-        silo.Contexto.Add(new Turno(Guid.NewGuid(), datos.Conductor.Id, datos.Turno.Inicio.AddHours(1), datos.Turno.Fin.AddHours(1)));
+        silo.Contexto.Add(new Turno(Guid.NewGuid(), datos.Conductor.Id, datos.Turno.Inicio.AddHours(1).Local(), datos.Turno.Fin.AddHours(1).Local()));
 
         var error = await Assert.ThrowsAsync<DbUpdateException>(() => silo.Contexto.SaveChangesAsync());
         Assert.Equal(PostgresErrorCodes.ExclusionViolation, Assert.IsType<PostgresException>(error.InnerException).SqlState);
@@ -199,7 +199,7 @@ public class MapeoSiloTests(PostgresFixture postgres) : IAsyncLifetime
 
     private async Task<SolicitudViaje> CrearSolicitudAsync(Datos datos)
     {
-        var solicitud = datos.Pasajero.SolicitarViaje(Guid.NewGuid(), "Hotel", "Aeropuerto", Ahora.AddHours(2),
+        var solicitud = datos.Pasajero.SolicitarViaje(Guid.NewGuid(), "Hotel", "Aeropuerto", Ahora.AddHours(2).Local(),
             TimeSpan.FromMinutes(45), 2, CanalSolicitud.WhatsApp, Ahora);
         await GuardarAsync(solicitud);
         return solicitud;

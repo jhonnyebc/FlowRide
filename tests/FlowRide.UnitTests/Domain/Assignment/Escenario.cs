@@ -22,7 +22,7 @@ internal static class Escenario
     public static readonly Guid PasajeroId = Id(901);
 
     public static SolicitudViaje Solicitud(bool urgente = false, int pasajeros = 2, DateTimeOffset? hora = null) =>
-        new(Id(900), PasajeroId, "Aeropuerto JMC", "Hotel Centro", hora ?? HoraServicio, TimeSpan.FromMinutes(45),
+        new(Id(900), PasajeroId, "Aeropuerto JMC", "Hotel Centro", (hora ?? HoraServicio).Local(), TimeSpan.FromMinutes(45),
             pasajeros, CanalSolicitud.WhatsApp, HoraServicio.AddDays(-1), urgente);
 
     public static Candidato Candidato(
@@ -51,8 +51,8 @@ internal static class Escenario
             new Turno(
                 Id(200 + conductor),
                 conductorId,
-                inicioTurno ?? HoraServicio.AddHours(-2),
-                finTurno ?? HoraServicio.AddHours(6),
+                (inicioTurno ?? HoraServicio.AddHours(-2)).Local(),
+                (finTurno ?? HoraServicio.AddHours(6)).Local(),
                 estadoTurno),
             asignacionesRecientes,
             conductorOcupado,

@@ -1,6 +1,7 @@
 using FlowRide.Domain.Comun.Consultas;
 using FlowRide.Domain.Enumeraciones;
 using FlowRide.Domain.Solicitudes;
+using FlowRide.Domain.ValoresObjeto;
 
 namespace FlowRide.Domain.Viajes.GestionViajes;
 
@@ -21,7 +22,7 @@ public sealed record IniciarViajeDominio(Guid ViajeId, Guid ActorId);
 
 public sealed record FinalizarViajeDominio(Guid ViajeId, Guid ActorId);
 
-public sealed record RegistrarParadaDominio(Guid ViajeId, string Direccion, int Orden, DateTimeOffset HoraEstimada, Guid ActorId);
+public sealed record RegistrarParadaDominio(Guid ViajeId, string Direccion, int Orden, FechaHoraLocal HoraEstimada, Guid ActorId);
 
 public sealed record RegistrarLlegadaDominio(Guid ViajeId, Guid ParadaId, Guid ActorId);
 
