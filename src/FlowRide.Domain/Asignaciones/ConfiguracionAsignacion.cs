@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using FlowRide.Domain.Assignment.Configuration;
 using FlowRide.Domain.Assignment.Rules;
 using FlowRide.Domain.Assignment.Rules.Filtering;
@@ -9,6 +10,7 @@ using FlowRide.Domain.Assignment.Rules.TieBreaking;
 
 namespace FlowRide.Domain.Asignaciones;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum EstadoConfiguracion
 {
     Borrador,

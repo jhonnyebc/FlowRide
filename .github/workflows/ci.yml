@@ -56,6 +56,40 @@ jobs:
           path: tests/FlowRide.UnitTests/TestResults/coverage/
           if-no-files-found: ignore
 
+  frontend:
+    name: Frontend (tipos, lint, pruebas y build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Instalar (versiones exactas del lockfile)
+        run: npm ci
+
+      - name: Los tipos de la API están al día con el contrato OpenAPI (ADR-0019)
+        run: npm run api:tipos && git diff --exit-code src/api/esquema.d.ts
+
+      - name: Lint (incluye la regla de no poner secretos en VITE_*)
+        run: npm run lint
+
+      - name: Tipos
+        run: npm run typecheck
+
+      - name: Pruebas (Vitest + Testing Library + axe para WCAG 2.1 AA)
+        run: npm test
+
+      - name: Build de producción
+        run: npm run build
+
   secretos:
     name: Escaneo de secretos (ADR-0014)
     runs-on: ubuntu-latest

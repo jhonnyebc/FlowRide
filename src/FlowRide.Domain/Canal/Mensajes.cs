@@ -1,7 +1,9 @@
+using System.Text.Json.Serialization;
 using FlowRide.Domain.Entidades;
 
 namespace FlowRide.Domain.Canal;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum EstadoMensajeEntrante
 {
     Pendiente,
@@ -9,6 +11,7 @@ public enum EstadoMensajeEntrante
     Fallido
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum EstadoMensajeSaliente
 {
     Pendiente,

@@ -5,12 +5,12 @@
 > Última actualización: 2026-10-19.
 
 ## Estado actual
-- **Rama de trabajo:** `feature/RF-02-seguridad-owasp` (sale de `develop` en `18039d9`; falta commit y PR). Luego la Fase 11.
+- **Rama de trabajo:** `feature/RF-36-panel-web` (Fase 11a: base del panel + Operación, SIN commit). Hecho: contrato OpenAPI tipado (TypedResults, enums como texto, números estrictos, prueba ContratoOpenApiTests), `web/` (Vite + React + Mantine, OIDC PKCE en memoria, SSE con fetch, vista del día, solicitudes, viajes, alertas), job Frontend en CI; gates verdes (548/17/143 backend, 29 web). Falta: commit y PR; luego 11b y 11c.
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
   Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6), Fase 4
   Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9), Fase 7 Canal WhatsApp (PR #10), Fase 8 Notificaciones y alertas (PR #11), Fase 9 Reportes y vista operacional (PR #12) y Fase 10 Borde común (PR #13).
 - **Fase actual:** Fase 10 cerrada. Antes de la Fase 11 se atienden los requisitos de los videos del profesor (2026-10-20):
-  fechas (PR #14, cerrado) y seguridad OWASP (implementado en su rama, con los gates en verde).
+  fechas (PR #14, cerrado) y seguridad OWASP (PR #15, cerrado). Requisitos de los videos cubiertos.
 - **Tests:** 548 unitarios (94,1 % líneas / 83,2 % ramas en Domain + Application), 17 de arquitectura, 142 de integración
   (Keycloak, Mailpit y Azurite reales con Testcontainers).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
@@ -371,10 +371,34 @@
 - **Pendiente en el entorno local (lo corre el usuario):** volver a correr `crear-operador` de tenant-a con las opciones
   `--admin-*` (aplica la política nueva al realm y le exige TOTP al administrador existente) y, para el borde, nada nuevo
   salvo que `FlowRide:Identidad:UrlKeycloak` ya está en `appsettings.Development.json` del borde.
+- Commit `a57bf8e` → PR #15 fusionada en `develop` el 2026-10-20 (merge `eb6c879`) con el CI en verde. **Seguridad cerrada.**
+
+## Sesión 2026-10-21: Fase 11a (base del Panel Web + Operación)
+- Decisiones del usuario: Mantine, tres entregas (11a operación, 11b administración, 11c configuración y reportes),
+  pruebas unitarias con axe, tema claro y oscuro. Decidido por mí: oidc-client-ts con tokens en memoria, openapi-fetch +
+  openapi-typescript, proxy de Vite a la API (sin CORS).
+- Backend para el contrato: `TypedResults` en los endpoints, `JsonStringEnumConverter` en los 26 enums, números estrictos
+  y OpenAPI también en Testing; `ContratoOpenApiTests` genera o compara `web/src/api/openapi.json`.
+- Versiones: las majors más nuevas (TS 7, Vite 8, React Router 8, Mantine 9, Vitest 5) se evitaron por compatibilidad; se
+  fijaron versiones exactas con al menos dos semanas de publicadas. npm 11 bloquea scripts de instalación (esbuild funciona sin él).
+- axe encontró que las X de cerrar de Mantine no tenían nombre: se corrigió en el tema. En pruebas, `env="test"` de Mantine.
+- Prueba local del usuario: login, solicitud por WhatsApp visible en el panel y asignación tras crear un conductor de prueba (`.http`).
+  El pasajero no recibió confirmación porque el aviso "conductor asignado" sale con `asignacion.aceptada`, no con
+  `asignacion.creada` (diseño de la Fase 8), y el conductor de prueba tiene un número falso (alerta `whatsapp.fallido`).
+- Rediseño pedido por el usuario (más elaborado): tablero `/` con indicadores (`/api/reportes/indicadores`), gráficas
+  por hora y por estado, listas de lo pendiente; la vista del día pasa a `/dia`. Marco con logo, avatar y contadores
+  por sección (`aria-description`). Detalle de solicitud con conductor asignado, aceptar o rechazar en nombre del
+  conductor (Operador logístico), decisiones del motor y estados; detalle de viaje con etapas, puntualidad, paradas,
+  incidentes y calificación. Dependencias nuevas: `@mantine/charts` 8.3.18 y `recharts` 2.15.4 (chunk `graficas`).
+  Pruebas del frontend: 41.
+- Estilo visual pedido por el usuario (referencia "quiosco de transporte" en blanco y negro): primario negro en claro y
+  blanco en oscuro (`virtualColor`), cabecera negra, tarjetas gris niebla `#f6f6f6` sin borde ni sombra, radio 8 px,
+  píldora solo en selectores de modo, pestaña activa `#9dcdd6`, Inter autohospedada (`@fontsource-variable/inter`
+  5.2.8), títulos grandes en peso 400. Se mantienen los colores con significado (semáforo, severidad, estados) por
+  OPLOG-UX-02 y ACC-02, y el tema oscuro. No se copió marca, nombre ni tipografía propietaria de la referencia.
 
 ## Próximos pasos
-1. Cerrar la rama de seguridad (commit, PR, CI).
-2. Fase 11 (Panel Web en React + TypeScript): sin tokens en cookies ni secretos en `VITE_*`; reautenticación con
+1. Fase 11 (Panel Web en React + TypeScript): sin tokens en cookies ni secretos en `VITE_*`; reautenticación con
    `max_age`/`prompt=login` para las acciones sensibles.
    **Recordatorio (2026-10-18):** itinerarios en PDF o Word por WhatsApp quedan fuera de V1; el bot responde que solo
    entiende texto y los itinerarios se registran desde el panel (RF-08). Opciones para después: recibir el archivo y
