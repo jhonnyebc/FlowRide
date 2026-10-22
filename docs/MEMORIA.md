@@ -5,14 +5,14 @@
 > Última actualización: 2026-10-19.
 
 ## Estado actual
-- **Rama de trabajo:** `feature/RF-24-panel-administracion` (Fase 11b-1: RF-24 + usuarios, empresas y pasajeros en el panel, SIN commit). Luego 11b-2 (conductores, vehículos e itinerarios).
+- **Rama de trabajo:** `develop` (al día con el merge de la PR #17). Siguiente: Fase 11b-2 (conductores, vehículos e itinerarios) en una rama nueva.
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
   Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6), Fase 4
   Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9), Fase 7 Canal WhatsApp (PR #10), Fase 8 Notificaciones y alertas (PR #11), Fase 9 Reportes y vista operacional (PR #12), Fase 10 Borde común (PR #13), fechas con zona (PR #14), seguridad OWASP
-  (PR #15) y Fase 11a Panel Web base y Operación (PR #16).
-- **Fase actual:** Fase 11a cerrada (PR #16, 2026-10-21). Siguen 11b (administración) y 11c (configuración y reportes).
-- **Tests:** 548 unitarios (94,1 % líneas / 83,2 % ramas en Domain + Application), 17 de arquitectura, 143 de integración
-  (Keycloak, Mailpit y Azurite reales con Testcontainers) y 41 del frontend (Vitest + axe).
+  (PR #15), Fase 11a Panel Web base y Operación (PR #16) y Fase 11b-1 usuarios, empresas y pasajeros (PR #17).
+- **Fase actual:** Fase 11b-1 cerrada (PR #17, 2026-10-21). Siguen 11b-2 (conductores, vehículos e itinerarios) y 11c (configuración y reportes).
+- **Tests:** 553 unitarios (94,1 % líneas / 83,2 % ramas en Domain + Application), 17 de arquitectura, 145 de integración
+  (Keycloak, Mailpit y Azurite reales con Testcontainers) y 50 del frontend (Vitest + axe).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
   Azurite (10000). Los secretos viven en el AppData **real** del usuario (`flowride-aprovisionamiento` y
   `flowride-tenant-a`, configurados por él el 2026-10-18). `tenant-a` se recreó ese día (base nueva con todas las
@@ -422,10 +422,11 @@
   grupo Administración y la ruta de Usuarios está protegida para otros roles.
 - Al correr la integración completa Docker Desktop estaba apagado (DockerUnavailableException); las pruebas de RF-24
   (Keycloak y autorización) ya habían pasado antes con Docker encendido.
+- Commit `8e6933e` → PR #17 fusionada en `develop` el 2026-10-21 (merge `ff42931`). Con Docker de nuevo arriba, la
+  integración completa pasó (145) y el CI de la rama quedó en verde. **Fase 11b-1 cerrada.**
 
 ## Próximos pasos
-1. Fase 11b (administración): usuarios, empresas, pasajeros, conductores (turnos y documentos), vehículos e
-   itinerarios desde el panel, con el mismo estilo visual.
+1. Fase 11b-2: conductores (turnos y documentos), vehículos e itinerarios desde el panel, con el mismo estilo visual.
    **Recordatorio (2026-10-18):** itinerarios en PDF o Word por WhatsApp quedan fuera de V1; el bot responde que solo
    entiende texto y los itinerarios se registran desde el panel (RF-08). Opciones para después: recibir el archivo y
    alertar al operador, o extracción automática (requeriría ADR nuevo).

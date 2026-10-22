@@ -170,7 +170,7 @@ Decisiones del usuario (2026-10-20): Mantine, tres entregas, pruebas unitarias c
 
 11b — administración (decisiones del usuario, 2026-10-21: lista con panel lateral para crear o editar; el Operador logístico
 consulta y programa turnos, Usuarios es solo del Administrador; dos entregas):
-- [x] 11b-1 (rama `feature/RF-24-panel-administracion`): RF-24 en el backend (`PUT /api/usuarios/{id}`: nombre, correo y
+- [x] 11b-1 (PR #17, cerrada el 2026-10-21): RF-24 en el backend (`PUT /api/usuarios/{id}`: nombre, correo y
   WhatsApp; el correo nuevo se sincroniza con Keycloak y queda pendiente de confirmar) y pantallas de usuarios, empresas
   cliente y pasajeros. Pruebas: 553 unitarias, 17 de arquitectura, 50 del frontend.
 - [ ] 11b-2: conductores (turnos y documentos), vehículos e itinerarios.
