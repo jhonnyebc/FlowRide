@@ -84,7 +84,17 @@ Elegida por alinearse con la confidencialidad B2B2B, contención de fallos y sim
 - **ADR-0004** — PostgreSQL es la persistencia transaccional de cada Silo.
 - **ADR-0010** — automatiza el despliegue y la operación por tenant.
 
-## Notas de implementación
+#
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- Cada operador tiene su propia base PostgreSQL (`flowride_<tenant>`) y su propio rol con contraseña generada; la herramienta `FlowRide.Aprovisionamiento` (comando `crear-operador`) crea ambos, aplica las migraciones y deja la cadena de conexión en el almacén de secretos del operador.
+- Varias bases de operadores pueden compartir un mismo servidor PostgreSQL (así se dimensiona en ADR-0010 y así corre en local) sin romper el Silo: el aislamiento lo dan la base y las credenciales propias, que nunca se comparten.
+- Una base de catálogo de plataforma guarda solo los operadores y la tabla de ruteo del borde; no contiene datos operacionales.
+- El stack conoce su tenant por su configuración de despliegue y rechaza los tokens cuyo claim `tenant_id` no coincide; el borde solo deja pasar a un subdominio los tokens del realm de ese operador. Una prueba de integración verifica que el token de un operador no abre la API de otro.
+- `empresaId` quedó como la entidad `EmpresaCliente` dentro del Silo, sin papel en el aislamiento.
+
+# Notas de implementación
 
 - El tenant debe resolverse a partir de una identidad confiable y no de un parámetro libre enviado por el cliente.
 - Las credenciales de conexión nunca se comparten entre operadores.

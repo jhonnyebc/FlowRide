@@ -82,7 +82,16 @@ El detalle de la comparación por atributo de calidad está en la tabla siguient
 - **ADR-0009** — define la estructura extensible del motor de asignación.
 - **ADR-0010** — define despliegue y escalado de cada instancia.
 
-## Notas de implementación
+#
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- Los módulos viven como carpetas por contexto dentro de `FlowRide.Application` (Tenancy, Identidad, Operación, Solicitudes, Asignación, Viajes, Canal, Notificaciones, Reportes, Horarios y Borde), con sus puertos de entrada y de salida; un solo artefacto, `FlowRide.API`, se despliega por operador.
+- `FlowRide.ArchitectureTests` (17 pruebas con ArchUnitNET) hace cumplir los límites: `Domain` no depende de nada externo, los endpoints solo conocen puertos de entrada y DTO, y los casos de uso no se referencian entre módulos por su implementación.
+- `FlowRide.Borde` y `FlowRide.Aprovisionamiento` son proyectos aparte porque pertenecen a la plataforma (se despliegan una vez, no por operador); no son una extracción de módulos de negocio.
+- Ningún módulo se ha extraído como servicio: no apareció un driver de escalado o de despliegue diferenciado.
+
+# Notas de implementación
 
 - Las referencias entre proyectos deben mantener `Domain` sin dependencias hacia infraestructura.
 - Los módulos no comparten detalles de proveedor; consumen interfaces de Application o contratos de dominio.

@@ -867,7 +867,17 @@ Los requisitos de disponibilidad y capacidad productiva deberán validarse nueva
 
 ---
 
-## Notas de implementación
+#
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- El número de prueba de Meta (WhatsApp Cloud API) se integra con `WhatsAppSandboxAdapter` detrás de `IWhatsAppGateway`; `WhatsAppSimuladoAdapter` permite probar sin Meta (en el entorno de pruebas, un endpoint simulado inyecta mensajes).
+- El webhook valida la firma `X-Hub-Signature-256` (también lo hace el borde, ADR-0012) y guarda cada mensaje en una bandeja de entrada idempotente por identificador de mensaje antes de responder 200; el proceso del canal lo atiende después.
+- Los mensajes salientes se guardan y los envía el mismo proceso con reintentos; los fallos permanentes generan el evento `canal.envio_fallido` y una alerta en el Panel Web.
+- El bot es un menú numerado con estado de conversación para pasajero y conductor (solicitar, consultar, cancelar, aceptar o rechazar un servicio, iniciar y finalizar el viaje, reportar incidentes y calificar).
+- En local, Meta llega por un túnel HTTPS (ngrok con dominio estático); la guía está en `docs/GUIA-WHATSAPP-META.md`.
+
+# Notas de implementación
 
 * Definir `IWhatsAppGateway` dentro de una capa independiente del proveedor.
 * Implementar `WhatsAppSandboxAdapter` en Infrastructure.

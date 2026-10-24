@@ -1068,7 +1068,17 @@ Tenant B
 
 ---
 
-## Notas de implementación
+#
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- El motor vive en `FlowRide.Domain/Assignment` (`AssignmentEngine`, `IAssignmentRule`): el ADR no exige que esté en Application y así queda sin dependencias.
+- Las reglas se agrupan en eliminatorias (las cuatro obligatorias van en toda configuración), de prioridad, de puntuación y de desempate estable sin aleatoriedad.
+- La configuración es versionada por operador (`/api/motor/configuraciones`), con activación y vuelta a una versión anterior; cambiarla es una acción del Administrador con autenticación reciente (ADR-0003).
+- Cada evaluación queda como decisión (decision log) con los candidatos, el resultado de cada regla, los puntajes, la posición y el desempate; el Panel Web la muestra en el detalle de la solicitud.
+- Hay pruebas unitarias por regla y del motor completo, y la asignación manual pasa por el mismo motor para validar al candidato elegido.
+
+# Notas de implementación
 
 * Separar reglas eliminatorias de reglas de puntuación.
 * Definir una interfaz común.

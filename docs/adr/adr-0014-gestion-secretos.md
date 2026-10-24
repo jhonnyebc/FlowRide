@@ -79,7 +79,16 @@ Si una credencial de un operador se filtrara o se compartiera, el aislamiento Si
 
 - `OPLOG-SEG-02`, `ADM-SEG-02`, `COND-SEG-01`; Escenario 3 de Drivers; `RF-03`, `RF-19`.
 
-## Notas de implementación
+#
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- En local, el equivalente del Key Vault de cada operador es un almacén *user-secrets* propio (`flowride-<tenant>`), que la herramienta de aprovisionamiento escribe y la API lee en desarrollo. Los secretos de la plataforma viven en otro almacén.
+- Cada operador tiene su propia clave para cifrar los campos sensibles (por ejemplo, teléfono y licencia del conductor), con versión para poder rotarla agregando una nueva sin perder los datos cifrados con la anterior.
+- No hay secretos en `appsettings.json` ni en el repositorio; las credenciales del entorno local se leen de un `.env` que no se versiona.
+- gitleaks revisa cada push (hook local) y cada PR (job del CI), y el Panel Web tiene una regla de lint que impide poner secretos en variables `VITE_*` (ADR-0018).
+
+# Notas de implementación
 
 - Ningún secreto se escribe en `appsettings.json`, en archivos `.env` versionados ni en variables que terminen en logs (ADR-0011).
 - El arranque del stack falla de forma explícita si falta un secreto: nunca se sigue con un valor por defecto.
@@ -94,3 +103,10 @@ Si una credencial de un operador se filtrara o se compartiera, el aislamiento Si
 - **ADR-0010** — los secretos se inyectan al arrancar la imagen inmutable.
 - **ADR-0012** — secretos del borde y certificados TLS.
 - **ADR-0013** — cifrado y credenciales del bucket.
+
+## Referencias
+
+- Microsoft. *Azure Key Vault — overview* y *Managed identities for Azure resources*. Microsoft Learn.
+- Microsoft. *Safe storage of app secrets in development in ASP.NET Core* (user-secrets). Microsoft Learn.
+- OWASP. *Secrets Management Cheat Sheet*. OWASP Cheat Sheet Series.
+- Gitleaks. *Gitleaks — detect secrets in git repositories*. github.com/gitleaks/gitleaks.

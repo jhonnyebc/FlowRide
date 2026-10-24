@@ -26,7 +26,7 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 8 | Notificaciones y alertas | Notificaciones | 0007, 0015, 0016 | ✅ PR #11 fusionada |
 | 9 | Reportes y vista operacional | Reportes | 0006, 0013 | ✅ PR #12 fusionada |
 | 10 | Borde común | Plataforma | 0012, 0014 | ✅ PR #13 fusionada |
-| 11 | Panel Web | Web | 0003, 0015, 0016, 0019 | 🟡 11a cerrada (PR #16); 11b y 11c pendientes |
+| 11 | Panel Web | Web | 0003, 0015, 0016, 0019 | 🟡 11a (PR #16) y 11b-1 (PR #17) cerradas; 11b-2 y 11c pendientes |
 | 12 | Operación: despliegue, backups y retención | Plataforma | 0010, 0011, 0013 | ⬜ |
 
 ## Detalle por fase
@@ -178,8 +178,12 @@ consulta y programa turnos, Usuarios es solo del Administrador; dos entregas):
 11c — configuración y reportes:
 - [ ] Parámetros, plantillas de WhatsApp, configuración del motor, indicadores y reportes con exporte (RF-42, RF-46 a RF-49).
 
+### Entrega de documentación (2026-10-28)
+- [x] Documentación del proyecto en Markdown en `docs/` (índice en `docs/README.md`): DAS v3.0 con diagramas en Mermaid, drivers, restricciones, funcionalidades significativas, trade-off y los 20 ADR con sus notas de implementación (ADR-0020 nuevo: fechas con zona horaria).
+
 ### Fase 12 — Operación
 - [ ] Dockerfile con versión fija, imagen semver+SHA, dos stacks locales (uno por operador).
+- [ ] Demostración con HTTPS local (decisión del usuario, 2026-10-22: basta con local, sin publicar en internet): el borde sirve el Panel Web compilado en `https://tenant-a.localhost:8443`; Keycloak con HTTPS (certificado de desarrollo o detrás del borde); direcciones de regreso del realm y CSP del borde ajustadas a esos orígenes; certificado de desarrollo confiado (`dotnet dev-certs https --trust`). Para WhatsApp sigue haciendo falta un túnel (ngrok) en una red que no lo bloquee.
 - [ ] Backups, jobs de retención y archivo con lock consultivo; pruebas de recuperación y de carga.
 
 ## Checklist por RF
@@ -205,10 +209,10 @@ consulta y programa turnos, Usuarios es solo del Administrador; dos entregas):
 | RF-17 | Notificación al conductor asignado | 8 | ✅ |
 | RF-18 | Actualización de estado del viaje por WhatsApp | 7 | ✅ |
 | RF-19 | Aislamiento físico entre tenants | 1 | ✅ Spike 3 |
-| RF-20 | Configuración separada por tenant | 1 | 🟡 BD y secretos por operador |
+| RF-20 | Configuración separada por tenant | 1, 3, 5 | ✅ base, secretos, realm, objetos, parámetros y configuración del motor por operador |
 | RF-21 | Configuración avanzada de reglas | 5 | ✅ |
-| RF-22 | Cierre de sesión | 2 | ⬜ |
-| RF-23 | Recuperación de credenciales | 2 | 🟡 |
+| RF-22 | Cierre de sesión | 11a | ✅ «Cerrar sesión» del Panel Web (cierra la sesión en Keycloak) |
+| RF-23 | Recuperación de credenciales | 2, 11a | ✅ «¿Olvidaste tu contraseña?» de Keycloak con correo (probado en local con Mailpit, 2026-10-21) |
 | RF-24 | Actualización de información de usuarios | 2, 11b | ✅ API y panel (11b-1) |
 | RF-25 | Activación e inactivación de usuarios | 2, 11b | ✅ API con revocación en Keycloak (Fase 2) y panel (11b-1) |
 | RF-26 | Registro de conductores | 3 | ✅ |
@@ -237,7 +241,7 @@ consulta y programa turnos, Usuarios es solo del Administrador; dos entregas):
 | RF-49 | Reporte histórico por cliente empresarial | 9 | ✅ |
 | RF-50 | Registro de eventos del sistema | 0 | 🟡 log estructurado por solicitud |
 | RF-51 | Registro de errores y excepciones | 0 | 🟡 ProblemDetails + log con traceId |
-| RF-52 | Auditoría de acciones administrativas | 2 | ⬜ |
+| RF-52 | Auditoría de acciones administrativas | 2 | ✅ auditoría encadenada por hash de las acciones sensibles, verificable con `/api/auditoria/verificacion` |
 | RF-53 | Monitoreo técnico de disponibilidad | 0 | 🟡 health checks + métricas OTel |
 | RF-54 | Calificación del servicio | 6 | ✅ |
 | RF-55 | Ingesta de telemetría GPS | — | ⛔ |

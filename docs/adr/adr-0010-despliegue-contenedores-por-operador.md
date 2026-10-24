@@ -5,7 +5,7 @@
 | Campo | Valor |
 |---|---|
 | ID | ADR-0010 |
-| Fecha | 2026-09-09 (revisado 2026-09-23) |
+| Fecha | 2026-09-09 (revisado 2026-09-23 y 2026-10-16) |
 | Estado | **Accepted** |
 | Participantes | Sebastián Zapata Naranjo, Andrés David Ortiz Mejía, Jhonny Estiven Benítez Caro |
 | Curso | ISS0666 — Ingeniería del Software 2 (UCO, semestre 2-2026) |
@@ -80,7 +80,7 @@ Estos valores no son precios cotizados: la plataforma que se elija debe caber en
 | Partida | Dimensionamiento de referencia | Tope objetivo (USD/mes) |
 |---|---|---|
 | Cómputo de la aplicación | 1 réplica, ~0,5–1 vCPU, 1–2 GB RAM (Azure Container Apps, precio por confirmar) | 12 |
-| Base del operador | **Azure Database for PostgreSQL Flexible Server**, SKU Burstable B1ms + 32 GB, instancia gestionada compartida (ADR-0002 §6). Costo real ≈17 USD/mes por la instancia completa (≈13 cómputo + ≈4 almacenamiento; precios de Azure consultados 2026-09-23), prorrateado entre los operadores que la comparten | 8 (compartida entre 2–3 operadores) |
+| Base del operador | **Azure Database for PostgreSQL Flexible Server**, SKU Burstable B1ms + 32 GB, instancia gestionada compartida (compatible con ADR-0002 porque cada operador conserva su propia base y sus propias credenciales; ver sus notas de implementación). Costo real ≈17 USD/mes por la instancia completa (≈13 cómputo + ≈4 almacenamiento; precios de Azure consultados 2026-09-23), prorrateado entre los operadores que la comparten | 8 (compartida entre 2–3 operadores) |
 | Almacenamiento de objetos | **Azure Blob Storage** (tier Hot), backups, archivo de 5 años y exportes (ADR-0013). Costo real ≈0,2–1 USD/mes al volumen del curso | 3 |
 | Borde: gateway, WAF y router prorrateados | 2 réplicas compartidas entre operadores (ADR-0012) | 4 |
 | Gestor de secretos prorrateado | **Azure Key Vault**, un vault por operador (ADR-0014). Costo real ≈0,15–0,65 USD/mes por operador | 1 |
@@ -153,7 +153,17 @@ WhatsApp queda fuera del sobre, como costo variable (restricción de *Presupuest
 - **ADR-0013** — backups.
 - **ADR-0014** — secretos inyectados.
 
-## Notas de implementación
+#
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- Los procesos en segundo plano de cada stack son: cola de asignación (incluido el vencimiento de asignaciones sin respuesta), canal WhatsApp, notificaciones (Outbox) y recálculo de horarios al iniciar (ADR-0020).
+- Health checks en `/health/live` y `/health/ready`.
+- En la etapa del curso el entorno es local con `docker compose` (PostgreSQL, Keycloak, Mailpit y Azurite) y la demostración se hace con HTTPS local a través del borde. El Dockerfile con versión fija, la imagen etiquetada con versión semántica y SHA y los dos stacks locales (uno por operador) son la Fase 12 del plan.
+
+> **Revisión 2026-10-16 — aprovisionamiento por línea de comandos.** El pipeline de aprovisionamiento de este ADR se implementa como una herramienta de línea de comandos (`FlowRide.Aprovisionamiento`, comandos `crear-operador`, `migrar`, `registrar-ruta` y `listar-rutas`) y **no** como un endpoint: crear bases, roles y realms exige permisos que ninguna API expuesta a Internet debe tener. La operan un administrador técnico o el pipeline de despliegue. El pipeline es idempotente en el orden catálogo → secreto → base y rol → migraciones → realm → clave de cifrado → contenedor de objetos → operador activo, y se puede repetir si falla a mitad.
+
+# Notas de implementación
 
 - Pipeline de aprovisionamiento (RF-03), idempotente: crear base → aplicar migraciones → crear secretos → crear realm → registrar la ruta en el borde → desplegar la imagen vigente.
 - Los *jobs* de fondo toleran varias réplicas (`SKIP LOCKED`, ADR-0007); los jobs de retención usan un *lock* consultivo de PostgreSQL.

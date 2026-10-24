@@ -5,7 +5,7 @@
 | Campo | Valor |
 |---|---|
 | ID | ADR-0012 |
-| Fecha | 2026-09-22 |
+| Fecha | 2026-09-22 (revisado 2026-10-22: tier del canal alineado con ADR-0010) |
 | Estado | **Accepted** |
 | Participantes | Sebastián Zapata Naranjo, Andrés David Ortiz Mejía, Jhonny Estiven Benítez Caro |
 | Curso | ISS0666 — Ingeniería del Software 2 (UCO, semestre 2-2026) |
@@ -23,7 +23,7 @@ Además:
 
 - la restricción técnica *Seguridad de datos* exige cifrado en tránsito y defensa en profundidad;
 - los webhooks son un endpoint público que atacantes pueden sondear (Escenario 3);
-- el canal debe sostener el tier de 99,9 % en el ingreso (ADR-0010).
+- el canal debe sostener su tier de disponibilidad, que ADR-0010 fijó en 99,5 % (antes 99,9 %), sin perder mensajes dentro de la ventana de reintentos de Meta.
 
 Exponer cada stack directamente obligaría a repetir en N lugares TLS, protección, límites de tasa y validación de webhooks, y no resolvería el enrutamiento de un único *callback* de Meta hacia N operadores.
 
@@ -73,7 +73,7 @@ Un **borde común de plataforma**, con 2 réplicas y **sin estado ni datos opera
 
 - Un único punto con TLS, WAF, límites de tasa y validación de firma.
 - Los stacks del operador no quedan expuestos directamente a Internet.
-- El canal alcanza el tier de 99,9 % en el ingreso con 2 réplicas compartidas (ADR-0010).
+- Con 2 réplicas compartidas el borde no es el punto débil del ingreso: el tier del canal es 99,5 % (ADR-0010) y lo limita el stack del operador; la pérdida de mensajes la evita el reintento de Meta.
 
 **Negativas**
 
@@ -103,7 +103,17 @@ Un **borde común de plataforma**, con 2 réplicas y **sin estado ni datos opera
 - **ADR-0013** — estáticos del panel.
 - **ADR-0014** — *app secret* y certificados.
 
-## Notas de implementación
+#
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- El borde es el proyecto `FlowRide.Borde` con YARP 2.3.0. La tabla de ruteo (subdominio y `phone_number_id` → URL del stack) vive en el catálogo de plataforma, la mantiene la herramienta de aprovisionamiento (`registrar-ruta`) y el borde la recarga sin reiniciarse.
+- El router de webhooks valida la firma de Meta con el secreto de la aplicación de la plataforma y reenvía cada evento al stack según su `phone_number_id`; el stack vuelve a validar la firma (defensa en profundidad).
+- Límites de tasa por IP (panel y API, y webhooks por separado), tamaño máximo de petición, cabeceras de seguridad y ocultamiento de las cabeceras de servidor.
+- A `/api/` de un subdominio solo pasa un token vigente del realm de ese operador; las claves públicas de cada realm se guardan en caché.
+- En local atiende `https://tenant-a.localhost:8443` con certificado de desarrollo. El WAF gestionado queda para la Fase 12.
+
+# Notas de implementación
 
 - La tabla de ruteo se genera en el aprovisionamiento y se recarga sin reiniciar.
 - Responder a Meta en ≤500 ms: el router solo valida y reenvía.

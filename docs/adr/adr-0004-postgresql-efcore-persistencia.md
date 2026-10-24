@@ -774,7 +774,17 @@ Administrar PostgreSQL directamente en infraestructura propia o máquinas virtua
 * **ADR-0007** — Outbox y concurrencia usan la transacción del motor.
 * **ADR-0005** — telemetría usa particiones en PostgreSQL para V1.
 
-## Notas de implementación
+#
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- EF Core 10 con Npgsql 10 sobre PostgreSQL 17. El esquema operativo es `ops`, en snake_case (`EFCore.NamingConventions`), igual al modelo entidad-relación; la herencia de `Usuario` (pasajero, conductor) es TPT.
+- Las fechas pasadas se guardan como `timestamptz` en UTC; los eventos futuros guardan además su hora local y su zona horaria (ADR-0020). Los enums se guardan como texto.
+- Los traslapes que no deben existir (turnos del mismo conductor y asignaciones del mismo conductor o del mismo vehículo en la misma franja) se protegen además con restricciones `EXCLUDE` en la base.
+- Las migraciones son versionadas y las aplica la herramienta de aprovisionamiento (`crear-operador`, `migrar`); su historial vive en `ops.__ef_migraciones`.
+- Las pruebas de integración corren contra PostgreSQL real con Testcontainers.
+
+# Notas de implementación
 
 * Versionar migraciones y registrar versión de esquema por tenant.
 * Definir índices según consultas reales.

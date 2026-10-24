@@ -515,7 +515,14 @@ Las métricas de hit rate, miss rate y latencia permiten identificar si una cach
 
 ---
 
-## Notas de implementación
+#
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- Se implementó con `IMemoryCache` detrás de dos puertos: `ICacheParametros` (catálogo de parámetros del operador, TTL configurable de hasta 60 s e invalidación explícita al cambiar un parámetro) e `ICacheReportes` (indicadores y reportes, TTL configurable de hasta 10 minutos).
+- Solicitudes, asignaciones, viajes en curso, alertas y la vista centralizada del día nunca se leen desde la caché: siempre salen de PostgreSQL.
+
+# Notas de implementación
 
 * Utilizar `IMemoryCache`.
 * Aplicar Cache-Aside solo donde exista beneficio.

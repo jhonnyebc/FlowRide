@@ -5,7 +5,7 @@
 | Campo | Valor |
 |---|---|
 | ID | ADR-0018 |
-| Fecha | 2026-10-13 |
+| Fecha | 2026-10-13 (revisado 2026-10-20) |
 | Estado | **Accepted** |
 | Participantes | Sebastián Zapata Naranjo, Andrés David Ortiz Mejía, Jhonny Estiven Benítez Caro |
 | Curso | ISS0666 — Ingeniería del Software 2 (UCO, semestre 2-2026) |
@@ -95,8 +95,35 @@ Una fase se cierra cuando:
 - **Restringir dependencias**: pruebas de arquitectura.
 - **Limitar exposición**: escaneo de secretos.
 
+## Escenarios y requisitos relacionados
+
+- Restricciones técnicas 18 (*Control de versiones y calidad*) y 19 (*Código y pruebas*).
+- QA-11 (Mantenibilidad): los cambios de reglas o de proveedor deben quedar localizados y probados.
+- ADM-SEG-01 y la restricción de seguridad de datos: ningún secreto llega al repositorio (escaneo en cada push y en cada PR).
+- ADR-0009 exige pruebas unitarias por regla del motor; el gate de cobertura las mantiene.
+
 ## ADRs relacionados
 - **ADR-0001** y **ADR-0017**: límites que verifican las pruebas de arquitectura.
 - **ADR-0010**: imagen inmutable por cada merge a `main`.
 - **ADR-0014**: escaneo de secretos.
 - **ADR-0019**: gates del frontend.
+
+## Notas de implementación
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- Ramas `feature/RF-xx-*` (o `docs/*`) desde `develop`, PR hacia `develop` y, en la entrega, de `develop` a `main`. Commits en español con prefijo de tipo (`feat`, `fix`, `docs`…).
+- GitHub Actions (`.github/workflows/ci.yml`) corre tres jobs en cada PR:
+  - **Backend:** restaurar, compilar sin advertencias, `dotnet format`, pruebas unitarias con gate de cobertura (Domain + Application ≥ 80 % de líneas y ≥ 70 % de ramas), pruebas de arquitectura y pruebas de integración con Testcontainers.
+  - **Frontend:** instalar con el lockfile, verificar que los tipos del contrato OpenAPI estén al día, lint (incluye la regla de no poner secretos en `VITE_*`), tipos, pruebas y build.
+  - **Escaneo de secretos:** gitleaks sobre el historial.
+- `main` está protegida por reglas del repositorio: no admite push forzado ni borrado, y exige PR con los checks en verde.
+
+> **Revisión 2026-10-20 — escaneo de secretos antes del push (requisito del curso sobre secretos).** Además del job del CI, un hook versionado (`.githooks/pre-push`, activado con `core.hooksPath`) ejecuta gitleaks antes de cada push, localmente o en Docker, y bloquea el push si encuentra un secreto o si no puede escanear. Así un secreto no llega a GitHub ni siquiera en una rama de trabajo.
+
+## Referencias
+
+- GitHub. *GitHub Actions documentation* y *About rulesets*. docs.github.com.
+- Conventional Commits. *Conventional Commits 1.0.0*. conventionalcommits.org.
+- Gitleaks. *Gitleaks — detect secrets in git repositories*. github.com/gitleaks/gitleaks.
+- Coverlet. *Coverlet — cross-platform code coverage for .NET*. github.com/coverlet-coverage/coverlet.

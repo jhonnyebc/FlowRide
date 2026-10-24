@@ -88,7 +88,15 @@ Guardar archivos en el disco del contenedor los perdería al reemplazar la insta
 - **ADR-0012** — estáticos del Panel Web servidos desde el borde.
 - **ADR-0014** — cifrado en reposo y credenciales del bucket.
 
-## Notas de implementación
+#
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- El puerto `IAlmacenObjetos` está implementado con Azure Blob Storage (Azurite en local). La herramienta de aprovisionamiento crea un contenedor privado por operador.
+- Los documentos del conductor (PDF, PNG o JPG de hasta 5 MB) y los exportes de reportes en CSV se guardan en ese contenedor y se descargan con una URL firmada (SAS) de corta duración; el contenedor nunca es público.
+- Backups, archivo histórico y ciclos de vida por nivel de acceso quedan para la Fase 12.
+
+# Notas de implementación
 
 - Probar la restauración de un backup por operador al menos una vez por mes (un backup no probado no cuenta).
 - El job de archivo corre mensualmente con un *lock* consultivo y registra en auditoría lo archivado.

@@ -5,7 +5,7 @@
 > Última actualización: 2026-10-19.
 
 ## Estado actual
-- **Rama de trabajo:** `develop` (al día con el merge de la PR #17). Siguiente: Fase 11b-2 (conductores, vehículos e itinerarios) en una rama nueva.
+- **Rama de trabajo:** `docs/entrega-documentacion` (documentación para la entrega del 2026-10-28, SIN commit). Después: Fase 11b-2.
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
   Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6), Fase 4
   Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9), Fase 7 Canal WhatsApp (PR #10), Fase 8 Notificaciones y alertas (PR #11), Fase 9 Reportes y vista operacional (PR #12), Fase 10 Borde común (PR #13), fechas con zona (PR #14), seguridad OWASP
@@ -425,6 +425,32 @@
 - Commit `8e6933e` → PR #17 fusionada en `develop` el 2026-10-21 (merge `ff42931`). Con Docker de nuevo arriba, la
   integración completa pasó (145) y el CI de la rama quedó en verde. **Fase 11b-1 cerrada.**
 
+## Sesión 2026-10-22 a 2026-10-24: documentación para la entrega (rama `docs/entrega-documentacion`)
+- El usuario debe entregar el 2026-10-28 toda la documentación en Markdown y pidió priorizarla sobre la 11b-2. Decisiones:
+  documentación en `docs/` del repo; diagramas en Mermaid dentro de los `.md`; no se hacen las secciones que la plantilla
+  del profesor (`Downloads/Plantilla Documento de Arquitectura de Software (DAS).docx`) marca «(NO)» (propósito, vista
+  funcional con la incepción ágil, diagramas de clases, objetos y colaboración); ADR-0020 nuevo para fechas y revisiones
+  fechadas en ADR-0003 (seguridad OWASP, RF-24), ADR-0010 (aprovisionamiento por CLI) y ADR-0018 (gitleaks).
+- Conversión sin pandoc con convertidores propios (en el scratchpad, fuera del repo): DAS `.docx` → `DAS.md` (títulos
+  numerados como en Word, 67 tablas), los 4 Excel de `OneDrive - UCO/FlowRide/Entregables` → `.md`, y las 40 tablas de
+  ancho fijo de los drivers → tablas Markdown (GitHub no dibuja las de pandoc).
+- Correcciones: canal WhatsApp en 99,5 % (ADR-0010); RF-55/RF-56 y todo lo de GPS/ETA marcado fuera de V1 (se conserva
+  por trazabilidad); nombres reales de adaptadores; línea base reescrita con lo implementado; PoC/Spikes con su evidencia;
+  hoja de ADR del trade-off (0003/0004/0008 aceptados, 0018–0020 agregados). Las hojas del taller del trade-off (lluvia de
+  escenarios, votos, banco de 164) no se tocaron.
+- 8 diagramas Mermaid validados con el parser oficial (mermaid 11.17.2): componentes, paquetes (referencias reales de los
+  `.csproj`), 5 secuencias (WhatsApp → asignación, aceptación del conductor, abandono de turno, login con reautenticación,
+  alta de operador) y despliegue.
+- Los 20 ADR tienen las 10 secciones y una subsección «Implementación en FlowRide (estado al 22-10-2026)»; índice de la
+  entrega en `docs/README.md`. ROADMAP: RF-20, RF-22, RF-23 y RF-52 pasan a ✅; se agregan la entrega de documentación y
+  la demostración con HTTPS local (Fase 12, basta con local según el usuario).
+- 2026-10-24: modelo entidad-relación nuevo (`docs/diagramas/modelo-entidad-relacion.md`, 6 erDiagram) generado del
+  esquema real de PostgreSQL con las FK reales; reemplaza el modelo de diseño del 13-10, que estaba desactualizado. Se
+  borraron del repo los diagramas viejos (PNG de clases/ER, PDF, drawio y su generador, figuras de la v2.0 del DAS); siguen
+  en el historial de git. Cada diagrama se dibujó con Edge sin interfaz y se revisó con un detector propio de líneas que
+  atraviesan cajas; se rehicieron paquetes (flechas por grupo) y despliegue (un solo stack representativo) y se
+  ajustaron las secuencias (pasos por el borde, lectura del mensaje saliente).
+
 ## Próximos pasos
 1. Fase 11b-2: conductores (turnos y documentos), vehículos e itinerarios desde el panel, con el mismo estilo visual.
    **Recordatorio (2026-10-18):** itinerarios en PDF o Word por WhatsApp quedan fuera de V1; el bot responde que solo
@@ -434,6 +460,6 @@
    pasajero recibe "ya tiene conductor"). Requiere ngrok en una red que no lo bloquee y un turno vigente el día de la prueba.
    También: marcar el job "Frontend" como requerido en `develop` y actualizar las herramientas de pruebas con alertas de
    `npm audit` (vitest, postcss, tinypool; solo desarrollo).
-3. RF-23: probar "Olvidé mi contraseña" con la pantalla de login cuando exista el Panel Web (Fase 11).
+3. Entrega de documentación del 2026-10-28: PR de la rama `docs/entrega-documentacion` hacia `develop` (ver la sesión del 2026-10-22).
 4. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).
 5. Opcional: SonarCloud (crear el proyecto y el secreto `SONAR_TOKEN`).
