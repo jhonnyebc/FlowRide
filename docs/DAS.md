@@ -1403,7 +1403,7 @@ La vista lógica describe la estructura del sistema en términos de clases, obje
 
 > No aplica en esta entrega: la plantilla del curso marca esta sección como «(NO)».
 
-Material de apoyo (no evaluado): el modelo de dominio está en [diagramas/1_Clases_Dominio.png](diagramas/1_Clases_Dominio.png), el del motor de asignación en [diagramas/2_Clases_Motor_Asignacion.png](diagramas/2_Clases_Motor_Asignacion.png) y el modelo entidad-relación en [diagramas/3_Entidad_Relacion.png](diagramas/3_Entidad_Relacion.png).
+Material de apoyo (no evaluado): el modelo entidad-relación de las bases de datos, generado del esquema real de PostgreSQL, está en [diagramas/modelo-entidad-relacion.md](diagramas/modelo-entidad-relacion.md).
 
 ### 9.2.2 Diagrama de objetos
 
@@ -1421,71 +1421,71 @@ El diagrama de componentes representa las piezas de software del sistema, sus re
 
 #### 9.3.1.1 Backend FlowRide — instancia Silo del operador
 
-Muestra los componentes de un stack de operador, el borde común por el que entra todo el tráfico, los actores que lo usan y los sistemas externos con los que se integra. Reemplaza el diagrama C4 del 09-09-2026 (que se conserva en `diagramas/das-fig1-componentes-c4-2026-09-09.png`), anterior a ADR-0008, ADR-0010, ADR-0012 y ADR-0019.
+Muestra los componentes de un stack de operador, el borde común por el que entra todo el tráfico, los actores que lo usan y los sistemas externos con los que se integra. Reemplaza el diagrama C4 del 09-09-2026, anterior a ADR-0008, ADR-0010, ADR-0012 y ADR-0019.
 
 ##### 9.3.1.1.1 Diagrama
 
 ```mermaid
-flowchart LR
-    pas["Pasajero<br/>(WhatsApp)"]
-    con["Conductor<br/>(WhatsApp)"]
-    adm["Administrador y<br/>Operador logístico"]
+flowchart TB
+    subgraph actores["Actores"]
+        direction LR
+        pas["Pasajero<br/>(WhatsApp)"]
+        con["Conductor<br/>(WhatsApp)"]
+        adm["Administrador y<br/>Operador logístico"]
+    end
 
-    subgraph ext["Sistemas externos"]
+    subgraph clientes["Canales de entrada"]
+        direction LR
         meta["WhatsApp Cloud API<br/>(número de prueba de Meta)"]
-        kc["Keycloak<br/>realm del operador"]
-        smtp["Servidor de correo<br/>(SMTP)"]
+        panel["Panel Web<br/>(React + TypeScript)"]
     end
 
     subgraph borde["Borde común de plataforma (FlowRide.Borde, YARP)"]
-        rut["Ruteo por subdominio<br/>+ límites de tasa + cabeceras"]
-        tok["Validación del token<br/>del realm del operador"]
+        direction LR
         wh["Router de webhooks<br/>firma de Meta + phone_number_id"]
+        rut["Ruteo por subdominio, límites de tasa,<br/>cabeceras y validación del token del realm"]
     end
 
     subgraph stack["Stack del operador"]
-        panel["Panel Web<br/>(React + TypeScript)"]
         subgraph api["FlowRide.API"]
-            ep["Endpoints HTTP/JSON<br/>+ contrato OpenAPI"]
-            auth["Autenticación JWT y políticas<br/>(rol, autenticación reciente)"]
+            direction LR
             hook["Webhook WhatsApp<br/>+ alertas en vivo (SSE)"]
+            ep["Endpoints HTTP/JSON + contrato OpenAPI<br/>autenticación JWT y políticas"]
         end
-        subgraph app["FlowRide.Application (casos de uso por módulo)"]
-            mod["Identidad · Operación · Solicitudes · Asignación<br/>Viajes · Canal (bot) · Notificaciones · Reportes · Horarios"]
+        app["FlowRide.Application — casos de uso por módulo<br/>Identidad · Operación · Solicitudes · Asignación · Viajes<br/>Canal (bot) · Notificaciones · Reportes · Horarios"]
+        subgraph nucleo["FlowRide.Infrastructure"]
+            direction LR
+            wk["Procesos en segundo plano: cola de asignación,<br/>canal, notificaciones y horarios"]
+            inf["Repositorios EF Core, Outbox, auditoría<br/>y adaptadores de los puertos de salida"]
         end
-        subgraph dom["FlowRide.Domain"]
-            ent["Entidades y reglas<br/>de dominio"]
-            motor["Motor de asignación<br/>AssignmentEngine + IAssignmentRule"]
-        end
-        subgraph inf["FlowRide.Infrastructure"]
-            ef["Repositorios EF Core<br/>+ Outbox + auditoría encadenada"]
-            wk["Procesos en segundo plano<br/>cola de asignación · canal · notificaciones · horarios"]
-            adp["Adaptadores<br/>IProveedorIdentidad · IWhatsAppGateway<br/>IEnviadorCorreo · IAlmacenObjetos"]
-        end
-        db[("PostgreSQL del Silo<br/>esquema ops")]
+        dom["FlowRide.Domain<br/>entidades, reglas y motor de asignación<br/>(AssignmentEngine + IAssignmentRule)"]
+        db[("PostgreSQL del Silo")]
         blob[("Almacenamiento de objetos<br/>del operador")]
     end
 
-    adm --> panel
-    panel -->|"https + token"| rut
+    subgraph ext["Servicios externos"]
+        direction LR
+        smtp["Servidor de correo<br/>(SMTP)"]
+        kc["Keycloak<br/>realm del operador"]
+    end
+
     pas --> meta
     con --> meta
+    adm --> panel
     meta -->|"webhook firmado"| wh
-    rut --> tok --> ep
-    wh --> hook
+    panel -->|"https + token"| rut
     panel -.->|"inicio de sesión<br/>código + PKCE"| kc
-    ep --> auth --> mod
-    hook --> mod
-    mod --> ent
-    mod --> motor
-    mod --> ef
-    wk --> mod
-    ef --> db
-    adp --> kc
-    adp --> meta
-    adp --> smtp
-    adp --> blob
-    mod -.->|"puertos de salida"| adp
+    wh --> hook
+    rut --> ep
+    hook --> app
+    ep --> app
+    wk --> app
+    app --> dom
+    app -->|"puertos de salida"| inf
+    inf --> db
+    inf --> blob
+    inf -->|"IProveedorIdentidad<br/>IEnviadorCorreo"| ext
+    inf -.->|"IWhatsAppGateway<br/>(mensajes salientes)"| meta
 ```
 
 Figura 1. Componentes de una instancia Silo de FlowRide detrás del borde común (estado al 22-10-2026).
@@ -1517,47 +1517,43 @@ El diagrama de paquetes muestra cómo se agrupan los elementos del software y la
 
 #### 9.3.2.1 Solución FlowRide (.NET 10)
 
-Representa los proyectos de la solución y las referencias reales entre ellos (tomadas de los archivos `.csproj` al 22-10-2026). Reemplaza la figura de la versión 2.0, que mostraba la solución inicial de cinco proyectos (se conserva en `diagramas/das-fig2-paquetes.png`).
+Representa los proyectos de la solución y las referencias reales entre ellos (tomadas de los archivos `.csproj` al 22-10-2026). Reemplaza la figura de la versión 2.0, que mostraba la solución inicial de cinco proyectos.
 
 ##### 9.3.2.1.1 Diagrama
 
 ```mermaid
-flowchart BT
-    subgraph prod["Producción"]
-        dom["FlowRide.Domain"]
-        app["FlowRide.Application"]
-        inf["FlowRide.Infrastructure"]
-        api["FlowRide.API"]
-        apr["FlowRide.Aprovisionamiento<br/>(CLI de plataforma)"]
-        bor["FlowRide.Borde<br/>(YARP)"]
-    end
-    subgraph pruebas["Pruebas"]
-        ut["FlowRide.UnitTests"]
-        at["FlowRide.ArchitectureTests"]
-        it["FlowRide.IntegrationTests"]
-    end
+flowchart TB
     web["web/ — Panel Web<br/>(React + TypeScript)"]
+    subgraph pruebas["Pruebas"]
+        direction LR
+        it["FlowRide.IntegrationTests"]
+        at["FlowRide.ArchitectureTests"]
+        ut["FlowRide.UnitTests"]
+    end
+    subgraph prod["Producción"]
+        subgraph entrada["Puntos de entrada"]
+            direction LR
+            apr["FlowRide.Aprovisionamiento<br/>(CLI de plataforma)"]
+            bor["FlowRide.Borde<br/>(YARP)"]
+            api["FlowRide.API"]
+        end
+        inf["FlowRide.Infrastructure"]
+        app["FlowRide.Application"]
+        dom["FlowRide.Domain"]
+    end
 
-    app --> dom
-    inf --> app
-    api --> app
-    api --> inf
-    apr --> app
-    apr --> inf
-    bor --> app
-    bor --> inf
-    ut --> dom
-    ut --> app
-    at --> api
-    at --> apr
-    at --> bor
-    it --> api
-    it --> apr
-    it --> bor
     web -.->|"HTTP + contrato OpenAPI"| api
+    it --> entrada
+    at -.->|"verifica las reglas de<br/>todos los proyectos"| prod
+    ut --> app
+    ut --> dom
+    entrada --> inf
+    entrada --> app
+    inf --> app
+    app --> dom
 ```
 
-Figura 2. Paquetes de la solución FlowRide y sus dependencias. Las flechas apuntan hacia el paquete del que se depende; ArchitectureTests referencia además Domain, Application e Infrastructure para verificar sus reglas.
+Figura 2. Paquetes de la solución FlowRide y sus dependencias. Las flechas apuntan hacia el paquete del que se depende. Una flecha que sale de un grupo vale para cada proyecto del grupo: API, Aprovisionamiento y Borde dependen de Infrastructure y de Application, e IntegrationTests de los tres. ArchitectureTests referencia todos los proyectos de producción para verificar sus reglas de dependencia.
 
 ##### 9.3.2.1.2 Documentación
 
@@ -1622,6 +1618,7 @@ sequenceDiagram
     WA->>DB: Una transacción: Asignacion (Asignada) + decisión + evento asignacion.creada en la Outbox
     WN->>DB: Toma el evento de la Outbox
     WN->>DB: Mensaje saliente para el conductor + recordatorio programado
+    WC->>DB: Lee el mensaje saliente pendiente
     WC->>M: Envía el servicio al conductor
     M-->>C: «Tienes un servicio nuevo…»
 ```
@@ -1655,6 +1652,7 @@ sequenceDiagram
     WC->>DB: Evento asignacion.aceptada en la Outbox (misma transacción)
     WN->>DB: Toma el evento
     WN->>DB: Mensaje saliente para el pasajero (conductor y placa)
+    WC->>DB: Lee el mensaje saliente pendiente
     WC->>M: Envía el mensaje
     M-->>P: «Tu servicio ya tiene conductor: … placa …»
     Note over C,P: Si el conductor no responde a tiempo, la cola de asignación vence la asignación y la solicitud vuelve a buscar conductor
@@ -1682,8 +1680,8 @@ sequenceDiagram
     participant WA as Proceso de la cola de asignación
 
     O->>UI: Registra el abandono con un motivo
-    UI->>A: POST /api/conductores/{id}/turnos/{turnoId}/abandonar
-    A->>DB: Una transacción: turno Abandonado, asignaciones no iniciadas canceladas, viajes programados cancelados, solicitudes de vuelta a Pendiente, auditoría y evento turno.abandonado
+    UI->>A: POST /api/conductores/{id}/turnos/{turnoId}/abandonar (a través del borde)
+    A->>DB: Una transacción: turno Abandonado, asignaciones no iniciadas<br/>y viajes programados cancelados, solicitudes de vuelta a Pendiente,<br/>auditoría y evento turno.abandonado en la Outbox
     A-->>UI: Solicitudes devueltas a la cola
     WN->>DB: Toma el evento y crea una alerta crítica
     WN-->>UI: Alerta en vivo (SSE)
@@ -1713,7 +1711,7 @@ sequenceDiagram
 
     U->>UI: Abre el panel
     UI->>K: Autorización con código + PKCE
-    K->>U: Contraseña y código TOTP
+    K->>U: Pide contraseña y código TOTP
     U->>K: Credenciales
     K-->>UI: Código de autorización
     UI->>K: Canjea el código por tokens
@@ -1723,11 +1721,13 @@ sequenceDiagram
     B->>A: Reenvía
     A->>DB: Resuelve el usuario interno (activo) y su rol
     A-->>UI: Usuario y rol
+    Note over UI,A: Desde aquí cada petición pasa por el borde igual que en los pasos 8 a 10
     U->>UI: Acción sensible (por ejemplo, cambiar un rol)
     UI->>A: PUT /api/usuarios/{id}/rol
     A-->>UI: 401 insufficient_user_authentication, max_age=300
     UI->>K: Nueva autorización pidiendo iniciar sesión otra vez
-    K->>U: Contraseña y TOTP
+    K->>U: Pide contraseña y código TOTP
+    U->>K: Credenciales
     K-->>UI: Token con auth_time reciente
     UI->>A: Repite la acción
     A->>DB: Cambio + auditoría en una transacción
@@ -1798,51 +1798,38 @@ flowchart TB
     inet(("Internet"))
     metaext["WhatsApp Cloud API (Meta)"]
 
-    subgraph plat["Plataforma compartida (sin datos operacionales)"]
+    subgraph entrada["Plataforma compartida: entrada (sin datos operacionales)"]
+        direction LR
         borde["Borde: YARP + WAF<br/>2 réplicas"]
-        kc["Keycloak<br/>un realm por operador"]
         cat[("Catálogo de plataforma<br/>operadores y rutas")]
+    end
+
+    subgraph op["Stack de un operador (uno idéntico y aislado por cada operador: A, B, …)"]
+        app["Contenedor de aplicación<br/>API + procesos en segundo plano"]
+        db[("PostgreSQL<br/>del Silo")]
+        kv["Gestor de secretos<br/>del operador"]
+        ob[("Almacenamiento de<br/>objetos del operador")]
+    end
+
+    subgraph soporte["Plataforma compartida: servicios de soporte"]
+        direction LR
+        kc["Keycloak<br/>un realm por operador"]
         acr["Registro de contenedores<br/>imágenes semver + SHA"]
         otel["Backend de observabilidad<br/>OTLP"]
     end
 
-    subgraph opA["Stack del operador A"]
-        appA["Contenedor de aplicación<br/>API + procesos en segundo plano"]
-        dbA[("PostgreSQL del Silo A")]
-        kvA["Gestor de secretos A"]
-        obA[("Objetos A")]
-    end
-
-    subgraph opB["Stack del operador B"]
-        appB["Contenedor de aplicación<br/>API + procesos en segundo plano"]
-        dbB[("PostgreSQL del Silo B")]
-        kvB["Gestor de secretos B"]
-        obB[("Objetos B")]
-    end
-
-    inet -->|"https a.flowride…"| borde
-    inet -->|"https b.flowride…"| borde
+    inet -->|"https a.flowride…, b.flowride…"| borde
     metaext -->|"webhook firmado"| borde
     borde --> cat
-    borde -->|"subdominio a / phone_number_id a"| appA
-    borde -->|"subdominio b / phone_number_id b"| appB
-    appA --> dbA
-    appA --> kvA
-    appA --> obA
-    appB --> dbB
-    appB --> kvB
-    appB --> obB
-    appA -->|"cuenta de servicio del realm A"| kc
-    appB -->|"cuenta de servicio del realm B"| kc
-    appA -->|"envío de mensajes"| metaext
-    appB -->|"envío de mensajes"| metaext
-    appA -.-> otel
-    appB -.-> otel
-    acr -.->|"misma imagen para todos"| appA
-    acr -.-> appB
+    borde -->|"según subdominio o phone_number_id"| app
+    app --> db
+    app --> kv
+    app --> ob
+    app -->|"identidad con la cuenta de servicio de su realm,<br/>imagen del registro (la misma para todos) y telemetría"| soporte
+    app -.->|"envío de mensajes"| metaext
 ```
 
-Figura 3. Despliegue de FlowRide: un stack aislado por operador detrás de los componentes de plataforma compartidos (ADR-0002, ADR-0010, ADR-0012, ADR-0013, ADR-0014).
+Figura 3. Despliegue de FlowRide: un stack aislado por operador detrás de los componentes de plataforma compartidos (ADR-0002, ADR-0010, ADR-0012, ADR-0013, ADR-0014). Se dibuja un solo stack porque todos son idénticos; cada operador tiene el suyo, con su base, sus secretos y su almacenamiento, y solo comparten el borde, el catálogo, Keycloak (un realm por operador), el registro de imágenes y la observabilidad.
 
 #### 9.5.1.2 Documentación
 

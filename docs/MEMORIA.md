@@ -444,6 +444,12 @@
 - Los 20 ADR tienen las 10 secciones y una subsección «Implementación en FlowRide (estado al 22-10-2026)»; índice de la
   entrega en `docs/README.md`. ROADMAP: RF-20, RF-22, RF-23 y RF-52 pasan a ✅; se agregan la entrega de documentación y
   la demostración con HTTPS local (Fase 12, basta con local según el usuario).
+- 2026-10-24: modelo entidad-relación nuevo (`docs/diagramas/modelo-entidad-relacion.md`, 6 erDiagram) generado del
+  esquema real de PostgreSQL con las FK reales; reemplaza el modelo de diseño del 13-10, que estaba desactualizado. Se
+  borraron del repo los diagramas viejos (PNG de clases/ER, PDF, drawio y su generador, figuras de la v2.0 del DAS); siguen
+  en el historial de git. Cada diagrama se dibujó con Edge sin interfaz y se revisó con un detector propio de líneas que
+  atraviesan cajas; se rehicieron paquetes (flechas por grupo) y despliegue (un solo stack representativo) y se
+  ajustaron las secuencias (pasos por el borde, lectura del mensaje saliente).
 
 ## Próximos pasos
 1. Fase 11b-2: conductores (turnos y documentos), vehículos e itinerarios desde el panel, con el mismo estilo visual.

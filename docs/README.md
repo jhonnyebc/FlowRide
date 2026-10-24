@@ -2,7 +2,7 @@
 
 FlowRide es una plataforma SaaS de gestión de transporte corporativo interno con modelo B2B2B: se vende al operador de transporte (un tenant = un operador), que presta el servicio a un cliente empresarial. Pasajeros y conductores usan WhatsApp; el Administrador del operador y el Operador logístico usan el Panel Web.
 
-Esta carpeta es la entrega de la documentación del proyecto (28-10-2026), toda en Markdown. Los diagramas nuevos están escritos en Mermaid dentro de los propios documentos: GitHub los dibuja al abrir el archivo.
+Esta carpeta es la entrega de la documentación del proyecto (28-10-2026), toda en Markdown. Todos los diagramas están escritos en Mermaid dentro de los propios documentos: GitHub los dibuja al abrir el archivo.
 
 **Curso:** ISS0666 — Ingeniería del Software 2, Universidad Católica de Oriente, semestre 2-2026. **Profesor:** Wider Farid Sánchez Garzón.
 
@@ -16,6 +16,7 @@ Esta carpeta es la entrega de la documentación del proyecto (28-10-2026), toda 
 | [restricciones-negocio.md](restricciones-negocio.md) | Las 15 restricciones de negocio con su justificación y plan de acción. |
 | [funcionalidades-significativas.md](funcionalidades-significativas.md) | Catálogo de requisitos funcionales y los arquitectónicamente significativos, con su tipo y justificación. |
 | [tradeoff-atributos-calidad.md](tradeoff-atributos-calidad.md) | Análisis de atributos de calidad: trade-offs, priorización, stakeholders, lluvia de escenarios y votación, banco de 164 escenarios, 33 escenarios seleccionados, tácticas por escenario, ADR, building blocks, PoC y spikes y catálogo de tácticas. |
+| [diagramas/modelo-entidad-relacion.md](diagramas/modelo-entidad-relacion.md) | Modelo entidad-relación de las bases de datos tal como están implementadas: seis diagramas (usuarios y recursos, solicitudes, asignaciones y viajes, motor, canal y notificaciones, catálogo de plataforma) generados del esquema real de PostgreSQL. |
 | [adr/](adr/README.md) | Los 20 Architecture Decision Records, con su estado, sus revisiones y lo que se implementó de cada uno. |
 
 ### Decisiones de arquitectura (ADR)
@@ -47,7 +48,7 @@ Esta carpeta es la entrega de la documentación del proyecto (28-10-2026), toda 
 
 1. **Qué condiciona la arquitectura:** sección 2 del [DAS](DAS.md) o, con más detalle, los [drivers](drivers-arquitectonicos.md), las [restricciones técnicas](restricciones-tecnicas.md) y [de negocio](restricciones-negocio.md) y el [trade-off](tradeoff-atributos-calidad.md).
 2. **Cómo se respondió:** secciones 3 a 8 del DAS (tácticas, contexto, arquetipo, solución, línea base y justificación) y los [ADR](adr/README.md).
-3. **Cómo es el sistema:** sección 9 del DAS, con los diagramas de componentes, paquetes, secuencias de los flujos críticos y despliegue.
+3. **Cómo es el sistema:** sección 9 del DAS, con los diagramas de componentes, paquetes, secuencias de los flujos críticos y despliegue, y el [modelo entidad-relación](diagramas/modelo-entidad-relacion.md) de las bases de datos.
 
 ## Alcance y estado
 
@@ -62,5 +63,3 @@ Esta carpeta es la entrega de la documentación del proyecto (28-10-2026), toda 
 |---|---|
 | [ROADMAP-V1.md](ROADMAP-V1.md) | Plan de implementación por fases y estado de cada requisito funcional. |
 | [GUIA-WHATSAPP-META.md](GUIA-WHATSAPP-META.md) | Cómo conectar el número de prueba de Meta y el webhook en local. |
-| [diagramas/](diagramas/) | Diagramas de clases del dominio y del motor, modelo entidad-relación y las dos figuras de la versión 2.0 del DAS (como referencia histórica). |
-| `FlowRide - Documento de Arquitectura de Software (DAS) v2.0.docx` | Versión 2.0 del DAS en Word, origen de [DAS.md](DAS.md). |
