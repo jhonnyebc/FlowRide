@@ -89,7 +89,15 @@ La organización interna del código seguirá la separación por capas ya establ
 - **ADR-0010** — el runtime se empaqueta en contenedores inmutables por operador.
 - **ADR-0012** — el borde de plataforma reutiliza el mismo stack mediante YARP.
 
-## Notas de implementación
+#
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- `Directory.Build.props` fija `net10.0`, habilita los tipos de referencia anulables y trata las advertencias como errores; el CI compila sin advertencias y verifica el formato con `dotnet format`.
+- La API usa Minimal APIs con `TypedResults` y publica un contrato OpenAPI del que el Panel Web genera sus tipos; una prueba de integración impide que el contrato y los tipos del frontend se desincronicen.
+- Las pruebas usan xUnit, ArchUnitNET y Testcontainers.
+
+# Notas de implementación
 
 - Fijar la versión exacta del SDK/runtime de .NET 10 en el Dockerfile de cada imagen, para builds reproducibles (coherente con ADR-0010, imágenes inmutables).
 - Habilitar Nullable Reference Types y analizadores estáticos (Roslyn analyzers) para reforzar en compilación el tipado fuerte que exige la restricción de dominio (DDD, lenguaje ubicuo).

@@ -825,7 +825,13 @@ Application y Domain no conocerán proveedores específicos.
 
 ---
 
-## Notas de implementación
+#
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- **No implementado.** Este ADR sigue en estado *Proposed* y la telemetría GPS y la detección de desviación de ETA (RF-55, RF-56) quedaron fuera del alcance de V1. No existen en el código el adaptador de telemetría, `RegistroUbicacion` ni la tabla particionada; el monitoreo de viajes del Panel Web se basa en estados y horarios, sin ubicación.
+
+# Notas de implementación
 
 * Particionar por `Timestamp` del evento.
 * Crear las particiones futuras de forma anticipada.

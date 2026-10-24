@@ -5,7 +5,7 @@
 | Campo | Valor |
 |---|---|
 | ID | ADR-0003 |
-| Fecha | 2026-09-09 (revisado 2026-10-13) |
+| Fecha | 2026-09-09 (revisado 2026-10-13, 2026-10-20 y 2026-10-21) |
 | Estado | **Accepted** |
 | Participantes | Sebastián Zapata Naranjo, Andrés David Ortiz Mejía, Jhonny Estiven Benítez Caro |
 | Curso | ISS0666 — Ingeniería del Software 2 (UCO, semestre 2-2026) |
@@ -202,7 +202,20 @@ Es una alternativa válida cuando se requiere mayor control operativo o evitar d
 - **ADR-0008** — WhatsApp aporta identidad de canal para Pasajero y Conductor.
 - **ADR-0011** — registra eventos de seguridad y auditoría.
 
-## Notas de implementación
+#
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- Keycloak 26 con un realm por operador, creado e idempotente desde `plantilla-realm.json` (versionada, sin secretos) por la herramienta de aprovisionamiento. La API se conecta con la cuenta de servicio de su propio realm; el administrador de Keycloak de la plataforma solo lo usa la herramienta.
+- El dominio solo ve el puerto `IProveedorIdentidad` (implementado por `ProveedorIdentidadKeycloak`): crear la cuenta, enviar el correo para definir la contraseña, exigir doble factor, habilitar, deshabilitar y, desde el 2026-10-21, actualizar nombre y correo (RF-24).
+- El rol y el estado del usuario los decide FlowRide: en cada petición la API resuelve el usuario interno por el claim `sub` y lo rechaza si está inactivo. Por eso la revocación surte efecto en la siguiente petición, sin esperar a que expire el token; además se deshabilita la cuenta y se cierran sus sesiones en Keycloak.
+- El Panel Web usa el flujo de código con PKCE y guarda los tokens solo en memoria (ADR-0019).
+
+> **Revisión 2026-10-20 — seguridad (requisito del curso sobre OWASP, autenticación rota).** Se agregan a la decisión: (1) **doble factor (TOTP) obligatorio para el Administrador**, como acción requerida al crear la cuenta o al pasar a ese rol; (2) **política de contraseñas** del realm (mínimo 12 caracteres, hash argon2, sin repetir las últimas 5) y **bloqueo por fuerza bruta** tras 5 intentos fallidos; (3) **reautenticación reciente** en las acciones sensibles (gestión de usuarios, configuración del motor, parámetros y plantillas): la API exige que el inicio de sesión sea de los últimos 5 minutos (claim `auth_time`) y, si no, responde `401` con `WWW-Authenticate: Bearer error="insufficient_user_authentication", max_age="300"` (RFC 9470); el Panel Web vuelve a pedir contraseña y TOTP y repite la acción.
+
+> **Revisión 2026-10-21 — cambio de correo (RF-24).** El correo es el usuario de inicio de sesión. Cuando el Administrador lo cambia, la cuenta de Keycloak cambia su correo y su usuario, queda sin verificar y recibe en la nueva dirección el correo para confirmarla (acción `VERIFY_EMAIL`); la auditoría registra qué campos cambiaron, no sus valores.
+
+# Notas de implementación
 
 - El Panel Web debe utilizar Authorization Code Flow con PKCE cuando aplique al tipo de cliente utilizado.
 - Las claves, secretos y configuraciones sensibles del proveedor deben almacenarse fuera del repositorio.

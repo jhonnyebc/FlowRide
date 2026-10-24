@@ -78,3 +78,17 @@
 ## ADRs relacionados
 
 - **ADR-0005**, **ADR-0006**, **ADR-0008**, **ADR-0009**, **ADR-0011**, **ADR-0015**.
+
+## Notas de implementación
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- El catálogo de mensajes está en `mensajes.es-CO.json` (clave, texto y variables declaradas); las plantillas de WhatsApp se pueden consultar y editar desde la API (`/api/notificaciones/plantillas`), con reautenticación del Administrador (ADR-0003).
+- El catálogo de parámetros es la tabla `ops.parametros` del Silo, con claves tipadas, valores por defecto y validación en `CatalogoParametros`; se cambian con `PUT /api/parametros/{clave}` (Administrador y autenticación reciente) y se leen a través de la caché de ADR-0006. La configuración del motor de asignación es versionada aparte (ADR-0009).
+- Los textos del Panel Web están centralizados en `web/src/textos.ts`, incluidos los nombres visibles de los estados que devuelve la API, para que nunca se muestre un nombre técnico al usuario.
+
+## Referencias
+
+- Microsoft. *Globalization and localization in ASP.NET Core*. Microsoft Learn.
+- Microsoft. *Options pattern in ASP.NET Core*. Microsoft Learn.
+- Wiggins, A. *The Twelve-Factor App — III. Config*. 12factor.net.

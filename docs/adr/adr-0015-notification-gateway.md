@@ -83,3 +83,18 @@ La restricción de negocio *Operativa* fija **WhatsApp como único canal** para 
 - **ADR-0008** — canal WhatsApp.
 - **ADR-0011** — métricas.
 - **ADR-0016** — catálogo de mensajes y plantillas.
+
+## Notas de implementación
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- `GatewayNotificaciones` es el punto único de salida: WhatsApp para pasajero y conductor, alertas persistidas para el Panel Web y correo SMTP (`IEnviadorCorreo`) para las alertas críticas a los roles administrativos (Mailpit en local).
+- El proceso de notificaciones recorre la Outbox (ADR-0007) y decide destinatarios y mensaje por tipo de evento; por ejemplo, el pasajero recibe «ya tiene conductor» cuando el conductor acepta (`asignacion.aceptada`) y no cuando el motor asigna, para no prometer un servicio que el conductor puede rechazar.
+- Las alertas del Panel Web llegan en vivo por SSE (`/api/alertas/en-vivo`) y quedan guardadas para consultarlas y marcarlas como leídas; tienen severidad (información, advertencia, crítica) que se muestra con color, icono y texto.
+- Los recordatorios de servicio se programan como eventos futuros de la Outbox. Cada notificación es idempotente por evento y destinatario, y los textos salen del catálogo de mensajes (ADR-0016).
+
+## Referencias
+
+- Meta. *WhatsApp Cloud API — Messages* y *Conversations and the 24-hour customer service window*. developers.facebook.com.
+- Richardson, C. *Pattern: Transactional outbox*. microservices.io.
+- WHATWG. *HTML Living Standard — Server-sent events*. html.spec.whatwg.org.

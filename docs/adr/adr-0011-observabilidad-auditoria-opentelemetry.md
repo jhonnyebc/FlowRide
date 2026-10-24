@@ -75,7 +75,16 @@ Elegida por separación de responsabilidades y portabilidad.
 - **ADR-0005** — instrumenta throughput/errores de telemetría.
 - **ADR-0010** — health checks y SLA de despliegue.
 
-## Notas de implementación
+#
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- OpenTelemetry con exportador OTLP para trazas, métricas y logs; los logs son JSON estructurado e incluyen `TraceId`, `TenantId` y el componente, y un middleware registra cada petición con su ruta, código y duración.
+- Los errores responden con ProblemDetails e incluyen el `traceId` para correlacionarlos con el log.
+- La auditoría legal es una tabla del Silo con eventos encadenados por hash SHA-256 (cada evento sella el hash del anterior, con candado consultivo para no romper la cadena bajo concurrencia); `/api/auditoria/verificacion` comprueba que la cadena esté íntegra y señala el primer evento alterado.
+- Los valores auditados evitan datos personales: por ejemplo, un cambio de usuario registra qué campos cambiaron, no sus valores.
+
+# Notas de implementación
 
 - No registrar tokens, contraseñas, coordenadas completas en logs generales ni payloads completos de WhatsApp.
 - Propagar `traceId` a workers y eventos Outbox.

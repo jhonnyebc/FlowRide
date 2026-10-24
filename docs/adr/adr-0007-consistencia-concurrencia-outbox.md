@@ -73,7 +73,16 @@ Elegida porque separa control de concurrencia de entrega confiable de eventos.
 - **ADR-0008** — los mensajes de WhatsApp consumen eventos de forma idempotente.
 - **ADR-0004** — PostgreSQL provee la transacción y persistencia de Outbox.
 
-## Notas de implementación
+#
+
+### Implementación en FlowRide (estado al 22-10-2026)
+
+- El token de versión es la columna de sistema `xmin` de PostgreSQL, mapeada como `IsRowVersion` en las entidades que compiten (por ejemplo, solicitud y asignación); los parámetros usan su propia versión como token de concurrencia.
+- `IUnidadTrabajo` confirma en una sola transacción el cambio de estado, su evento de auditoría y su evento de Outbox (`IBandejaSalida`); si otra réplica ganó la carrera se lanza `ConflictoConcurrenciaExcepcion` y no se guarda nada.
+- El proceso de notificaciones toma los eventos de la Outbox uno a uno y los procesa una sola vez; la Outbox también admite eventos programados (recordatorios).
+- El spike de concurrencia quedó como prueba de integración permanente: dos réplicas compitiendo por la misma cola contra PostgreSQL real producen 0 dobles asignaciones.
+
+# Notas de implementación
 
 - El worker Outbox debe marcar eventos enviados de forma atómica y soportar reintentos.
 - Los handlers de notificación deben deduplicar por `EventId`/`MessageId`.
