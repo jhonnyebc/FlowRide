@@ -1,5 +1,5 @@
 # Pruebas manuales de la API del stack de un operador.
-# Requisitos: `docker compose up -d` y el operador aprovisionado con la herramienta (ver CLAUDE.md).
+# Requisitos: `docker compose up -d` y el operador aprovisionado con la herramienta (ver docs/DESARROLLO.md).
 @host = http://localhost:5237
 
 ### RF-53 — Liveness: el proceso responde (no consulta la base)
@@ -17,7 +17,7 @@ GET {{host}}/openapi/v1.json
 # ---------------------------------------------------------------------------------------------------------------
 # Fase 2 — Identidad, usuarios y auditoría (RF-01, RF-02, ADM-SEG-01).
 # Requisitos: `docker compose up -d` (Keycloak en :8080, Mailpit en :8025) y el operador aprovisionado con su
-# primer administrador (ver CLAUDE.md). El token lo emite el realm del operador (flowride-tenant-a) para el cliente
+# primer administrador (ver docs/DESARROLLO.md). El token lo emite el realm del operador (flowride-tenant-a) para el cliente
 # flowride-panel; pégalo aquí sin versionarlo.
 @token = pega-aqui-un-token-del-realm
 
