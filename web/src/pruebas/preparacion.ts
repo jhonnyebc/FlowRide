@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom/vitest';
+import { notifications } from '@mantine/notifications';
 import { cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
 
@@ -27,4 +28,9 @@ window.HTMLElement.prototype.scrollIntoView = () => {};
 // axe-core prueba ligaduras de iconos con un canvas; jsdom no lo implementa y sin esto solo ensucia la salida.
 window.HTMLCanvasElement.prototype.getContext = () => null;
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  // Las notificaciones de Mantine viven en un almacén global: sin limpiarlo, pasadas cinco las nuevas quedan en cola y
+  // no se pintan en las pruebas siguientes.
+  notifications.clean();
+});

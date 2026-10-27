@@ -1,12 +1,58 @@
 import { ActionIcon, Alert, Badge, Button, Drawer, Group, Menu, Modal, Pagination, Stack, Text } from '@mantine/core';
 import { IconDots } from '@tabler/icons-react';
-import type { UseMutationResult } from '@tanstack/react-query';
+import { useQuery, type UseMutationResult } from '@tanstack/react-query';
 import type { FormEvent, ReactNode } from 'react';
+import { api, datos } from '../api/cliente';
+import { diasHasta, fechaCorta } from '../comun/fechas';
+import { texto, textos } from '../textos';
 
 // Piezas compartidas de las pantallas de administración (11b): lista con filtros y, a la derecha, un panel lateral
 // para crear o editar sin salir de la lista (decisión del usuario, 2026-10-21).
 
 export const TamanoPagina = 25;
+
+export type FiltroActivo = 'activos' | 'inactivos' | 'todos';
+
+/** Días antes del vencimiento en que un documento ya se marca como "vence pronto". */
+export const DiasAvisoVencimiento = 30;
+
+/** Los conductores activos, para elegir uno (son pocos por operador: una sola página basta). */
+export function useConductoresActivos() {
+  return useQuery({
+    queryKey: ['conductores', 'activos'],
+    queryFn: () => datos(api.GET('/api/conductores', { params: { query: { Estado: 'Activo', TamanoPagina: 200 } } })),
+    select: (p) => p.elementos,
+  });
+}
+
+/** Estado del conductor con texto (OPLOG-ACC-02): solo los activos reciben asignaciones. */
+export function InsigniaConductor({ estado }: { estado: string }) {
+  const color = estado === 'Activo' ? 'teal' : estado === 'Suspendido' ? 'orange' : 'gray';
+  return (
+    <Badge color={color} variant={estado === 'Inactivo' ? 'outline' : 'light'}>
+      {texto(textos.estadoConductor, estado)}
+    </Badge>
+  );
+}
+
+/** Fecha de vencimiento con su estado en texto: vencido, vence pronto o vigente (OPLOG-ACC-02: no solo color). */
+export function InsigniaVencimiento({ fecha }: { fecha: string | null | undefined }) {
+  if (!fecha) return <>—</>;
+  const dias = diasHasta(fecha);
+  if (dias < 0)
+    return (
+      <Badge color="red" variant="light">
+        Vencido · {fechaCorta(fecha)}
+      </Badge>
+    );
+  if (dias <= DiasAvisoVencimiento)
+    return (
+      <Badge color="orange" variant="light">
+        Vence pronto · {fechaCorta(fecha)}
+      </Badge>
+    );
+  return <Text size="sm">{fechaCorta(fecha)}</Text>;
+}
 
 /** Panel lateral con un formulario: título, error de la API arriba y los botones abajo. */
 export function PanelLateral({
@@ -29,7 +75,7 @@ export function PanelLateral({
   children: ReactNode;
 }) {
   return (
-    <Drawer opened={abierto} onClose={alCerrar} title={titulo} position="right" size="md" padding="lg">
+    <Drawer opened={abierto} onClose={alCerrar} title={titulo} position="right" size="md" padding="lg" closeButtonProps={{ 'aria-label': 'Cerrar' }}>
       <form
         onSubmit={(evento: FormEvent) => {
           evento.preventDefault();

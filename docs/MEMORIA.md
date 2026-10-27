@@ -5,14 +5,15 @@
 > Última actualización: 2026-10-19.
 
 ## Estado actual
-- **Rama de trabajo:** `docs/entrega-documentacion` (documentación para la entrega del 2026-10-28, SIN commit). Después: Fase 11b-2.
+- **Rama de trabajo:** `feature/RF-07-panel-recursos` (Fase 11b-2, con commit y push, pendiente del PR). Después: Fase 11c.
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
   Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6), Fase 4
   Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9), Fase 7 Canal WhatsApp (PR #10), Fase 8 Notificaciones y alertas (PR #11), Fase 9 Reportes y vista operacional (PR #12), Fase 10 Borde común (PR #13), fechas con zona (PR #14), seguridad OWASP
-  (PR #15), Fase 11a Panel Web base y Operación (PR #16) y Fase 11b-1 usuarios, empresas y pasajeros (PR #17).
-- **Fase actual:** Fase 11b-1 cerrada (PR #17, 2026-10-21). Siguen 11b-2 (conductores, vehículos e itinerarios) y 11c (configuración y reportes).
+  (PR #15), Fase 11a Panel Web base y Operación (PR #16), Fase 11b-1 usuarios, empresas y pasajeros (PR #17) y la
+  documentación de la entrega (PR #18).
+- **Fase actual:** Fase 11b-2 (conductores, vehículos e itinerarios) con commit en la rama, pendiente del PR. Sigue 11c (configuración y reportes).
 - **Tests:** 553 unitarios (94,1 % líneas / 83,2 % ramas en Domain + Application), 17 de arquitectura, 145 de integración
-  (Keycloak, Mailpit y Azurite reales con Testcontainers) y 50 del frontend (Vitest + axe).
+  (Keycloak, Mailpit y Azurite reales con Testcontainers) y 59 del frontend (Vitest + axe).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
   Azurite (10000). Los secretos viven en el AppData **real** del usuario (`flowride-aprovisionamiento` y
   `flowride-tenant-a`, configurados por él el 2026-10-18). `tenant-a` se recreó ese día (base nueva con todas las
@@ -450,16 +451,45 @@
   en el historial de git. Cada diagrama se dibujó con Edge sin interfaz y se revisó con un detector propio de líneas que
   atraviesan cajas; se rehicieron paquetes (flechas por grupo) y despliegue (un solo stack representativo) y se
   ajustaron las secuencias (pasos por el borde, lectura del mensaje saliente).
+- PR #18 fusionada en `develop` (merge `412dc65`, CI en verde); rama borrada. Fuera del repo quedó en el escritorio la
+  carpeta de la entrega con el DAS también en Word (con el modelo entidad-relación como Anexo A) y los 14 diagramas en
+  PNG; esos dos se generan con scripts del scratchpad, no se versionan.
+
+## Sesión 2026-10-24 (continuación): Fase 11b-2 (conductores, vehículos e itinerarios en el panel)
+- Rama `feature/RF-07-panel-recursos`. Solo panel: el backend de la Fase 3 y la 4 ya tenía todo lo necesario.
+- Decisiones del usuario: turnos con programar y registrar abandono (sin cancelar turnos programados); itinerarios solo
+  registrar y consultar (sin editar ni eliminar); las tres pantallas en el grupo Administración.
+- `PaginaConductores` (lista, alta, edición y cambio de estado con confirmación) con `DetalleConductor` (turnos vigentes y
+  los últimos 5 terminados; programar en hora local sin desfase, ADR-0020; abandono con motivo solo para el Operador
+  logístico porque el endpoint exige ese rol; documentos: cargar PDF/PNG/JPG ≤ 5 MB, descargar con el enlace firmado en
+  otra pestaña y eliminar con confirmación, solo el Administrador carga y elimina). `PaginaVehiculos` (vencimientos de
+  RTM y SOAT, activar/desactivar, conductor habitual: el motor le asigna siempre ese vehículo y no lo da a otros).
+  `PaginaItinerarios` (filtros por empresa, código y fechas; registro por rango y días; las horas viajan como `HH:mm:ss`).
+- Comunes nuevos: `InsigniaVencimiento` (vencido / vence pronto a 30 días, con texto), `InsigniaConductor`,
+  `useConductoresActivos`, `fechaCorta` y `diasHasta`. El botón de cerrar de los paneles laterales ahora tiene nombre
+  accesible (axe lo marcaba).
+- Pruebas: 7 nuevas de pantallas y 2 de fechas (59 en total). Hallazgos del entorno de pruebas: las notificaciones de
+  Mantine son un almacén global y, pasadas cinco, las nuevas quedan en cola (se limpian después de cada prueba en
+  `preparacion.ts`); en jsdom el cuerpo multipart no se puede leer de vuelta (FormData de jsdom con Request de Node),
+  así que la prueba de carga verifica los campos que el panel agrega al formulario.
+- 2026-10-26: el usuario revisó las tres pantallas en vivo con el stack local (programó un turno desde Conductores).
+- **Prueba de punta a punta por WhatsApp cerrada (pendiente desde la 11a):** con ngrok desde la red de la casa del
+  usuario, el pasajero de pruebas pidió y confirmó un servicio por WhatsApp, el motor lo asignó automáticamente, el
+  conductor de pruebas lo aceptó desde su celular (mismo número del bot; el bot distingue el rol por el número que
+  escribe) y el mensaje `solicitud.pasajero.conductor_asignado` salió a Meta sin errores; el viaje quedó Programado.
+- Hallazgo pendiente: un turno del 2026-10-21 que ya terminó sigue en estado `Programado` (no pasa a Finalizado). No
+  afecta la asignación (el motor exige que el turno cubra la franja), pero hay que revisar quién actualiza ese estado.
+- Pregunta del usuario sobre «America/Bogota»: es el nombre IANA de la zona (sale de `FlowRide:ZonaHoraria` del
+  operador), no la ciudad del servicio; se deja así. Mostrar un nombre amigable sería un cambio de presentación a
+  anotar en ADR-0020.
 
 ## Próximos pasos
-1. Fase 11b-2: conductores (turnos y documentos), vehículos e itinerarios desde el panel, con el mismo estilo visual.
+1. Fase 11b-2: PR y revisión del CI. Revisar el turno que queda `Programado` después de terminar.
    **Recordatorio (2026-10-18):** itinerarios en PDF o Word por WhatsApp quedan fuera de V1; el bot responde que solo
    entiende texto y los itinerarios se registran desde el panel (RF-08). Opciones para después: recibir el archivo y
    alertar al operador, o extracción automática (requeriría ADR nuevo).
-2. Pendiente de la 11a: prueba de punta a punta por WhatsApp (el conductor de pruebas acepta desde su celular → el
-   pasajero recibe "ya tiene conductor"). Requiere ngrok en una red que no lo bloquee y un turno vigente el día de la prueba.
-   También: marcar el job "Frontend" como requerido en `develop` y actualizar las herramientas de pruebas con alertas de
-   `npm audit` (vitest, postcss, tinypool; solo desarrollo).
-3. Entrega de documentación del 2026-10-28: PR de la rama `docs/entrega-documentacion` hacia `develop` (ver la sesión del 2026-10-22).
+2. Fase 11c: parámetros, plantillas de WhatsApp, configuración del motor, indicadores y reportes con exporte.
+3. Pendiente de la 11a: marcar el job "Frontend" como requerido en `develop` y actualizar las herramientas de pruebas
+   con alertas de `npm audit` (vitest, postcss, tinypool; solo desarrollo).
 4. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).
 5. Opcional: SonarCloud (crear el proyecto y el secreto `SONAR_TOKEN`).

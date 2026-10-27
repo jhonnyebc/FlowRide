@@ -26,7 +26,7 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 8 | Notificaciones y alertas | Notificaciones | 0007, 0015, 0016 | ✅ PR #11 fusionada |
 | 9 | Reportes y vista operacional | Reportes | 0006, 0013 | ✅ PR #12 fusionada |
 | 10 | Borde común | Plataforma | 0012, 0014 | ✅ PR #13 fusionada |
-| 11 | Panel Web | Web | 0003, 0015, 0016, 0019 | 🟡 11a (PR #16) y 11b-1 (PR #17) cerradas; 11b-2 y 11c pendientes |
+| 11 | Panel Web | Web | 0003, 0015, 0016, 0019 | 🟡 11a (PR #16), 11b-1 (PR #17) y 11b-2 cerradas; 11c pendiente |
 | 12 | Operación: despliegue, backups y retención | Plataforma | 0010, 0011, 0013 | ⬜ |
 
 ## Detalle por fase
@@ -173,7 +173,11 @@ consulta y programa turnos, Usuarios es solo del Administrador; dos entregas):
 - [x] 11b-1 (PR #17, cerrada el 2026-10-21): RF-24 en el backend (`PUT /api/usuarios/{id}`: nombre, correo y
   WhatsApp; el correo nuevo se sincroniza con Keycloak y queda pendiente de confirmar) y pantallas de usuarios, empresas
   cliente y pasajeros. Pruebas: 553 unitarias, 17 de arquitectura, 50 del frontend.
-- [ ] 11b-2: conductores (turnos y documentos), vehículos e itinerarios.
+- [x] 11b-2 (2026-10-24, solo panel; el backend ya existía): conductores con detalle de turnos (programar en hora local;
+  el abandono lo registra solo el Operador logístico, como exige la API) y documentos (cargar, descargar con enlace
+  temporal y eliminar; solo el Administrador carga y elimina), vehículos (vencimientos de RTM y SOAT, activar y
+  desactivar, conductor habitual) e itinerarios (registro por rango de fechas y días, y consulta; sin editar ni
+  eliminar, decisión del usuario). Las tres pantallas van en Administración. Pruebas: 59 del frontend.
 
 11c — configuración y reportes:
 - [ ] Parámetros, plantillas de WhatsApp, configuración del motor, indicadores y reportes con exporte (RF-42, RF-46 a RF-49).

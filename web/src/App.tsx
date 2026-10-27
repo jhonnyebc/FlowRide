@@ -2,9 +2,12 @@ import { Anchor, Stack, Text, Title } from '@mantine/core';
 import { IconLock } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Link, Route, Routes } from 'react-router';
+import { PaginaConductores } from './administracion/PaginaConductores';
 import { PaginaEmpresas } from './administracion/PaginaEmpresas';
+import { PaginaItinerarios } from './administracion/PaginaItinerarios';
 import { PaginaPasajeros } from './administracion/PaginaPasajeros';
 import { PaginaUsuarios } from './administracion/PaginaUsuarios';
+import { PaginaVehiculos } from './administracion/PaginaVehiculos';
 import { PaginaAlertas } from './alertas/PaginaAlertas';
 import { ProveedorAlertas } from './alertas/useAlertas';
 import { RequiereSesion } from './auth/RequiereSesion';
@@ -42,6 +45,9 @@ export function App() {
             />
             <Route path="administracion/empresas" element={<PaginaEmpresas />} />
             <Route path="administracion/pasajeros" element={<PaginaPasajeros />} />
+            <Route path="administracion/conductores" element={<PaginaConductores />} />
+            <Route path="administracion/vehiculos" element={<PaginaVehiculos />} />
+            <Route path="administracion/itinerarios" element={<PaginaItinerarios />} />
             <Route path="*" element={<NoEncontrada />} />
           </Route>
         </Routes>
