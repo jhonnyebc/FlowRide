@@ -220,3 +220,66 @@ export function pasajero(id: string, extra: Partial<Esquemas['PasajeroRespuesta'
     ...extra,
   };
 }
+
+export function conductor(id: string, extra: Partial<Esquemas['ConductorRespuesta']> = {}): Esquemas['ConductorRespuesta'] {
+  return {
+    id,
+    nombre: `Conductor ${id}`,
+    telefonoWhatsApp: '+573007778899',
+    correo: null,
+    numeroLicencia: `LIC-${id}`,
+    categoriaLicencia: 'C1',
+    vencimientoLicencia: '2099-12-31',
+    estado: 'Activo',
+    activo: true,
+    aptoServicioCritico: false,
+    ...extra,
+  };
+}
+
+export function turno(id: string, estado: string, extra: Partial<Esquemas['TurnoRespuesta']> = {}): Esquemas['TurnoRespuesta'] {
+  return {
+    id,
+    inicio: '2026-10-27T11:00:00Z',
+    fin: '2026-10-27T19:00:00Z',
+    estado,
+    inicioLocal: '2026-10-27T06:00:00',
+    finLocal: '2026-10-27T14:00:00',
+    zonaHoraria: 'America/Bogota',
+    ...extra,
+  };
+}
+
+export function documento(id: string, tipo: string, fechaVencimiento: string | null = null): Esquemas['DocumentoConductorRespuesta'] {
+  return { id, tipo, fechaVencimiento };
+}
+
+export function vehiculo(id: string, extra: Partial<Esquemas['VehiculoRespuesta']> = {}): Esquemas['VehiculoRespuesta'] {
+  return {
+    id,
+    placa: `ABC${id}`,
+    marca: 'Renault',
+    modelo: 'Master',
+    capacidad: 12,
+    vencimientoRtm: '2099-06-30',
+    vencimientoSoat: '2099-06-30',
+    activo: true,
+    conductorHabitualId: null,
+    ...extra,
+  };
+}
+
+export function itinerario(id: string, extra: Partial<Esquemas['ItinerarioRespuesta']> = {}): Esquemas['ItinerarioRespuesta'] {
+  return {
+    id,
+    empresaClienteId: 'e-1',
+    codigoServicio: 'AV-123',
+    fecha: '2026-10-27',
+    origen: 'Hotel Central',
+    destino: 'Aeropuerto',
+    horaSalida: '05:30:00',
+    horaLlegada: '06:15:00',
+    zonaHoraria: 'America/Bogota',
+    ...extra,
+  };
+}

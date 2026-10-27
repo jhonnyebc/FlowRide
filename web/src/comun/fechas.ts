@@ -30,6 +30,24 @@ export function horaLocal(local: string | null | undefined, zona: string | null 
   return zona ? `${texto} (${zona})` : texto;
 }
 
+const formatoFecha = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+
+/** Una fecha sin hora (`2026-11-30`) tal cual, sin pasar por zonas horarias: `30 de nov de 2026`. */
+export function fechaCorta(valor: string | null | undefined): string {
+  if (!valor) return '—';
+  const [anio, mes, dia] = valor.split('-').map(Number);
+  return formatoFecha.format(new Date(Date.UTC(anio ?? 1970, (mes ?? 1) - 1, dia ?? 1)));
+}
+
+/** Días que faltan desde hoy (zona del navegador) hasta una fecha `yyyy-MM-dd`; negativo si ya pasó. */
+export function diasHasta(fecha: string, ahora: Date = new Date()): number {
+  const aUtc = (iso: string) => {
+    const [anio, mes, dia] = iso.split('-').map(Number);
+    return Date.UTC(anio ?? 1970, (mes ?? 1) - 1, dia ?? 1);
+  };
+  return Math.round((aUtc(fecha) - aUtc(hoyIso(ahora))) / 86_400_000);
+}
+
 /** `yyyy-MM-dd` de hoy en la zona del navegador (para el filtro de la vista del día). */
 export function hoyIso(ahora: Date = new Date()): string {
   const local = new Date(ahora.getTime() - ahora.getTimezoneOffset() * 60_000);
