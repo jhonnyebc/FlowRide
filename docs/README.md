@@ -63,3 +63,4 @@ Esta carpeta es la entrega de la documentación del proyecto (28-10-2026), toda 
 |---|---|
 | [ROADMAP-V1.md](ROADMAP-V1.md) | Plan de implementación por fases y estado de cada requisito funcional. |
 | [GUIA-WHATSAPP-META.md](GUIA-WHATSAPP-META.md) | Cómo conectar el número de prueba de Meta y el webhook en local. |
+| [DESARROLLO.md](DESARROLLO.md) | Guía técnica para desarrollar: arquitectura, convenciones, comandos y entorno local. |

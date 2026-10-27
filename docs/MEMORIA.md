@@ -5,13 +5,13 @@
 > Última actualización: 2026-10-19.
 
 ## Estado actual
-- **Rama de trabajo:** `feature/RF-07-panel-recursos` (Fase 11b-2, con commit y push, pendiente del PR). Después: Fase 11c.
+- **Rama de trabajo:** `chore/documentacion-desarrollo` (guía de desarrollo y limpieza de archivos locales, SIN commit). Después: Fase 11c.
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
   Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6), Fase 4
   Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9), Fase 7 Canal WhatsApp (PR #10), Fase 8 Notificaciones y alertas (PR #11), Fase 9 Reportes y vista operacional (PR #12), Fase 10 Borde común (PR #13), fechas con zona (PR #14), seguridad OWASP
   (PR #15), Fase 11a Panel Web base y Operación (PR #16), Fase 11b-1 usuarios, empresas y pasajeros (PR #17) y la
-  documentación de la entrega (PR #18).
-- **Fase actual:** Fase 11b-2 (conductores, vehículos e itinerarios) con commit en la rama, pendiente del PR. Sigue 11c (configuración y reportes).
+  documentación de la entrega (PR #18) y la Fase 11b-2 conductores, vehículos e itinerarios (PR #19).
+- **Fase actual:** Fase 11b-2 cerrada (PR #19, 2026-10-26). Sigue 11c (configuración y reportes).
 - **Tests:** 553 unitarios (94,1 % líneas / 83,2 % ramas en Domain + Application), 17 de arquitectura, 145 de integración
   (Keycloak, Mailpit y Azurite reales con Testcontainers) y 59 del frontend (Vitest + axe).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
@@ -20,7 +20,7 @@
   migraciones, clave de cifrado nueva, admin `admin@tenant-a.local` con contraseña ya definida) y tiene una empresa de
   pruebas y un pasajero con el celular del usuario. El canal de tenant-a está en `MetaSandbox` (número de prueba
   +1 555 203 2563, token permanente de un usuario del sistema, webhook por ngrok `chummy-spree-clutter.ngrok-free.dev`).
-  `tenant-b` existe en la base pero sus secretos solo estaban en la copia aislada de los procesos de Claude: para usarlo
+  `tenant-b` existe en la base pero sus secretos solo estaban en una copia aislada del AppData: para usarlo
   hay que recrearlo igual que tenant-a.
 - **Datos de prueba de tenant-a (2026-10-21):** "Conductor de pruebas" con un segundo celular del usuario (autorizado en
   la lista de destinatarios de Meta), turno del 2026-10-21 y vehículo `PRU001`. El número no va en el repo (el `.http`
@@ -138,9 +138,9 @@
   dejarlo entero en un solo formato (con `perl -pi` cambiando cada salto de línea a CRLF).
 - **Docker Desktop cerrado:** las pruebas de integración fallan al conectar; iniciarlo y esperar a que `docker info` responda.
   Testcontainers usa el pipe `docker_engine`, que a veces tarda más que `docker info` en aparecer.
-- **AppData aislado:** lo que escriben en `%APPDATA%` los procesos que lanza Claude (app de escritorio) queda en una copia
-  aislada (`AppData/Local/Packages/Claude_*/LocalCache`). Los `dotnet user-secrets set` y la CLI de aprovisionamiento los
-  corre el usuario en su terminal; Claude solo verifica nombres de claves.
+- **AppData aislado:** lo que escriben en `%APPDATA%` los procesos lanzados desde una app empaquetada (no desde la
+  terminal) puede quedar en una copia aislada (`AppData/Local/Packages/<app>/LocalCache`). Los `dotnet user-secrets set`
+  y la CLI de aprovisionamiento se corren siempre desde la terminal del usuario.
 - **Meta Cloud API:** el token temporal vence en horas (usar uno de usuario del sistema); sin `subscribed_apps` el webhook
   se verifica pero no llegan mensajes; ngrok gratis exige agente ≥ 3.20 (`ngrok update`).
 
@@ -169,7 +169,7 @@
 - Gates al cierre: build sin advertencias, formato OK, 173 unitarias (94,5 % / 92,1 %), 15 arquitectura, 47 integración.
 - CLI refactorizada probada contra el entorno local: `listar`, `crear-operador` repetido (idempotente), errores amigables
   (NIT duplicado, Id inválido, operador inexistente → código de salida 1) y `migrar-todos`.
-- CLAUDE.md tiene la sección "Estilo de puertos y adaptadores (acordado con el profesor)"; ROADMAP actualizado (Fase 1 y
+- La guía de desarrollo (hoy `docs/DESARROLLO.md`) tiene la sección "Estilo de puertos y adaptadores (acordado con el profesor)"; ROADMAP actualizado (Fase 1 y
   dos decisiones del 2026-10-16).
 - Commit `ad2341c` → PR #4 fusionada en `develop` el 2026-10-17 con el CI en verde. **Fase 1 cerrada.**
 
@@ -287,8 +287,8 @@
   celular del usuario. Hizo falta: actualizar ngrok (≥ 3.20), suscribir la cuenta de WhatsApp a la app
   (`subscribed_apps`), un token permanente de usuario del sistema y reiniciar la API tras cambiar secretos. La guía
   `docs/GUIA-WHATSAPP-META.md` quedó con esos pasos.
-- **Incidente:** los secretos que la CLI había creado desde los procesos de Claude estaban en una copia aislada del AppData
-  (virtualización de la app de escritorio); al borrarla se perdió la clave de cifrado de tenant-a y se recreó tenant-a con
+- **Incidente:** los secretos que la CLI había creado desde un proceso que no era la terminal del usuario estaban en una
+  copia aislada del AppData (virtualización de una app empaquetada); al borrarla se perdió la clave de cifrado de tenant-a y se recreó tenant-a con
   la CLI corrida por el usuario. Desde entonces los secretos y el aprovisionamiento los corre el usuario.
 - Al probar se vio que la API aceptaba cualquier texto como teléfono: ahora se valida y normaliza a E.164
   (`TelefonosWhatsApp.Normalizar` en los adaptadores de entrada de usuarios, pasajeros y conductores).
@@ -482,9 +482,21 @@
 - Pregunta del usuario sobre «America/Bogota»: es el nombre IANA de la zona (sale de `FlowRide:ZonaHoraria` del
   operador), no la ciudad del servicio; se deja así. Mostrar un nombre amigable sería un cambio de presentación a
   anotar en ADR-0020.
+- PR #19 fusionada en `develop` el 2026-10-26 (merge `74f04fc`, CI en verde). **Fase 11b-2 cerrada.**
+
+## Sesión 2026-10-26 (continuación): guía de desarrollo y archivos locales fuera del repo
+- Rama `chore/documentacion-desarrollo`. A pedido del usuario, los archivos de configuración del asistente salen del
+  repositorio: se quitan del índice (`git rm --cached`) y se ignoran con `.git/info/exclude` (local, para que ni el
+  `.gitignore` los nombre); siguen en el disco del usuario. La historia anterior no se reescribe.
+- La documentación técnica que vivía en esa configuración pasa a `docs/DESARROLLO.md` (producto, arquitectura, estilo de
+  puertos y adaptadores, módulos por fase, convenciones, flujo de trabajo, comandos y entorno local), enlazada desde
+  `docs/README.md`. Se quitaron las menciones al asistente en esta memoria y en `FlowRide.API.http`.
+- Contexto: tras reescribir la historia (sin líneas `Co-authored-by`), la barra «Colaboradores» de GitHub seguía
+  mostrando un segundo colaborador aunque la API de colaboradores ya devuelve solo la cuenta del usuario. Soporte de
+  GitHub no atiende esa limpieza en cuentas gratuitas; queda esperar a que la caché se recalcule.
 
 ## Próximos pasos
-1. Fase 11b-2: PR y revisión del CI. Revisar el turno que queda `Programado` después de terminar.
+1. Revisar el turno que queda `Programado` después de terminar (hallazgo de la prueba del 2026-10-26).
    **Recordatorio (2026-10-18):** itinerarios en PDF o Word por WhatsApp quedan fuera de V1; el bot responde que solo
    entiende texto y los itinerarios se registran desde el panel (RF-08). Opciones para después: recibir el archivo y
    alertar al operador, o extracción automática (requeriría ADR nuevo).
