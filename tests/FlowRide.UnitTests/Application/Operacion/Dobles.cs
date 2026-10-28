@@ -78,6 +78,13 @@ internal sealed class ConductoresEnMemoria() : RepositorioEnMemoria<Conductor>(c
 
     public Task<IReadOnlyList<Conductor>> ConsultarConTurnoQueCubreAsync(FranjaHoraria franja, CancellationToken ct) =>
         Task.FromResult<IReadOnlyList<Conductor>>(Elementos.Values.Where(c => c.TieneTurnoQueCubre(franja)).ToList());
+
+    public Task<IReadOnlyList<Conductor>> ConsultarConTurnosPorActualizarAsync(DateTimeOffset ahora, int lote, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<Conductor>>(Elementos.Values
+            .Where(c => c.Turnos.Any(t => (t.Estado == EstadoTurno.Programado && t.Inicio <= ahora) || (t.Estado == EstadoTurno.Activo && t.Fin <= ahora)))
+            .OrderBy(c => c.Id)
+            .Take(lote)
+            .ToList());
 }
 
 internal sealed class VehiculosEnMemoria() : RepositorioEnMemoria<Vehiculo>(v => v.Id), IVehiculoRepositorio

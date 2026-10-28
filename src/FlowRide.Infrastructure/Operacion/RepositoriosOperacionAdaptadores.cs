@@ -154,6 +154,17 @@ public sealed class ConductorRepositorioAdaptador(FlowRideDbContext contexto) : 
             .Include(c => c.Turnos)
             .ToListAsync(ct);
     }
+
+    /// <summary>Con rastreo: el caso de uso cambia el estado de sus turnos y confirma con la unidad de trabajo.</summary>
+    public async Task<IReadOnlyList<Conductor>> ConsultarConTurnosPorActualizarAsync(DateTimeOffset ahora, int lote, CancellationToken ct) =>
+        await contexto.Conductores
+            .Where(c => c.Turnos.Any(t => (t.Estado == EstadoTurno.Programado && t.Franja.Inicio <= ahora)
+                                          || (t.Estado == EstadoTurno.Activo && t.Franja.Fin <= ahora)))
+            .OrderBy(c => c.Id)
+            .Take(lote)
+            .Include(c => c.Turnos)
+            .AsSplitQuery()
+            .ToListAsync(ct);
 }
 
 public sealed class VehiculoRepositorioAdaptador(FlowRideDbContext contexto) : IVehiculoRepositorio

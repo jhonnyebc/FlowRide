@@ -5,14 +5,15 @@
 > Última actualización: 2026-10-19.
 
 ## Estado actual
-- **Rama de trabajo:** `feature/RF-21-panel-configuracion` (Fase 11c, con commit y push, pendiente del PR). Después: Fase 12.
+- **Rama de trabajo:** `fix/RF-07-estado-turnos` (estado de los turnos por la hora, con commit y push, pendiente del PR). Después: RF-50/51/53 y Fase 12.
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
   Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6), Fase 4
   Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9), Fase 7 Canal WhatsApp (PR #10), Fase 8 Notificaciones y alertas (PR #11), Fase 9 Reportes y vista operacional (PR #12), Fase 10 Borde común (PR #13), fechas con zona (PR #14), seguridad OWASP
   (PR #15), Fase 11a Panel Web base y Operación (PR #16), Fase 11b-1 usuarios, empresas y pasajeros (PR #17) y la
-  documentación de la entrega (PR #18) y la Fase 11b-2 conductores, vehículos e itinerarios (PR #19).
-- **Fase actual:** Fase 11c (configuración y reportes) con commit en la rama, pendiente del PR. Sigue la Fase 12 (operación).
-- **Tests:** 553 unitarios (94,1 % líneas / 83,2 % ramas en Domain + Application), 17 de arquitectura, 145 de integración
+  documentación de la entrega (PR #18), la Fase 11b-2 conductores, vehículos e itinerarios (PR #19), la guía de desarrollo
+  (PR #20) y la Fase 11c configuración y reportes (PR #21).
+- **Fase actual:** Fase 11 (Panel Web) completa (PR #21, 2026-10-27). En curso: corrección del estado de los turnos. Siguen RF-50/51/53, la Fase 12 y el diseño.
+- **Tests:** 556 unitarios (92,5 % líneas / 82,6 % ramas en Domain + Application), 17 de arquitectura, 146 de integración
   (Keycloak, Mailpit y Azurite reales con Testcontainers) y 69 del frontend (Vitest + axe).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
   Azurite (10000). Los secretos viven en el AppData **real** del usuario (`flowride-aprovisionamiento` y
@@ -518,14 +519,30 @@
   desactivar pasajeros en el panel (hueco de la 11b-1; la API ya lo tenía en `/api/usuarios/{id}/activar|desactivar`):
   agregado con confirmación.
 - Pruebas: 10 nuevas (69 del frontend).
+- PR #21 fusionada en `develop` (merge `2a14bca`). **Fase 11 (Panel Web) completa.** El usuario decidió dejar el
+  diseño para el final, cuando todo esté al 100 %.
+
+## Sesión 2026-10-27 (continuación): estado de los turnos por la hora
+- Rama `fix/RF-07-estado-turnos`. Causa: `Turno.Iniciar` y `Finalizar` existían pero nadie los llamaba (ni el bot ni el
+  panel ni un proceso), así que los turnos quedaban en Programado para siempre. No afectaba la asignación (el motor exige
+  un turno que cubra la franja), pero el panel los mostraba vigentes y se podía registrar el abandono de un turno pasado.
+- Decisión del usuario: automático por la hora. `Turno.ActualizarPorHora(ahora)` (Programado → Activo al llegar el inicio,
+  → Finalizado al llegar el fin, pasando por Activo), `Conductor.ActualizarTurnosPorHora`, repositorio
+  `ConsultarConTurnosPorActualizarAsync` (con rastreo, por lotes), `ActualizarEstadoTurnosCasoUso` y
+  `IConductoresPuertoEntrada.ActualizarEstadoTurnosAsync`, llamado por `WorkerColaAsignacion` antes de cada vuelta (un
+  fallo no detiene la vuelta). No se audita: el cambio sale solo de la hora.
+- Pruebas: 2 de dominio, 1 de caso de uso y 1 de integración (el worker con PostgreSQL real): 556 unitarias, 17 de
+  arquitectura y 146 de integración en verde; formato al día.
 
 ## Próximos pasos
-1. Fase 11c: PR, revisión del CI y prueba en vivo de las cuatro pantallas.
-2. Revisar el turno que queda `Programado` después de terminar (hallazgo de la prueba del 2026-10-26).
-   **Recordatorio (2026-10-18):** itinerarios en PDF o Word por WhatsApp quedan fuera de V1; el bot responde que solo
-   entiende texto y los itinerarios se registran desde el panel (RF-08). Opciones para después: recibir el archivo y
-   alertar al operador, o extracción automática (requeriría ADR nuevo).
+1. Corrección de turnos: commit, PR y CI.
+2. RF-50, RF-51 y RF-53 (hoy parciales): mostrar al usuario qué hay y decidir si basta.
 3. Pendiente de la 11a: marcar el job "Frontend" como requerido en `develop` y actualizar las herramientas de pruebas
    con alertas de `npm audit` (vitest, postcss, tinypool; solo desarrollo).
 4. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).
 5. Opcional: SonarCloud (crear el proyecto y el secreto `SONAR_TOKEN`).
+6. Al final: diseño del Panel Web (decisión del usuario, 2026-10-27).
+
+**Recordatorio (2026-10-18):** itinerarios en PDF o Word por WhatsApp quedan fuera de V1; el bot responde que solo
+entiende texto y los itinerarios se registran desde el panel (RF-08). Opciones para después: recibir el archivo y
+alertar al operador, o extracción automática (requeriría ADR nuevo).

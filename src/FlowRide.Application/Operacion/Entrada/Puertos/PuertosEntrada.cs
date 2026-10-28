@@ -39,6 +39,9 @@ public interface IConductoresPuertoEntrada
     Task<TurnoRespuesta> ProgramarTurnoAsync(Guid conductorId, TurnoPeticion peticion, Guid? actorId, CancellationToken ct);
 
     Task<IReadOnlyList<ConductorDisponibleRespuesta>> ConsultarDisponiblesAsync(DateTime? inicio, DateTime? fin, string? zonaHoraria, CancellationToken ct);
+
+    /// <summary>Pone al día con el reloj el estado de los turnos (lo llama el worker de la cola); devuelve cuántos cambiaron.</summary>
+    Task<int> ActualizarEstadoTurnosAsync(int loteMaximo, CancellationToken ct);
 }
 
 public interface IDocumentosConductorPuertoEntrada

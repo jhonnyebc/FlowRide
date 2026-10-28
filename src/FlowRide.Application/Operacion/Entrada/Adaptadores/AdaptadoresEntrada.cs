@@ -85,6 +85,7 @@ public sealed class ConductoresAdaptadorEntrada(
     ICasoUsoConRetorno<BuscarConductoresDominio, PaginaResultado<Conductor>> buscar,
     ICasoUsoConRetorno<ProgramarTurnoDominio, Turno> programarTurno,
     ICasoUsoConRetorno<ConsultarDisponibilidadDominio, IReadOnlyList<Conductor>> disponibles,
+    ICasoUsoConRetorno<ActualizarEstadoTurnosDominio, int> actualizarTurnos,
     ZonaHorariaOperador zona) : IConductoresPuertoEntrada
 {
     private const string MensajeRequeridos =
@@ -146,6 +147,9 @@ public sealed class ConductoresAdaptadorEntrada(
             .Select(c => new ConductorDisponibleRespuesta(c.Id, c.Nombre, c.CategoriaLicencia, c.VencimientoLicencia))
             .ToList();
     }
+
+    public Task<int> ActualizarEstadoTurnosAsync(int loteMaximo, CancellationToken ct) =>
+        actualizarTurnos.EjecutarAsync(new ActualizarEstadoTurnosDominio(Math.Max(1, loteMaximo)), ct);
 
     private static void ValidarConductor(ConductorPeticion? peticion) =>
         Requeridos.Validar(peticion, MensajeRequeridos, peticion?.Nombre, peticion?.TelefonoWhatsApp, peticion?.NumeroLicencia,

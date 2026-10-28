@@ -109,7 +109,8 @@ public class AdaptadoresEntradaOperacionTests
         var turno = new Grabador<ProgramarTurnoDominio, Turno>(_ => conductor.Turnos[0]);
         var disponibles = new Grabador<ConsultarDisponibilidadDominio, IReadOnlyList<Conductor>>(_ => [conductor]);
         var adaptador = new ConductoresAdaptadorEntrada(registrar, new Grabador<ActualizarConductorDominio, Conductor>(_ => conductor), estado,
-            new Grabador<Guid, Conductor>(_ => conductor), buscar, turno, disponibles, HorasDePrueba.ZonaOperador);
+            new Grabador<Guid, Conductor>(_ => conductor), buscar, turno, disponibles, new Grabador<ActualizarEstadoTurnosDominio, int>(_ => 0),
+            HorasDePrueba.ZonaOperador);
         var peticion = new ConductorPeticion
         {
             Nombre = "Luis",

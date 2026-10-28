@@ -164,6 +164,36 @@ public sealed class ProgramarTurnoCasoUso(
     }
 }
 
+/// <summary>
+/// Pone al día con el reloj el estado de los turnos: Programado → Activo al llegar su inicio y → Finalizado al llegar su
+/// fin (decisión del usuario, 2026-10-27). Lo dispara el worker de la cola de asignación en cada vuelta. No se audita:
+/// el cambio sale solo de la hora y siempre se puede reconstruir con la franja del turno.
+/// </summary>
+public sealed class ActualizarEstadoTurnosCasoUso(
+    IConductorRepositorio conductores,
+    IUnidadTrabajo unidadTrabajo,
+    TimeProvider reloj) : ICasoUsoConRetorno<ActualizarEstadoTurnosDominio, int>
+{
+    public async Task<int> EjecutarAsync(ActualizarEstadoTurnosDominio datos, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(datos);
+        var ahora = reloj.GetUtcNow();
+        var cambiados = 0;
+        foreach (var conductor in await conductores.ConsultarConTurnosPorActualizarAsync(ahora, datos.LoteMaximo, ct))
+        {
+            var cambios = conductor.ActualizarTurnosPorHora(ahora);
+            if (cambios == 0)
+                continue;
+            await conductores.ModificarAsync(conductor.Id, conductor, ct);
+            cambiados += cambios;
+        }
+
+        if (cambiados > 0)
+            await unidadTrabajo.GuardarCambiosAsync(ct);
+        return cambiados;
+    }
+}
+
 /// <summary>Conductores disponibles para una franja según lo programado (RF-07).</summary>
 public sealed class ConsultarDisponibilidadCasoUso(IConductorRepositorio conductores, IAsignacionRepositorio asignaciones)
     : ICasoUsoConRetorno<ConsultarDisponibilidadDominio, IReadOnlyList<Conductor>>

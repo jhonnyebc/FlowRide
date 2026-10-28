@@ -271,6 +271,26 @@ public class AsignacionApiTests(PostgresFixture postgres) : PruebasAsignacionBas
         Assert.Equal(urgente, Assert.Single(cola!.Elementos).SolicitudId);
         Assert.Equal("SinCandidatos", (await Operador.GetFromJsonAsync<SolicitudDetalleRespuesta>($"/api/solicitudes/{normal}"))!.Solicitud.Estado);
     }
+
+    [Fact]
+    public async Task ElWorker_PoneAlDiaElEstadoDeLosTurnosConLaHora()
+    {
+        var enCurso = await ConductorListoAsync();
+        var terminado = await ConductorListoAsync();
+        var futuro = await ConductorListoAsync();
+        await EjecutarEnSiloAsync<int>(
+            $"UPDATE ops.turno SET inicio = now() - interval '1 hour', fin = now() + interval '7 hours' WHERE id = '{enCurso.TurnoId}' RETURNING 1");
+        await EjecutarEnSiloAsync<int>(
+            $"UPDATE ops.turno SET inicio = now() - interval '10 hours', fin = now() - interval '2 hours' WHERE id = '{terminado.TurnoId}' RETURNING 1");
+
+        var cambiados = await Api.Services.GetRequiredService<WorkerColaAsignacion>().ActualizarTurnosAsync(CancellationToken.None);
+
+        Assert.Equal(2, cambiados);
+        Assert.Equal("Activo", await EjecutarEnSiloAsync<string>($"SELECT estado FROM ops.turno WHERE id = '{enCurso.TurnoId}'"));
+        Assert.Equal("Finalizado", await EjecutarEnSiloAsync<string>($"SELECT estado FROM ops.turno WHERE id = '{terminado.TurnoId}'"));
+        Assert.Equal("Programado", await EjecutarEnSiloAsync<string>($"SELECT estado FROM ops.turno WHERE id = '{futuro.TurnoId}'"));
+        Assert.Equal(0, await Api.Services.GetRequiredService<WorkerColaAsignacion>().ActualizarTurnosAsync(CancellationToken.None));
+    }
 }
 
 /// <summary>

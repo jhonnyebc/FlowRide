@@ -44,6 +44,12 @@ public interface IConductorRepositorio
     /// turno vigente que la contiene. Incluye sus turnos; la licencia y las asignaciones las valida el dominio.
     /// </summary>
     Task<IReadOnlyList<Conductor>> ConsultarConTurnoQueCubreAsync(FranjaHoraria franja, CancellationToken ct);
+
+    /// <summary>
+    /// Conductores con algún turno atrasado respecto del reloj: programado que ya debió empezar o vigente que ya debió
+    /// terminar. Incluye sus turnos para modificarlos; como mucho <paramref name="lote"/>.
+    /// </summary>
+    Task<IReadOnlyList<Conductor>> ConsultarConTurnosPorActualizarAsync(DateTimeOffset ahora, int lote, CancellationToken ct);
 }
 
 public interface IVehiculoRepositorio
