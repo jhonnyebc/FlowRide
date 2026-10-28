@@ -57,6 +57,9 @@ public sealed class Conductor : Usuario
 
     public bool TieneTurnoQueCubre(FranjaHoraria franja) => _turnos.Any(turno => turno.Cubre(franja));
 
+    /// <summary>Pone al día con el reloj el estado de sus turnos; devuelve cuántos cambiaron.</summary>
+    public int ActualizarTurnosPorHora(DateTimeOffset ahora) => _turnos.Count(turno => turno.ActualizarPorHora(ahora));
+
     /// <summary>Programa un turno; dos turnos vigentes del mismo conductor no pueden solaparse.</summary>
     public Turno ProgramarTurno(Guid turnoId, FechaHoraLocal inicio, FechaHoraLocal fin)
     {

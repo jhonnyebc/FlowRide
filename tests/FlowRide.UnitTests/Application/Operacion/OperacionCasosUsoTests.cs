@@ -246,6 +246,28 @@ public class ConductoresCasosUsoTests : CasosUsoOperacionBase
     }
 
     [Fact]
+    public async Task ActualizarEstadoTurnos_LosPoneAlDiaConElReloj_YSoloConfirmaSiAlgoCambio()
+    {
+        var conductor = ConductorRegistrado();
+        var terminado = conductor.ProgramarTurno(Guid.NewGuid(), new FlowRide.Domain.ValoresObjeto.FranjaHoraria(Ahora.AddHours(-10), Ahora.AddHours(-2)));
+        var enCurso = conductor.ProgramarTurno(Guid.NewGuid(), new FlowRide.Domain.ValoresObjeto.FranjaHoraria(Ahora.AddHours(-1), Ahora.AddHours(7)));
+        var futuro = conductor.ProgramarTurno(Guid.NewGuid(), new FlowRide.Domain.ValoresObjeto.FranjaHoraria(Ahora.AddHours(8), Ahora.AddHours(16)));
+        var casoUso = new ActualizarEstadoTurnosCasoUso(Conductores, UnidadTrabajo, Reloj);
+
+        var cambiados = await casoUso.EjecutarAsync(new ActualizarEstadoTurnosDominio(20), CancellationToken.None);
+
+        Assert.Equal(2, cambiados);
+        Assert.Equal(EstadoTurno.Finalizado, terminado.Estado);
+        Assert.Equal(EstadoTurno.Activo, enCurso.Estado);
+        Assert.Equal(EstadoTurno.Programado, futuro.Estado);
+        Assert.Equal(1, UnidadTrabajo.Confirmaciones);
+        Assert.Empty(Auditoria.Eventos);
+
+        Assert.Equal(0, await casoUso.EjecutarAsync(new ActualizarEstadoTurnosDominio(20), CancellationToken.None));
+        Assert.Equal(1, UnidadTrabajo.Confirmaciones);
+    }
+
+    [Fact]
     public async Task Disponibilidad_SoloActivosConLicenciaTurnoYLibres()
     {
         var franja = (Inicio: Ahora.AddHours(2), Fin: Ahora.AddHours(3));

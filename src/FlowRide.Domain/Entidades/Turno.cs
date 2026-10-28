@@ -82,6 +82,21 @@ public sealed class Turno
         Estado = EstadoTurno.Finalizado;
     }
 
+    /// <summary>
+    /// Pone el estado al día con el reloj (decisión del usuario, 2026-10-27): al llegar la hora de inicio pasa a Activo
+    /// y al llegar la de fin, a Finalizado (pasando por Activo si nadie lo inició). Un turno abandonado o finalizado no
+    /// cambia. Devuelve true si cambió.
+    /// </summary>
+    public bool ActualizarPorHora(DateTimeOffset ahora)
+    {
+        var antes = Estado;
+        if (Estado == EstadoTurno.Programado && ahora >= Inicio)
+            Iniciar();
+        if (Estado == EstadoTurno.Activo && ahora >= Fin)
+            Finalizar();
+        return Estado != antes;
+    }
+
     /// <summary>Contingencia del caso ancla: el conductor abandona el turno (RF-12).</summary>
     public void MarcarAbandonado(string motivo)
     {

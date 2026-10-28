@@ -167,6 +167,36 @@ public class TurnoTests
         Assert.Equal("Emergencia familiar", turno.MotivoAbandono);
         Assert.False(turno.Cubre(Ahora.AddHours(1)));
     }
+
+    [Fact]
+    public void ActualizarPorHora_SigueAlReloj()
+    {
+        var turno = new Turno(Id(100), Id(20), Ahora.AddHours(1).Local(), Ahora.AddHours(9).Local());
+
+        Assert.False(turno.ActualizarPorHora(Ahora));
+        Assert.Equal(EstadoTurno.Programado, turno.Estado);
+
+        Assert.True(turno.ActualizarPorHora(Ahora.AddHours(1)));
+        Assert.Equal(EstadoTurno.Activo, turno.Estado);
+        Assert.False(turno.ActualizarPorHora(Ahora.AddHours(5)));
+
+        Assert.True(turno.ActualizarPorHora(Ahora.AddHours(9)));
+        Assert.Equal(EstadoTurno.Finalizado, turno.Estado);
+        Assert.False(turno.ActualizarPorHora(Ahora.AddDays(1)));
+    }
+
+    [Fact]
+    public void ActualizarPorHora_UnProgramadoYaTerminadoPasaAFinalizado_YUnAbandonadoNoCambia()
+    {
+        var olvidado = new Turno(Id(100), Id(20), Ahora.Local(), Ahora.AddHours(8).Local());
+        var abandonado = new Turno(Id(101), Id(20), Ahora.Local(), Ahora.AddHours(8).Local());
+        abandonado.MarcarAbandonado("Enfermedad");
+
+        Assert.True(olvidado.ActualizarPorHora(Ahora.AddDays(2)));
+        Assert.Equal(EstadoTurno.Finalizado, olvidado.Estado);
+        Assert.False(abandonado.ActualizarPorHora(Ahora.AddDays(2)));
+        Assert.Equal(EstadoTurno.Abandonado, abandonado.Estado);
+    }
 }
 
 public class VehiculoTests

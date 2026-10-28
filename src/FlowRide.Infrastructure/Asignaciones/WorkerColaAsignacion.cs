@@ -1,5 +1,6 @@
 using FlowRide.Application.Asignaciones.Entrada.Puertos;
 using FlowRide.Application.Comun.Salida.Puertos;
+using FlowRide.Application.Operacion.Entrada.Puertos;
 using FlowRide.Application.Viajes.Entrada.Puertos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -18,7 +19,7 @@ public sealed class WorkerAsignacionOptions
 }
 
 /// <summary>
-/// Adaptador de entrada en segundo plano (RF-10): cada intervalo primero vence las asignaciones que el conductor no
+/// Adaptador de entrada en segundo plano (RF-10): cada intervalo pone al día el estado de los turnos con el reloj, vence las asignaciones que el conductor no
 /// respondió en el plazo (Fase 6: vuelven a la cola sin ese conductor) y luego toma la cola en el orden en que se atiende
 /// (urgentes primero), cada solicitud en su propio alcance y transacción. Si otra réplica ya la tomó, el conflicto se
 /// registra y la solicitud se reintenta en la siguiente vuelta; un error en una no detiene las demás.
@@ -52,6 +53,7 @@ public sealed partial class WorkerColaAsignacion(
     /// <summary>Una vuelta de la cola. Devuelve cuántas solicitudes procesó (asignadas o sin candidatos).</summary>
     public async Task<int> ProcesarAsync(CancellationToken ct)
     {
+        await ActualizarTurnosAsync(ct);
         await VencerSinRespuestaAsync(ct);
 
         IReadOnlyList<Guid> pendientes;
@@ -78,6 +80,31 @@ public sealed partial class WorkerColaAsignacion(
             }
         }
         return procesadas;
+    }
+
+    /// <summary>
+    /// Pone al día con el reloj el estado de los turnos (Programado → Activo → Finalizado). Un fallo no detiene la vuelta:
+    /// el estado del turno no decide la asignación, que siempre exige un turno que cubra el servicio. Devuelve cuántos cambió.
+    /// </summary>
+    public async Task<int> ActualizarTurnosAsync(CancellationToken ct)
+    {
+        await using var alcance = alcances.CreateAsyncScope();
+        try
+        {
+            var cambiados = await alcance.ServiceProvider.GetRequiredService<IConductoresPuertoEntrada>().ActualizarEstadoTurnosAsync(opciones.LoteMaximo, ct);
+            if (cambiados > 0)
+                TurnosActualizados(logger, cambiados);
+            return cambiados;
+        }
+        catch (ConflictoConcurrenciaExcepcion)
+        {
+            TurnosEnConflicto(logger);
+        }
+        catch (Exception error) when (error is not OperationCanceledException)
+        {
+            ActualizacionTurnosFallida(logger, error);
+        }
+        return 0;
     }
 
     /// <summary>Vence las asignaciones sin respuesta. Devuelve cuántas venció.</summary>
@@ -133,4 +160,14 @@ public sealed partial class WorkerColaAsignacion(
 
     [LoggerMessage(EventId = 5007, Level = LogLevel.Error, Message = "Cola de asignación: no se pudo vencer la asignación {AsignacionId}.")]
     private static partial void VencimientoFallido(ILogger logger, Guid asignacionId, Exception error);
+
+    [LoggerMessage(EventId = 5008, Level = LogLevel.Information, Message = "Cola de asignación: {Cantidad} turno(s) cambiaron de estado por la hora.")]
+    private static partial void TurnosActualizados(ILogger logger, int cantidad);
+
+    [LoggerMessage(EventId = 5009, Level = LogLevel.Information,
+        Message = "Cola de asignación: los turnos cambiaron mientras se actualizaban; se revisarán en la siguiente vuelta.")]
+    private static partial void TurnosEnConflicto(ILogger logger);
+
+    [LoggerMessage(EventId = 5010, Level = LogLevel.Error, Message = "Cola de asignación: no se pudo actualizar el estado de los turnos.")]
+    private static partial void ActualizacionTurnosFallida(ILogger logger, Exception error);
 }

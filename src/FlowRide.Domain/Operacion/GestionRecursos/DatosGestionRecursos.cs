@@ -49,6 +49,9 @@ public sealed record CambiarEstadoConductorDominio(Guid ConductorId, EstadoCondu
 
 public sealed record ProgramarTurnoDominio(Guid ConductorId, FechaHoraLocal Inicio, FechaHoraLocal Fin, Guid? ActorId);
 
+/// <summary>Una vuelta de la actualización de turnos por la hora: como mucho <paramref name="LoteMaximo"/> conductores.</summary>
+public sealed record ActualizarEstadoTurnosDominio(int LoteMaximo);
+
 /// <summary>Archivo ya validado por el adaptador de entrada (tipo de contenido y tamaño).</summary>
 public sealed record SubirDocumentoConductorDominio(
     Guid ConductorId,

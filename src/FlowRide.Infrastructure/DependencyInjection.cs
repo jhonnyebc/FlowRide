@@ -333,6 +333,7 @@ public static class DependencyInjection
         services.AddScoped<ICasoUsoConRetorno<Guid, Conductor>, ConsultarConductorCasoUso>();
         services.AddScoped<ICasoUsoConRetorno<BuscarConductoresDominio, PaginaResultado<Conductor>>, BuscarConductoresCasoUso>();
         services.AddScoped<ICasoUsoConRetorno<ProgramarTurnoDominio, Turno>, ProgramarTurnoCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ActualizarEstadoTurnosDominio, int>, ActualizarEstadoTurnosCasoUso>();
         services.AddScoped<ICasoUsoConRetorno<ConsultarDisponibilidadDominio, IReadOnlyList<Conductor>>, ConsultarDisponibilidadCasoUso>();
         services.AddScoped<ICasoUsoConRetorno<SubirDocumentoConductorDominio, DocumentoConductor>, SubirDocumentoConductorCasoUso>();
         services.AddScoped<ICasoUsoConRetorno<DocumentoConductorRefDominio, UrlDocumento>, ObtenerUrlDocumentoConductorCasoUso>();
