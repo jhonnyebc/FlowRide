@@ -26,7 +26,7 @@ Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente · ⛔ fuera de alcance
 | 8 | Notificaciones y alertas | Notificaciones | 0007, 0015, 0016 | ✅ PR #11 fusionada |
 | 9 | Reportes y vista operacional | Reportes | 0006, 0013 | ✅ PR #12 fusionada |
 | 10 | Borde común | Plataforma | 0012, 0014 | ✅ PR #13 fusionada |
-| 11 | Panel Web | Web | 0003, 0015, 0016, 0019 | 🟡 11a (PR #16), 11b-1 (PR #17) y 11b-2 (PR #19) cerradas; 11c pendiente |
+| 11 | Panel Web | Web | 0003, 0015, 0016, 0019 | 🟡 11a (PR #16), 11b-1 (PR #17), 11b-2 (PR #19) y 11c cerradas |
 | 12 | Operación: despliegue, backups y retención | Plataforma | 0010, 0011, 0013 | ⬜ |
 
 ## Detalle por fase
@@ -180,7 +180,15 @@ consulta y programa turnos, Usuarios es solo del Administrador; dos entregas):
   eliminar, decisión del usuario). Las tres pantallas van en Administración. Pruebas: 59 del frontend.
 
 11c — configuración y reportes:
-- [ ] Parámetros, plantillas de WhatsApp, configuración del motor, indicadores y reportes con exporte (RF-42, RF-46 a RF-49).
+- [x] 11c (2026-10-27, solo panel; el backend ya existía; decisiones del usuario: grupo «Configuración» con Parámetros,
+  Plantillas de WhatsApp y Motor de asignación; «Reportes» en Operación como una página con pestañas; un solo PR):
+  parámetros con el control de su tipo (número con rango, opción o franjas) y volver al valor por defecto; plantillas
+  (nombre e idioma en Meta y estado de aprobación); motor por versiones (versión activa con sus reglas, borrador nuevo a
+  partir de la activa con las eliminatorias bloqueadas, activar y volver a una anterior con confirmación); reportes de
+  viajes, solicitudes, conductores y empresas con periodo en días locales, resumen, tabla paginada y exporte a CSV.
+  Los indicadores (RF-42) ya estaban en el tablero (11a). Cambiar parámetros, plantillas o el motor exige
+  Administrador con inicio de sesión reciente. También se agregó activar y desactivar pasajeros (RF-25), que faltaba en
+  la 11b-1. Pruebas: 69 del frontend.
 
 ### Entrega de documentación (2026-10-28)
 - [x] Documentación del proyecto en Markdown en `docs/` (índice en `docs/README.md`): DAS v3.0 con diagramas en Mermaid, drivers, restricciones, funcionalidades significativas, trade-off y los 20 ADR con sus notas de implementación (ADR-0020 nuevo: fechas con zona horaria).

@@ -18,17 +18,21 @@ import {
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
+  IconAdjustments,
   IconAlertTriangle,
   IconBell,
+  IconBrandWhatsapp,
   IconBuildingSkyscraper,
   IconCalendarEvent,
   IconCalendarRepeat,
   IconCar,
   IconChevronDown,
+  IconCirclesRelation,
   IconLayoutDashboard,
   IconListDetails,
   IconLogout,
   IconMoon,
+  IconReportAnalytics,
   IconRoute,
   IconSteeringWheel,
   IconSun,
@@ -87,6 +91,7 @@ const grupos: { titulo: string; secciones: Seccion[] }[] = [
       { ruta: '/solicitudes', etiqueta: textos.menu.solicitudes, icono: IconListDetails },
       { ruta: '/viajes', etiqueta: textos.menu.viajesEnCurso, icono: IconRoute },
       { ruta: '/alertas', etiqueta: textos.menu.alertas, icono: IconAlertTriangle },
+      { ruta: '/reportes', etiqueta: textos.menu.reportes, icono: IconReportAnalytics },
     ],
   },
   {
@@ -98,6 +103,14 @@ const grupos: { titulo: string; secciones: Seccion[] }[] = [
       { ruta: '/administracion/conductores', etiqueta: textos.menu.conductores, icono: IconSteeringWheel },
       { ruta: '/administracion/vehiculos', etiqueta: textos.menu.vehiculos, icono: IconCar },
       { ruta: '/administracion/itinerarios', etiqueta: textos.menu.itinerarios, icono: IconCalendarRepeat },
+    ],
+  },
+  {
+    titulo: textos.menu.configuracion,
+    secciones: [
+      { ruta: '/configuracion/parametros', etiqueta: textos.menu.parametros, icono: IconAdjustments },
+      { ruta: '/configuracion/plantillas', etiqueta: textos.menu.plantillas, icono: IconBrandWhatsapp },
+      { ruta: '/configuracion/motor', etiqueta: textos.menu.motor, icono: IconCirclesRelation },
     ],
   },
 ];

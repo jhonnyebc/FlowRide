@@ -1,14 +1,14 @@
 import { Badge, Button, Group, Select, Table, TextInput, VisuallyHidden } from '@mantine/core';
 import { useDebouncedValue, useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
-import { IconEdit, IconPlus, IconSearch, IconUsers } from '@tabler/icons-react';
+import { IconCircleCheck, IconCircleOff, IconEdit, IconPlus, IconSearch, IconUsers } from '@tabler/icons-react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api, datos, type Esquemas } from '../api/cliente';
 import { esAdministrador, useUsuario } from '../auth/usuario';
 import { Consulta, Encabezado, EstadoVacio, Persona } from '../comun/Componentes';
 import { textos } from '../textos';
-import { InsigniaActivo, MenuAcciones, PanelLateral, PiePagina, TamanoPagina } from './comun';
+import { Confirmacion, InsigniaActivo, MenuAcciones, PanelLateral, PiePagina, TamanoPagina } from './comun';
 
 type Pasajero = Esquemas['PasajeroRespuesta'];
 
@@ -23,7 +23,7 @@ function useEmpresas() {
 
 /**
  * Pasajeros del operador (RF-05): su número de WhatsApp es su identidad en el bot (ADR-0008). El Administrador los
- * registra y edita; el Operador logístico los consulta.
+ * registra, edita, activa y desactiva; el Operador logístico los consulta.
  */
 export function PaginaPasajeros() {
   const usuario = useUsuario();
@@ -48,6 +48,20 @@ export function PaginaPasajeros() {
         }),
       ),
     placeholderData: keepPreviousData,
+  });
+
+  const [porCambiar, setPorCambiar] = useState<Pasajero | null>(null);
+  // El estado del pasajero es el de su usuario (RF-25): inactivo, el bot deja de reconocer su número.
+  const cambiarEstado = useMutation({
+    mutationFn: (p: Pasajero) =>
+      p.activo
+        ? datos(api.POST('/api/usuarios/{id}/desactivar', { params: { path: { id: p.id } } }))
+        : datos(api.POST('/api/usuarios/{id}/activar', { params: { path: { id: p.id } } })),
+    onSuccess: (u) => {
+      notifications.show({ color: 'green', message: u.activo ? `${u.nombre} está activo.` : `${u.nombre} quedó inactivo.` });
+      setPorCambiar(null);
+      void cliente.invalidateQueries({ queryKey: ['pasajeros'] });
+    },
   });
 
   const abrir = (pasajero: Pasajero | null) => {
@@ -139,7 +153,18 @@ export function PaginaPasajeros() {
                           <Table.Td>
                             <MenuAcciones
                               de={p.nombre}
-                              acciones={[{ etiqueta: 'Editar', icono: <IconEdit size={16} aria-hidden />, alElegir: () => abrir(p) }]}
+                              acciones={[
+                                { etiqueta: 'Editar', icono: <IconEdit size={16} aria-hidden />, alElegir: () => abrir(p) },
+                                {
+                                  etiqueta: p.activo ? 'Desactivar' : 'Activar',
+                                  icono: p.activo ? <IconCircleOff size={16} aria-hidden /> : <IconCircleCheck size={16} aria-hidden />,
+                                  peligrosa: p.activo,
+                                  alElegir: () => {
+                                    cambiarEstado.reset();
+                                    setPorCambiar(p);
+                                  },
+                                },
+                              ]}
                             />
                           </Table.Td>
                         )}
@@ -162,6 +187,22 @@ export function PaginaPasajeros() {
           pasajero={editando}
           empresas={(empresas.data ?? []).filter((e) => e.activa || e.id === editando?.empresaClienteId)}
           alGuardar={() => void cliente.invalidateQueries({ queryKey: ['pasajeros'] })}
+        />
+      )}
+      {porCambiar && (
+        <Confirmacion
+          abierta
+          alCerrar={() => setPorCambiar(null)}
+          titulo={porCambiar.activo ? 'Desactivar pasajero' : 'Activar pasajero'}
+          mensaje={
+            porCambiar.activo
+              ? `El bot de WhatsApp dejará de reconocer a ${porCambiar.nombre} y no podrá pedir viajes. Sus solicitudes que ya existen no cambian.`
+              : `${porCambiar.nombre} podrá volver a pedir viajes por WhatsApp.`
+          }
+          textoConfirmar={porCambiar.activo ? 'Desactivar' : 'Activar'}
+          peligrosa={porCambiar.activo}
+          mutacion={cambiarEstado}
+          alConfirmar={() => cambiarEstado.mutate(porCambiar)}
         />
       )}
     </>
