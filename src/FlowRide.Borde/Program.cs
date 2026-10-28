@@ -25,6 +25,7 @@ internal static class ProgramaBorde
             kestrel.Limits.MaxRequestBodySize = opciones.TamanoMaximoMb * 1024L * 1024L;
         });
 
+        builder.AddObservabilidadBorde();
         builder.Services.AddSingleton(opciones);
         builder.Services.AddBordeComun(builder.Configuration);
         // Autenticación en el borde (parte AUTH del API gateway): las claves públicas del realm de cada operador.

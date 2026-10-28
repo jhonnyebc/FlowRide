@@ -3,6 +3,7 @@
 #   flowride_catalogo     → catálogo de plataforma (operadores; sin datos operacionales), creado al iniciar el volumen
 #   flowride_<tenant>     → un Silo por operador, con su propio rol, creado por la herramienta de aprovisionamiento
 # Keycloak (un realm por operador) y Mailpit (correos de Keycloak en local). Azurite (documentos, ADR-0013).
+# Panel de observabilidad (Aspire Dashboard) con los logs, trazas y métricas de la API y del borde (ADR-0011).
 # Las contraseñas se leen de .env, que no se versiona (ADR-0014).
 services:
   postgres:
@@ -65,6 +66,20 @@ services:
       - "${MAILPIT_UI_PORT:-8025}:8025"
       # SMTP para los correos de la API (alertas críticas, Fase 8); Keycloak lo usa por la red interna.
       - "${MAILPIT_SMTP_PORT:-1025}:1025"
+
+  # Observabilidad local (ADR-0011, RF-50, RF-51, RF-53): recibe por OTLP los logs, trazas y métricas de la API y del
+  # borde y los muestra en http://localhost:18888. Solo escucha en el equipo local y no guarda nada (al reiniciarlo se
+  # vacía); por eso no pide inicio de sesión. En la nube, el backend OTLP lo da la plataforma (Fase 12).
+  observabilidad:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:13.6.1
+    container_name: flowride-observabilidad
+    restart: unless-stopped
+    environment:
+      DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+    ports:
+      - "127.0.0.1:${OBSERVABILIDAD_UI_PORT:-18888}:18888"
+      # OTLP por gRPC: es el destino de OTEL_EXPORTER_OTLP_ENDPOINT de la API y del borde al correr en local.
+      - "127.0.0.1:${OTLP_PORT:-4317}:18889"
 
 volumes:
   flowride-pgdata:
