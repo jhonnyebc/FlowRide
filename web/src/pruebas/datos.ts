@@ -283,3 +283,66 @@ export function itinerario(id: string, extra: Partial<Esquemas['ItinerarioRespue
     ...extra,
   };
 }
+
+export function parametroEntero(clave: string, valor: number, extra: Partial<Esquemas['ParametroRespuesta']> = {}): Esquemas['ParametroRespuesta'] {
+  return {
+    clave,
+    tipo: 'Entero',
+    descripcion: `Descripción de ${clave}.`,
+    valor,
+    valorPorDefecto: valor,
+    version: 0,
+    esPorDefecto: true,
+    modificadoEn: null,
+    minimo: 1,
+    maximo: 1440,
+    opciones: [],
+    ...extra,
+  };
+}
+
+export function plantilla(clave: string, estado: string, extra: Partial<Esquemas['PlantillaRespuesta']> = {}): Esquemas['PlantillaRespuesta'] {
+  return {
+    clave,
+    nombre: clave.replaceAll('.', '_'),
+    idioma: 'es_CO',
+    estado,
+    variables: ['conductor', 'placa'],
+    modificadaEn: '2026-10-18T00:00:00Z',
+    ...extra,
+  };
+}
+
+/** Las siete reglas sembradas en la v1 del motor. */
+export function reglasMotor(): Esquemas['ReglaRespuesta'][] {
+  const regla = (codigo: string, tipo: string, extra: Partial<Esquemas['ReglaRespuesta']> = {}): Esquemas['ReglaRespuesta'] => ({
+    codigo,
+    tipo,
+    habilitada: true,
+    orden: 1,
+    peso: 1,
+    parametros: {},
+    ...extra,
+  });
+  return [
+    regla('AvailabilityRule', 'Filtering'),
+    regla('RegulatoryRestrictionRule', 'Filtering', { orden: 2 }),
+    regla('ServiceCapabilityRule', 'Filtering', { orden: 3 }),
+    regla('ShiftCompatibilityRule', 'Filtering', { orden: 4 }),
+    regla('CriticalServicePriorityRule', 'Priority'),
+    regla('WorkloadBalanceRule', 'Scoring', { parametros: { ventanaDias: '7' } }),
+    regla('StableTieBreaker', 'TieBreak'),
+  ];
+}
+
+export function configuracionMotor(version: number, estado: string, extra: Partial<Esquemas['ConfiguracionMotorRespuesta']> = {}): Esquemas['ConfiguracionMotorRespuesta'] {
+  return {
+    id: `cfg-${version}`,
+    version,
+    estado,
+    creadaEn: '2026-10-18T00:00:00Z',
+    activadaEn: estado === 'Borrador' ? null : '2026-10-18T00:00:00Z',
+    reglas: reglasMotor(),
+    ...extra,
+  };
+}

@@ -8,6 +8,9 @@ import { PaginaItinerarios } from './administracion/PaginaItinerarios';
 import { PaginaPasajeros } from './administracion/PaginaPasajeros';
 import { PaginaUsuarios } from './administracion/PaginaUsuarios';
 import { PaginaVehiculos } from './administracion/PaginaVehiculos';
+import { PaginaMotor } from './ajustes/PaginaMotor';
+import { PaginaParametros } from './ajustes/PaginaParametros';
+import { PaginaPlantillas } from './ajustes/PaginaPlantillas';
 import { PaginaAlertas } from './alertas/PaginaAlertas';
 import { ProveedorAlertas } from './alertas/useAlertas';
 import { RequiereSesion } from './auth/RequiereSesion';
@@ -15,13 +18,14 @@ import { esAdministrador, useUsuario } from './auth/usuario';
 import { EstadoVacio } from './comun/Componentes';
 import { Marco } from './layout/Marco';
 import { VistaDelDia } from './operacion/VistaDelDia';
+import { PaginaReportes } from './reportes/PaginaReportes';
 import { DetalleSolicitud } from './solicitudes/DetalleSolicitud';
 import { PaginaSolicitudes } from './solicitudes/PaginaSolicitudes';
 import { Tablero } from './tablero/Tablero';
 import { DetalleViaje } from './viajes/DetalleViaje';
 import { PaginaViajes } from './viajes/PaginaViajes';
 
-/** Rutas del panel (11a operación, 11b administración). Todo exige sesión y un usuario interno activo. */
+/** Rutas del panel (11a operación, 11b administración, 11c configuración y reportes). Todo exige sesión y un usuario interno activo. */
 export function App() {
   return (
     <RequiereSesion>
@@ -48,6 +52,10 @@ export function App() {
             <Route path="administracion/conductores" element={<PaginaConductores />} />
             <Route path="administracion/vehiculos" element={<PaginaVehiculos />} />
             <Route path="administracion/itinerarios" element={<PaginaItinerarios />} />
+            <Route path="reportes" element={<PaginaReportes />} />
+            <Route path="configuracion/parametros" element={<PaginaParametros />} />
+            <Route path="configuracion/plantillas" element={<PaginaPlantillas />} />
+            <Route path="configuracion/motor" element={<PaginaMotor />} />
             <Route path="*" element={<NoEncontrada />} />
           </Route>
         </Routes>

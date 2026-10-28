@@ -121,7 +121,7 @@ Las pruebas de `EstiloHexagonalTests` hacen cumplir los puntos 1, 2, 3 y 5.
 - Fechas en pantalla: instantes en la zona del navegador; eventos futuros con su hora local y el nombre de su zona.
 - Accesibilidad (WCAG 2.1 AA): enlace "saltar al contenido", foco visible, estados con color + icono + texto, botones de cerrar con nombre. Cada pantalla tiene prueba con axe (`sinViolacionesDeAccesibilidad`).
 - Pruebas: Vitest + Testing Library + axe; `apiFalsa` responde por `MÉTODO /ruta`; `MantineProvider env="test"`; las notificaciones de Mantine se limpian después de cada prueba (`preparacion.ts`). CI: job "Frontend" (tipos al día, lint con la regla de no poner secretos en `VITE_*`, tipos, pruebas, build).
-- Entregas: 11a base + Operación (tablero con gráficas, vista del día, solicitudes, viajes, alertas); 11b administración (11b-1 usuarios, empresas y pasajeros; 11b-2 conductores, vehículos e itinerarios; lista + panel lateral); 11c parámetros, plantillas, motor y reportes.
+- Entregas: 11a base + Operación (tablero con gráficas, vista del día, solicitudes, viajes, alertas); 11b administración (11b-1 usuarios, empresas y pasajeros; 11b-2 conductores, vehículos e itinerarios; lista + panel lateral); 11c configuración (parámetros, plantillas de WhatsApp y motor, en `web/src/ajustes`) y reportes con pestañas y exporte (`web/src/reportes`).
 
 ## Motor de asignación (RF-10, ADR-0009)
 El sistema asigna automáticamente un conductor y un vehículo a cada solicitud pendiente, aplicando las reglas

@@ -63,6 +63,7 @@ export function PanelLateral({
   mutacion,
   alEnviar,
   textoEnviar = 'Guardar',
+  tamano = 'md',
   children,
 }: {
   abierto: boolean;
@@ -72,10 +73,11 @@ export function PanelLateral({
   mutacion: Pick<UseMutationResult<unknown, Error, never>, 'isPending' | 'isError' | 'error'>;
   alEnviar: () => void;
   textoEnviar?: string;
+  tamano?: 'md' | 'lg' | 'xl';
   children: ReactNode;
 }) {
   return (
-    <Drawer opened={abierto} onClose={alCerrar} title={titulo} position="right" size="md" padding="lg" closeButtonProps={{ 'aria-label': 'Cerrar' }}>
+    <Drawer opened={abierto} onClose={alCerrar} title={titulo} position="right" size={tamano} padding="lg" closeButtonProps={{ 'aria-label': 'Cerrar' }}>
       <form
         onSubmit={(evento: FormEvent) => {
           evento.preventDefault();

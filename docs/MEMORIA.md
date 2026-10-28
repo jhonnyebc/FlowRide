@@ -5,15 +5,15 @@
 > Última actualización: 2026-10-19.
 
 ## Estado actual
-- **Rama de trabajo:** `chore/documentacion-desarrollo` (guía de desarrollo y limpieza de archivos locales, SIN commit). Después: Fase 11c.
+- **Rama de trabajo:** `feature/RF-21-panel-configuracion` (Fase 11c, con commit y push, pendiente del PR). Después: Fase 12.
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
   Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6), Fase 4
   Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9), Fase 7 Canal WhatsApp (PR #10), Fase 8 Notificaciones y alertas (PR #11), Fase 9 Reportes y vista operacional (PR #12), Fase 10 Borde común (PR #13), fechas con zona (PR #14), seguridad OWASP
   (PR #15), Fase 11a Panel Web base y Operación (PR #16), Fase 11b-1 usuarios, empresas y pasajeros (PR #17) y la
   documentación de la entrega (PR #18) y la Fase 11b-2 conductores, vehículos e itinerarios (PR #19).
-- **Fase actual:** Fase 11b-2 cerrada (PR #19, 2026-10-26). Sigue 11c (configuración y reportes).
+- **Fase actual:** Fase 11c (configuración y reportes) con commit en la rama, pendiente del PR. Sigue la Fase 12 (operación).
 - **Tests:** 553 unitarios (94,1 % líneas / 83,2 % ramas en Domain + Application), 17 de arquitectura, 145 de integración
-  (Keycloak, Mailpit y Azurite reales con Testcontainers) y 59 del frontend (Vitest + axe).
+  (Keycloak, Mailpit y Azurite reales con Testcontainers) y 69 del frontend (Vitest + axe).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
   Azurite (10000). Los secretos viven en el AppData **real** del usuario (`flowride-aprovisionamiento` y
   `flowride-tenant-a`, configurados por él el 2026-10-18). `tenant-a` se recreó ese día (base nueva con todas las
@@ -494,13 +494,37 @@
 - Contexto: tras reescribir la historia (sin líneas `Co-authored-by`), la barra «Colaboradores» de GitHub seguía
   mostrando un segundo colaborador aunque la API de colaboradores ya devuelve solo la cuenta del usuario. Soporte de
   GitHub no atiende esa limpieza en cuentas gratuitas; queda esperar a que la caché se recalcule.
+- PR #20 fusionada en `develop` (merge `b045b16`, CI en verde). Al cambiar a `develop`, Git sobrescribió y luego borró
+  los archivos locales excluidos (los commits anteriores todavía los versionaban); se restauraron. Antes de cambiar a un
+  commit anterior al 2026-10-26 hay que respaldarlos.
+
+## Sesión 2026-10-27: Fase 11c (configuración y reportes en el panel)
+- Rama `feature/RF-21-panel-configuracion`. Solo panel: el backend de las Fases 5, 8 y 9 ya tenía todo.
+- Decisiones del usuario: grupo «Configuración» (Parámetros, Plantillas de WhatsApp, Motor de asignación) y «Reportes»
+  como sección de Operación; Reportes en una sola página con pestañas y filtro de periodo compartido; un solo PR.
+- `web/src/ajustes/`: `PaginaParametros` (cada parámetro con su nombre en español, valor legible con unidad, «Por
+  defecto», control según el tipo: número con rango, opción o franjas `HH:mm-HH:mm`, y volver al valor por defecto),
+  `PaginaPlantillas` (nombre e idioma en Meta, variables en orden y estado de aprobación) y `PaginaMotor` (versión activa
+  con sus reglas, historial, borrador nuevo a partir de la activa con las eliminatorias bloqueadas y la ventana de días
+  del balance de carga, activar o volver a una anterior con confirmación). Las validaciones del motor (peso 0–1, orden
+  > 0 y único por tipo, obligatorias, dependencias) siguen en la API y el panel muestra su mensaje.
+- `web/src/reportes/PaginaReportes`: viajes, solicitudes (con grupo), conductores y empresas; periodo en días locales
+  completos (por defecto los últimos 7) convertido a instantes con el día final incluido; cambiar un filtro vuelve a la
+  primera página; «Exportar … a CSV» exporta la pestaña abierta con los mismos filtros y abre el enlace temporal.
+- `PanelLateral` acepta un tamaño (`tamano`) para el formulario del motor. Textos nuevos: reglas, tipos de regla,
+  parámetros, opciones, estados de plantilla y de configuración, grupos de solicitudes.
+- Revisión en vivo del usuario (2026-10-27): plantillas con el estado cortado (etiquetas acortadas a Pendiente / Aprobada /
+  Rechazada) y variables que parecían datos vacíos (ahora numeradas como en Meta: `{{1}} fecha`…). Faltaba activar y
+  desactivar pasajeros en el panel (hueco de la 11b-1; la API ya lo tenía en `/api/usuarios/{id}/activar|desactivar`):
+  agregado con confirmación.
+- Pruebas: 10 nuevas (69 del frontend).
 
 ## Próximos pasos
-1. Revisar el turno que queda `Programado` después de terminar (hallazgo de la prueba del 2026-10-26).
+1. Fase 11c: PR, revisión del CI y prueba en vivo de las cuatro pantallas.
+2. Revisar el turno que queda `Programado` después de terminar (hallazgo de la prueba del 2026-10-26).
    **Recordatorio (2026-10-18):** itinerarios en PDF o Word por WhatsApp quedan fuera de V1; el bot responde que solo
    entiende texto y los itinerarios se registran desde el panel (RF-08). Opciones para después: recibir el archivo y
    alertar al operador, o extracción automática (requeriría ADR nuevo).
-2. Fase 11c: parámetros, plantillas de WhatsApp, configuración del motor, indicadores y reportes con exporte.
 3. Pendiente de la 11a: marcar el job "Frontend" como requerido en `develop` y actualizar las herramientas de pruebas
    con alertas de `npm audit` (vitest, postcss, tinypool; solo desarrollo).
 4. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).

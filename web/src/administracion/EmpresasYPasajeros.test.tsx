@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { empresa, pagina, pasajero } from '../pruebas/datos';
+import { empresa, pagina, pasajero, usuarioPanel } from '../pruebas/datos';
 import { administrador, apiFalsa, renderizar, sinViolacionesDeAccesibilidad } from '../pruebas/utilidades';
 import { PaginaEmpresas } from './PaginaEmpresas';
 import { PaginaPasajeros } from './PaginaPasajeros';
@@ -100,5 +100,23 @@ describe('Pasajeros (RF-05)', () => {
       empresaClienteId: 'e-1',
       codigoInterno: 'E-200',
     });
+  });
+
+  it('el Administrador desactiva un pasajero con confirmación (RF-25)', async () => {
+    const { peticiones } = apiFalsa({
+      ...rutas,
+      'POST /api/usuarios/p-1/desactivar': () => usuarioPanel('p-1', 'Administrador', { nombre: 'Ana Gómez', rol: 'Pasajero', activo: false }),
+    });
+    const usuario = userEvent.setup();
+    renderizar(<PaginaPasajeros />, { usuario: administrador });
+
+    await usuario.click(await screen.findByRole('button', { name: 'Acciones de Ana Gómez' }));
+    await usuario.click(await screen.findByRole('menuitem', { name: 'Desactivar' }));
+    const dialogo = await screen.findByRole('dialog', { name: 'Desactivar pasajero' });
+    expect(within(dialogo).getByText(/dejará de reconocer a Ana Gómez/)).toBeInTheDocument();
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Desactivar' }));
+
+    expect(await screen.findByText('Ana Gómez quedó inactivo.')).toBeInTheDocument();
+    expect(peticiones.some((p) => p.method === 'POST' && p.url.endsWith('/api/usuarios/p-1/desactivar'))).toBe(true);
   });
 });
