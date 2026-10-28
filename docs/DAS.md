@@ -17,6 +17,7 @@
 | 1.0 | 04/08/2026 | Creación | Versión inicial del documento de arquitectura de software de FlowRide | Sebastián Zapata, Jhonny Benitez |
 | 2.0 | 07/10/2026 | Revisión | Actualización con el contexto maestro v10, los drivers arquitectónicos vigentes, los ADR-0001 a ADR-0017 y la línea base del repositorio (alcance RF-10) | Sebastián Zapata, Jhonny Benitez |
 | 3.0 | 22/10/2026 | Revisión | Conversión a Markdown para la entrega. Alineación con los ADR revisados (ADR-0003, ADR-0004, ADR-0008, ADR-0010) y los nuevos ADR-0018, ADR-0019 y ADR-0020 (fechas con zona horaria); disponibilidad del canal WhatsApp en 99,5 %; telemetría GPS y ETA (RF-55, RF-56, ADR-0005) fuera del alcance de V1; línea base actualizada con lo implementado (Fases 0 a 11b-1); diagramas de componentes, paquetes, secuencia y despliegue en Mermaid. Las secciones marcadas «(NO)» en la plantilla del curso se dejan indicadas como no aplicables. | Jhonny Benitez |
+| 3.1 | 28/10/2026 | Revisión | Diseño de alto nivel con el modelo C4: diagrama de contexto (nivel 1, sección 4.1) y de contenedores (nivel 2, sección 6.1); diagrama de despliegue en notación C4 (sección 9.5.1); figuras renumeradas. | Jhonny Benitez |
 
 # 1. Propósito del proyecto
 
@@ -1063,7 +1064,44 @@ El modelo de contexto delimita el sistema y muestra los actores y sistemas exter
 | Backend de observabilidad | Sistema externo | Recibe trazas, métricas y logs mediante OTLP. | ADR-0011 |
 | Servicio de correo | Sistema externo | Entrega alertas críticas a los roles administrativos (`IEnviadorCorreo`) y los correos de la cuenta (definir o recuperar la contraseña, confirmar el correo), que envía el proveedor de identidad. En local, Mailpit. | ADR-0015 |
 
-El diagrama C4 de componentes de la sección 9.3.1 representa estos actores y sistemas externos alrededor de la instancia Silo del operador.
+## 4.1 Diagrama de contexto (C4, nivel 1)
+
+Forma parte del diseño de alto nivel. Muestra a FlowRide como una sola caja, las personas que lo usan y los sistemas externos con los que se integra. El cliente empresarial no aparece porque no usa FlowRide directamente, y la fuente de telemetría GPS tampoco, porque quedó fuera del alcance de V1 (ADR-0005).
+
+```mermaid
+flowchart TB
+    pasajero["<b>Pasajero</b><br/>[Persona]<br/>Empleado del cliente empresarial.<br/>Pide y sigue sus viajes por WhatsApp."]
+    conductor["<b>Conductor</b><br/>[Persona]<br/>Recibe, acepta y ejecuta<br/>los servicios por WhatsApp."]
+    administrador["<b>Administrador del operador</b><br/>[Persona]<br/>Configura el operador, los usuarios,<br/>los recursos y las reglas."]
+    operador["<b>Operador logístico</b><br/>[Persona]<br/>Supervisa la operación del día<br/>y atiende las contingencias."]
+
+    whatsapp["<b>WhatsApp Cloud API</b><br/>[Sistema externo: Meta]<br/>Canal conversacional de<br/>pasajeros y conductores."]
+    flowride["<b>FlowRide</b><br/>[Sistema de software]<br/>Plataforma SaaS de transporte corporativo<br/>programado por turnos. Un stack aislado<br/>por operador de transporte."]
+
+    identidad["<b>Keycloak</b><br/>[Sistema externo]<br/>Proveedor de identidad OIDC.<br/>Un realm por operador."]
+    correo["<b>Servicio de correo</b><br/>[Sistema externo: SMTP]<br/>Alertas críticas y<br/>correos de la cuenta."]
+    observabilidad["<b>Backend de observabilidad</b><br/>[Sistema externo: OTLP]<br/>Logs, trazas y métricas."]
+
+    pasajero -->|"Pide y consulta viajes"| whatsapp
+    conductor -->|"Responde asignaciones<br/>y actualiza el viaje"| whatsapp
+    whatsapp <-->|"Webhook firmado / mensajes<br/>[HTTPS]"| flowride
+    administrador -->|"Administra<br/>[Panel Web, HTTPS]"| flowride
+    operador -->|"Supervisa y reasigna<br/>[Panel Web, HTTPS]"| flowride
+    flowride -->|"Inicio de sesión, tokens<br/>y cuentas [OIDC]"| identidad
+    flowride -->|"Envía alertas<br/>[SMTP]"| correo
+    flowride -->|"Envía telemetría<br/>[OTLP]"| observabilidad
+
+    classDef persona fill:#08427b,stroke:#052e56,color:#ffffff
+    classDef sistema fill:#1168bd,stroke:#0b4884,color:#ffffff
+    classDef externo fill:#999999,stroke:#6b6b6b,color:#ffffff
+    class pasajero,conductor,administrador,operador persona
+    class flowride sistema
+    class whatsapp,identidad,correo,observabilidad externo
+```
+
+Figura 1. Contexto de FlowRide (modelo C4, nivel 1). Azul oscuro: personas; azul: el sistema; gris: sistemas externos.
+
+La sección 6.1 abre la caja de FlowRide en sus contenedores (nivel 2) y la sección 9.3.1 detalla los componentes de la API.
 
 # 5. Arquetipo de solución/referencia
 
@@ -1120,6 +1158,61 @@ El presupuesto de infraestructura por tenant definido en ADR-0010, frente al top
 | Gestor de secretos prorrateado | Azure Key Vault, un vault por operador | 1 |
 | Identidad, registro y observabilidad prorrateados | Keycloak, Azure Container Registry y backend de observabilidad | 4 |
 | Total |  | ≤ 32 |
+
+## 6.1 Diagrama de contenedores (C4, nivel 2)
+
+Forma parte del diseño de alto nivel. Abre la caja de FlowRide del diagrama de contexto y muestra sus contenedores: las aplicaciones y los almacenes de datos que se despliegan por separado, con su tecnología y cómo se comunican. El borde, el catálogo y el aprovisionamiento son de la plataforma y los comparten todos los operadores; la API, la base del Silo y el almacenamiento de objetos se repiten, aislados, para cada operador (modelo Silo, ADR-0002).
+
+```mermaid
+flowchart TB
+    personas["<b>Pasajero y conductor</b><br/>[Persona]<br/>Usan WhatsApp."]
+    usuarios["<b>Administrador y<br/>Operador logístico</b><br/>[Persona]<br/>Usan el Panel Web."]
+    whatsapp["<b>WhatsApp Cloud API</b><br/>[Sistema externo: Meta]"]
+    subgraph flowride["FlowRide [Sistema de software]"]
+        panel["<b>Panel Web</b><br/>[Contenedor: React 19 + TypeScript]<br/>Aplicación de una página: operación,<br/>administración, configuración y reportes."]
+        borde["<b>Borde común</b><br/>[Contenedor: ASP.NET Core + YARP]<br/>Ruteo por subdominio, límites de tasa,<br/>token del realm y router de webhooks."]
+        catalogo[("<b>Catálogo de plataforma</b><br/>[Contenedor: PostgreSQL 17]<br/>Operadores y tabla de ruteo.")]
+        aprovisionamiento["<b>Aprovisionamiento</b><br/>[Contenedor: CLI .NET 10]<br/>Alta de operadores: base, realm,<br/>secretos, objetos y ruta."]
+        api["<b>API y procesos del operador</b><br/>[Contenedor: ASP.NET Core, .NET 10]<br/>Casos de uso, motor de asignación, bot,<br/>Outbox, notificaciones, reportes y auditoría."]
+        silo[("<b>Base del Silo</b><br/>[Contenedor: PostgreSQL 17]<br/>Datos y auditoría de un solo operador.")]
+        objetos[("<b>Almacenamiento de objetos</b><br/>[Contenedor: Azure Blob Storage]<br/>Documentos y exportes del operador.")]
+    end
+    identidad["<b>Keycloak</b><br/>[Sistema externo]<br/>Un realm por operador."]
+    correo["<b>Servicio de correo</b><br/>[Sistema externo: SMTP]"]
+    classDef persona fill:#08427b,stroke:#052e56,color:#ffffff
+    classDef contenedor fill:#438dd5,stroke:#2e6295,color:#ffffff
+    classDef externo fill:#999999,stroke:#6b6b6b,color:#ffffff
+    class personas,usuarios persona
+    class panel,borde,catalogo,aprovisionamiento,api,silo,objetos contenedor
+    class whatsapp,identidad,correo externo
+    style flowride fill:none,stroke:#1168bd,stroke-dasharray:6 4,color:#1168bd
+    aprovisionamiento -->|"Crea la base<br/>y migra [SQL]"| silo
+    aprovisionamiento -->|"Registra operadores<br/>y rutas [SQL]"| catalogo
+    usuarios -->|"Usan<br/>[HTTPS]"| panel
+    borde -->|"Reenvía al stack<br/>del operador [HTTPS]"| api
+    api -->|"Envía mensajes<br/>[HTTPS]"| whatsapp
+    api -->|"Guarda archivos<br/>[HTTPS]"| objetos
+    borde -->|"Lee las rutas<br/>[SQL]"| catalogo
+    api -->|"Gestiona su realm<br/>[Admin API]"| identidad
+    panel -->|"Inicia sesión<br/>[OIDC, código + PKCE]"| identidad
+    api -->|"Lee y escribe<br/>[EF Core, SQL]"| silo
+    whatsapp -->|"Webhook firmado<br/>[HTTPS]"| borde
+    panel -->|"Llama a la API<br/>[JSON/HTTPS + token]"| borde
+    api -->|"Envía alertas<br/>[SMTP]"| correo
+    personas -->|"Conversan con el bot"| whatsapp
+```
+
+Figura 2. Contenedores de FlowRide (modelo C4, nivel 2). Azul claro: contenedores (los cilindros son almacenes de datos); la línea punteada es el límite del sistema.
+
+| Contenedor | Tecnología | Responsabilidad | ADR |
+| --- | --- | --- | --- |
+| Panel Web | React 19 + TypeScript, Vite, Mantine 8 | Interfaz del Administrador y del Operador logístico; sesión OIDC con PKCE y tokens solo en memoria. | ADR-0019 |
+| Borde común | ASP.NET Core + YARP, 2 réplicas | Único punto de entrada: ruteo por subdominio, límites de tasa, cabeceras, validación del token del realm y router de webhooks de Meta. | ADR-0012 |
+| Catálogo de plataforma | PostgreSQL 17 | Operadores registrados y tabla de ruteo del borde; sin datos operacionales. | ADR-0002, ADR-0012 |
+| Aprovisionamiento | Aplicación de consola .NET 10 | Alta idempotente de operadores: base y rol, migraciones, realm, secretos, contenedor de objetos y ruta. | ADR-0010 |
+| API y procesos del operador | ASP.NET Core, .NET 10 | Casos de uso, motor de asignación, bot de WhatsApp, Outbox, notificaciones, reportes y auditoría. | ADR-0001, ADR-0007, ADR-0009 |
+| Base del Silo | PostgreSQL 17 | Fuente de verdad transaccional y auditoría encadenada de un solo operador. | ADR-0002, ADR-0004 |
+| Almacenamiento de objetos | Azure Blob Storage (Azurite en local) | Documentos de conductores y exportes, un contenedor por operador. | ADR-0013 |
 
 # 7. Línea base arquitectónica
 
@@ -1389,6 +1482,8 @@ Para el aislamiento entre operadores se descartaron el modelo Pool (una base com
 
 Las vistas de arquitectura describen el sistema desde perspectivas complementarias, cada una dirigida a intereses distintos: la vista funcional (escenarios y casos de uso), la vista lógica (estructura del modelo), la vista de despliegue o desarrollo (componentes y organización del código), la vista de procesos (comportamiento en ejecución y concurrencia) y la vista física (nodos e infraestructura donde se ejecuta).
 
+**Diseño de alto nivel y diseño detallado.** El diseño de alto nivel sigue el modelo C4: el diagrama de contexto (nivel 1, sección 4.1) y el de contenedores (nivel 2, sección 6.1). El diseño detallado está en esta sección: el diagrama de componentes (9.3.1), el de paquetes (9.3.2), los de secuencia (9.4.1) y el de despliegue (9.5.1), este último en notación C4 sobre los contenedores del nivel 2.
+
 ## 9.1 Vista Funcional/Vista de Escenarios/Vista de Casos de Uso
 
 > No aplica en esta entrega: la plantilla del curso marca esta sección como «(NO)».
@@ -1488,7 +1583,7 @@ flowchart TB
     inf -.->|"IWhatsAppGateway<br/>(mensajes salientes)"| meta
 ```
 
-Figura 1. Componentes de una instancia Silo de FlowRide detrás del borde común (estado al 22-10-2026).
+Figura 3. Componentes de una instancia Silo de FlowRide detrás del borde común (estado al 22-10-2026).
 
 ##### 9.3.1.1.2 Documentación
 
@@ -1553,7 +1648,7 @@ flowchart TB
     app --> dom
 ```
 
-Figura 2. Paquetes de la solución FlowRide y sus dependencias. Las flechas apuntan hacia el paquete del que se depende. Una flecha que sale de un grupo vale para cada proyecto del grupo: API, Aprovisionamiento y Borde dependen de Infrastructure y de Application, e IntegrationTests de los tres. ArchitectureTests referencia todos los proyectos de producción para verificar sus reglas de dependencia.
+Figura 4. Paquetes de la solución FlowRide y sus dependencias. Las flechas apuntan hacia el paquete del que se depende. Una flecha que sale de un grupo vale para cada proyecto del grupo: API, Aprovisionamiento y Borde dependen de Infrastructure y de Application, e IntegrationTests de los tres. ArchitectureTests referencia todos los proyectos de producción para verificar sus reglas de dependencia.
 
 ##### 9.3.2.1.2 Documentación
 
@@ -1789,47 +1884,61 @@ La vista física describe los nodos de hardware o de plataforma donde se ejecuta
 
 ### 9.5.1 Diagrama de despliegue
 
-El diagrama de despliegue representa los nodos, los artefactos desplegados en ellos y las conexiones entre nodos.
+El diagrama de despliegue representa los nodos, los artefactos desplegados en ellos y las conexiones entre nodos. Se presenta en notación C4 (diagrama de despliegue): cada nodo de infraestructura es una caja que contiene los contenedores del diagrama de nivel 2 (sección 6.1).
 
 #### 9.5.1.1 Diagrama
 
 ```mermaid
 flowchart TB
-    inet(("Internet"))
-    metaext["WhatsApp Cloud API (Meta)"]
-
-    subgraph entrada["Plataforma compartida: entrada (sin datos operacionales)"]
-        direction LR
-        borde["Borde: YARP + WAF<br/>2 réplicas"]
-        cat[("Catálogo de plataforma<br/>operadores y rutas")]
+    subgraph navegador["Navegador del usuario [Nodo: Chrome, Edge o Firefox]"]
+        panel["<b>Panel Web</b><br/>[Contenedor: React + TypeScript]<br/>Lo sirve el borde como<br/>archivos estáticos."]
     end
 
-    subgraph op["Stack de un operador (uno idéntico y aislado por cada operador: A, B, …)"]
-        app["Contenedor de aplicación<br/>API + procesos en segundo plano"]
-        db[("PostgreSQL<br/>del Silo")]
-        kv["Gestor de secretos<br/>del operador"]
-        ob[("Almacenamiento de<br/>objetos del operador")]
+    subgraph azure["Microsoft Azure [Nodo: nube; en el curso, docker compose en el equipo local]"]
+        subgraph entrada["Plataforma compartida: entrada [Nodo: sin datos operacionales]"]
+            borde["<b>Borde común</b><br/>[Contenedor: ASP.NET Core + YARP]<br/>2 réplicas detrás del WAF"]
+            catalogo[("<b>Catálogo de plataforma</b><br/>[Azure Database for PostgreSQL]")]
+        end
+        subgraph stack["Stack de un operador [Nodo: uno idéntico y aislado por operador]"]
+            api["<b>API y procesos del operador</b><br/>[Contenedor: ASP.NET Core, .NET 10]<br/>Azure Container Apps, 1 réplica"]
+            silo[("<b>Base del Silo</b><br/>[Azure Database for PostgreSQL]")]
+            objetos[("<b>Contenedor de objetos</b><br/>[Azure Blob Storage]")]
+            secretos[("<b>Secretos del operador</b><br/>[Azure Key Vault]")]
+        end
+        subgraph soporte["Plataforma compartida: servicios de soporte [Nodo]"]
+            keycloak["<b>Keycloak</b><br/>[Contenedor]<br/>Un realm por operador"]
+            observabilidad["<b>Backend de observabilidad</b><br/>[OTLP; en local, Aspire Dashboard]"]
+        end
     end
 
-    subgraph soporte["Plataforma compartida: servicios de soporte"]
-        direction LR
-        kc["Keycloak<br/>un realm por operador"]
-        acr["Registro de contenedores<br/>imágenes semver + SHA"]
-        otel["Backend de observabilidad<br/>OTLP"]
+    subgraph meta["Meta [Nodo: servicio externo]"]
+        whatsapp["<b>WhatsApp Cloud API</b><br/>[Sistema externo]"]
     end
 
-    inet -->|"https a.flowride…, b.flowride…"| borde
-    metaext -->|"webhook firmado"| borde
-    borde --> cat
-    borde -->|"según subdominio o phone_number_id"| app
-    app --> db
-    app --> kv
-    app --> ob
-    app -->|"identidad con la cuenta de servicio de su realm,<br/>imagen del registro (la misma para todos) y telemetría"| soporte
-    app -.->|"envío de mensajes"| metaext
+    panel -->|"Llama a la API<br/>[HTTPS + token]"| borde
+    panel -->|"Inicia sesión [OIDC]"| keycloak
+    whatsapp -->|"Webhook firmado [HTTPS]"| borde
+    borde -->|"Lee las rutas [SQL]"| catalogo
+    borde -->|"Reenvía por subdominio<br/>o número [HTTPS]"| api
+    api -->|"Lee y escribe [SQL/TLS]"| silo
+    api -->|"Guarda archivos [HTTPS]"| objetos
+    api -->|"Lee sus secretos<br/>[identidad administrada]"| secretos
+    api -->|"Envía mensajes [HTTPS]"| whatsapp
+    api -->|"Gestiona su realm [Admin API]<br/>y envía telemetría [OTLP]"| soporte
+
+    classDef contenedor fill:#438dd5,stroke:#2e6295,color:#ffffff
+    classDef externo fill:#999999,stroke:#6b6b6b,color:#ffffff
+    class panel,borde,keycloak,catalogo,observabilidad,api,silo,objetos,secretos contenedor
+    class whatsapp externo
+    style navegador fill:#ffffff,stroke:#5a5a5a
+    style meta fill:#ffffff,stroke:#5a5a5a
+    style azure fill:#ffffff,stroke:#5a5a5a
+    style entrada fill:#f4f7fb,stroke:#5a5a5a
+    style soporte fill:#f4f7fb,stroke:#5a5a5a
+    style stack fill:#f4f7fb,stroke:#5a5a5a
 ```
 
-Figura 3. Despliegue de FlowRide: un stack aislado por operador detrás de los componentes de plataforma compartidos (ADR-0002, ADR-0010, ADR-0012, ADR-0013, ADR-0014). Se dibuja un solo stack porque todos son idénticos; cada operador tiene el suyo, con su base, sus secretos y su almacenamiento, y solo comparten el borde, el catálogo, Keycloak (un realm por operador), el registro de imágenes y la observabilidad.
+Figura 5. Despliegue de FlowRide en notación C4 (cajas blancas: nodos de infraestructura; azul claro: contenedores): un stack aislado por operador detrás de los componentes de plataforma compartidos (ADR-0002, ADR-0010, ADR-0012, ADR-0013, ADR-0014). Se dibuja un solo stack porque todos son idénticos; cada operador tiene el suyo, con su base, sus secretos y su almacenamiento, y solo comparten el borde, el catálogo, Keycloak (un realm por operador), el registro de imágenes y la observabilidad.
 
 #### 9.5.1.2 Documentación
 

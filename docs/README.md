@@ -10,7 +10,7 @@ Esta carpeta es la entrega de la documentación del proyecto (28-10-2026), toda 
 
 | Documento | Contenido |
 |---|---|
-| [DAS.md](DAS.md) | Documento de Arquitectura de Software, versión 3.0: motivadores (restricciones, atributos de calidad con sus 33 escenarios, funcionalidades críticas), tácticas, modelo de contexto, arquetipo y arquitectura de solución, línea base implementada, estilos y patrones, justificación y vistas (componentes, paquetes, secuencias y despliegue). |
+| [DAS.md](DAS.md) | Documento de Arquitectura de Software, versión 3.1: motivadores (restricciones, atributos de calidad con sus 33 escenarios, funcionalidades críticas), tácticas, modelo de contexto, arquetipo y arquitectura de solución, línea base implementada, estilos y patrones, justificación y vistas (componentes, paquetes, secuencias y despliegue). |
 | [drivers-arquitectonicos.md](drivers-arquitectonicos.md) | Drivers arquitectónicos: atributos de calidad priorizados, priorización por stakeholder, trade-offs, escenarios generales QA-01 a QA-11 y especificación de los requisitos funcionales RF-01 a RF-56 con su filtro de significancia. |
 | [restricciones-tecnicas.md](restricciones-tecnicas.md) | Las 19 restricciones técnicas con su tipo, categoría y justificación. |
 | [restricciones-negocio.md](restricciones-negocio.md) | Las 15 restricciones de negocio con su justificación y plan de acción. |
@@ -48,7 +48,8 @@ Esta carpeta es la entrega de la documentación del proyecto (28-10-2026), toda 
 
 1. **Qué condiciona la arquitectura:** sección 2 del [DAS](DAS.md) o, con más detalle, los [drivers](drivers-arquitectonicos.md), las [restricciones técnicas](restricciones-tecnicas.md) y [de negocio](restricciones-negocio.md) y el [trade-off](tradeoff-atributos-calidad.md).
 2. **Cómo se respondió:** secciones 3 a 8 del DAS (tácticas, contexto, arquetipo, solución, línea base y justificación) y los [ADR](adr/README.md).
-3. **Cómo es el sistema:** sección 9 del DAS, con los diagramas de componentes, paquetes, secuencias de los flujos críticos y despliegue, y el [modelo entidad-relación](diagramas/modelo-entidad-relacion.md) de las bases de datos.
+3. **Diseño de alto nivel (modelo C4):** el diagrama de contexto (nivel 1, sección 4.1 del DAS) y el de contenedores (nivel 2, sección 6.1).
+4. **Diseño detallado:** sección 9 del DAS, con los diagramas de componentes, paquetes, secuencias de los flujos críticos y despliegue (este en notación C4), y el [modelo entidad-relación](diagramas/modelo-entidad-relacion.md) de las bases de datos.
 
 ## Alcance y estado
 

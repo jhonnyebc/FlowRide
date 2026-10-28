@@ -196,9 +196,16 @@ Corrección posterior (2026-10-27, decisión del usuario: automático por la hor
   el cambio sale de la hora. Pruebas: 556 unitarias (92,5 % / 82,6 %), 17 de arquitectura, 146 de integración.
 
 ### Entrega de documentación (2026-10-28)
+- [x] Pedido del profesor el día de la entrega (tablero de clase): diseño de alto nivel con C4 y diagrama de despliegue
+  en notación C4. El DAS pasa a la versión 3.1 con los diagramas de contexto (nivel 1) y de contenedores (nivel 2) y el
+  despliegue en C4; el Word y los PNG de la carpeta del escritorio se regeneran.
 - [x] Documentación del proyecto en Markdown en `docs/` (índice en `docs/README.md`): DAS v3.0 con diagramas en Mermaid, drivers, restricciones, funcionalidades significativas, trade-off y los 20 ADR con sus notas de implementación (ADR-0020 nuevo: fechas con zona horaria).
 
 ### Fase 12 — Operación
+- [x] Observabilidad local (2026-10-27, decisión del usuario): Aspire Dashboard 13.6.1 en el docker-compose
+  (http://localhost:18888, OTLP en 4317, solo local); la API y el borde le envían logs, trazas y métricas al correr con
+  `dotnet run`. El borde ahora tiene OpenTelemetry (sus métricas propias y las trazas del proxy). Con esto RF-50, RF-51 y
+  RF-53 pasan a ✅.
 - [ ] Dockerfile con versión fija, imagen semver+SHA, dos stacks locales (uno por operador).
 - [ ] Demostración con HTTPS local (decisión del usuario, 2026-10-22: basta con local, sin publicar en internet): el borde sirve el Panel Web compilado en `https://tenant-a.localhost:8443`; Keycloak con HTTPS (certificado de desarrollo o detrás del borde); direcciones de regreso del realm y CSP del borde ajustadas a esos orígenes; certificado de desarrollo confiado (`dotnet dev-certs https --trust`). Para WhatsApp sigue haciendo falta un túnel (ngrok) en una red que no lo bloquee.
 - [ ] Backups, jobs de retención y archivo con lock consultivo; pruebas de recuperación y de carga.
@@ -256,10 +263,10 @@ Corrección posterior (2026-10-27, decisión del usuario: automático por la hor
 | RF-47 | Reporte de solicitudes atendidas y pendientes | 9 | ✅ |
 | RF-48 | Reporte de conductores asignados | 9 | ✅ |
 | RF-49 | Reporte histórico por cliente empresarial | 9 | ✅ |
-| RF-50 | Registro de eventos del sistema | 0 | 🟡 log estructurado por solicitud |
-| RF-51 | Registro de errores y excepciones | 0 | 🟡 ProblemDetails + log con traceId |
+| RF-50 | Registro de eventos del sistema | 0, 12 | ✅ log JSON estructurado por solicitud y por proceso, enviado por OTLP; visible en el panel de observabilidad local |
+| RF-51 | Registro de errores y excepciones | 0, 12 | ✅ ProblemDetails con el traceId del log y la excepción completa en el log y la traza |
 | RF-52 | Auditoría de acciones administrativas | 2 | ✅ auditoría encadenada por hash de las acciones sensibles, verificable con `/api/auditoria/verificacion` |
-| RF-53 | Monitoreo técnico de disponibilidad | 0 | 🟡 health checks + métricas OTel |
+| RF-53 | Monitoreo técnico de disponibilidad | 0, 12 | ✅ /health/live, /health/ready y /salud; métricas OTel de la API y del borde en el panel de observabilidad |
 | RF-54 | Calificación del servicio | 6 | ✅ |
 | RF-55 | Ingesta de telemetría GPS | — | ⛔ |
 | RF-56 | Detección de desviación de ETA | — | ⛔ |
