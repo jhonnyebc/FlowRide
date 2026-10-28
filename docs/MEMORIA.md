@@ -5,14 +5,14 @@
 > Última actualización: 2026-10-19.
 
 ## Estado actual
-- **Rama de trabajo:** `fix/RF-07-estado-turnos` (estado de los turnos por la hora, con commit y push, pendiente del PR). Después: RF-50/51/53 y Fase 12.
+- **Rama de trabajo:** `feature/RF-53-observabilidad` (panel de observabilidad local, SIN commit). Después: Fase 12.
 - **`develop`** contiene: motor de asignación (ADR-0009), ADR revisados + roadmap, Fase 0, modelo de dominio (PR #3),
   Fase 1 Tenancy/Silo (PR #4), Fase 2 Identidad y auditoría (PR #5), Fase 3 Recursos y parámetros (PR #6), Fase 4
   Solicitudes e itinerarios (PR #7), Fase 5 Asignación de punta a punta (PR #8), Fase 6 Viajes y calificación (PR #9), Fase 7 Canal WhatsApp (PR #10), Fase 8 Notificaciones y alertas (PR #11), Fase 9 Reportes y vista operacional (PR #12), Fase 10 Borde común (PR #13), fechas con zona (PR #14), seguridad OWASP
   (PR #15), Fase 11a Panel Web base y Operación (PR #16), Fase 11b-1 usuarios, empresas y pasajeros (PR #17) y la
   documentación de la entrega (PR #18), la Fase 11b-2 conductores, vehículos e itinerarios (PR #19), la guía de desarrollo
-  (PR #20) y la Fase 11c configuración y reportes (PR #21).
-- **Fase actual:** Fase 11 (Panel Web) completa (PR #21, 2026-10-27). En curso: corrección del estado de los turnos. Siguen RF-50/51/53, la Fase 12 y el diseño.
+  (PR #20), la Fase 11c configuración y reportes (PR #21) y el estado de los turnos por la hora (PR #22).
+- **Fase actual:** Fase 11 completa y turnos corregidos (PR #22). En curso: observabilidad local (RF-50, RF-51, RF-53). Siguen el resto de la Fase 12 y el diseño.
 - **Tests:** 556 unitarios (92,5 % líneas / 82,6 % ramas en Domain + Application), 17 de arquitectura, 146 de integración
   (Keycloak, Mailpit y Azurite reales con Testcontainers) y 69 del frontend (Vitest + axe).
 - **Entorno local del usuario:** `docker compose` levanta PostgreSQL (5433), Keycloak 26.3 (8080), Mailpit (8025) y
@@ -534,9 +534,33 @@
 - Pruebas: 2 de dominio, 1 de caso de uso y 1 de integración (el worker con PostgreSQL real): 556 unitarias, 17 de
   arquitectura y 146 de integración en verde; formato al día.
 
+- PR #22 fusionada en `develop` (merge `cb22952`, CI en verde).
+
+## Sesión 2026-10-27 (continuación): observabilidad local (RF-50, RF-51, RF-53)
+- Rama `feature/RF-53-observabilidad`. Los tres RF ya tenían logs JSON con traceId, ProblemDetails con el mismo
+  traceId y health checks, pero en local las métricas y trazas no llegaban a ningún lado. Decisión del usuario: agregar un
+  panel de observabilidad.
+- `docker-compose`: servicio `observabilidad` con el Aspire Dashboard 13.6.1 (publicado el 2026-10-07), interfaz en
+  http://localhost:18888 y OTLP gRPC en 4317, ambos solo en 127.0.0.1 y sin inicio de sesión (local y sin datos
+  persistentes). `launchSettings.json` de la API y del borde define `OTEL_EXPORTER_OTLP_ENDPOINT`; las pruebas no lo usan.
+- El borde no tenía OpenTelemetry: `ObservabilidadBorde` (servicio `flowride-borde`, trazas de ASP.NET, HttpClient y
+  YARP, métricas propias `FlowRide.Borde*`), con los mismos paquetes que la API (1.19.x).
+- RF-50, RF-51 y RF-53 pasan a ✅. Verificación: compila sin advertencias, formato, 17 de arquitectura y 146 de
+  integración en verde; el panel responde en local.
+
+## Sesión 2026-10-28: diseño de alto nivel con C4 para la entrega
+- El profesor pidió en el tablero: documentación final en Markdown con diseño de alto nivel y diseño detallado
+  (componentes, paquetes, secuencia y despliegue), marcando el modelo C4 de nivel 2. Decisión del usuario: agregar C4
+  nivel 1 y nivel 2 al alto nivel y pasar el despliegue a notación C4.
+- La sintaxis C4 nativa de Mermaid dibuja mal (ignora el acomodo, líneas sobre las cajas), así que los diagramas usan la
+  notación C4 (tipo de elemento, tecnología, descripción y colores estándar) sobre `flowchart`, revisados con el
+  detector de cruces. DAS 3.1: §4.1 contexto (Figura 1), §6.1 contenedores con tabla (Figura 2), §9.5.1 despliegue C4
+  (Figura 5) y nota en la sección 9 que separa alto nivel y detallado; figuras renumeradas.
+
 ## Próximos pasos
-1. Corrección de turnos: commit, PR y CI.
-2. RF-50, RF-51 y RF-53 (hoy parciales): mostrar al usuario qué hay y decidir si basta.
+1. Observabilidad: probar en vivo (arrancar la API y ver logs, trazas y métricas en el panel), commit, PR y CI.
+2. Resto de la Fase 12: Dockerfile e imagen versionada, demostración con HTTPS local, backups, retención y pruebas de
+   recuperación y carga.
 3. Pendiente de la 11a: marcar el job "Frontend" como requerido en `develop` y actualizar las herramientas de pruebas
    con alertas de `npm audit` (vitest, postcss, tinypool; solo desarrollo).
 4. Fase 12: credencial de objetos limitada al contenedor de cada operador (en local se comparte la cuenta de Azurite).
