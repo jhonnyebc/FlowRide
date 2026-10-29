@@ -556,9 +556,15 @@
   notación C4 (tipo de elemento, tecnología, descripción y colores estándar) sobre `flowchart`, revisados con el
   detector de cruces. DAS 3.1: §4.1 contexto (Figura 1), §6.1 contenedores con tabla (Figura 2), §9.5.1 despliegue C4
   (Figura 5) y nota en la sección 9 que separa alto nivel y detallado; figuras renumeradas.
+- Observabilidad y C4 entraron en el PR #23 (CI verde).
+- Diagramas en draw.io: los 16 diagramas Mermaid se convirtieron a `.drawio` editables (cajas, conectores unidos y
+  contenedores anidados) en `docs/diagramas/drawio`, más `04b-paquetes-uml.drawio`: paquetes UML por espacio de
+  nombres al estilo del curso (FlowRide › capa › módulo, flechas «import» tomadas de los `using`, módulo Solicitudes
+  como ejemplo). Ese diagrama entró al DAS como §9.3.2.2 (Figura 5; despliegue pasa a Figura 6). Los PNG de todos los
+  diagramas quedan en `docs/diagramas/imagenes` y el Word v3.1 reemplaza al v2.0 en `docs/`.
 
 ## Próximos pasos
-1. Observabilidad: probar en vivo (arrancar la API y ver logs, trazas y métricas en el panel), commit, PR y CI.
+1. Observabilidad: probar en vivo (arrancar la API y ver logs, trazas y métricas en el panel).
 2. Resto de la Fase 12: Dockerfile e imagen versionada, demostración con HTTPS local, backups, retención y pruebas de
    recuperación y carga.
 3. Pendiente de la 11a: marcar el job "Frontend" como requerido en `develop` y actualizar las herramientas de pruebas

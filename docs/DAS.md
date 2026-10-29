@@ -17,7 +17,7 @@
 | 1.0 | 04/08/2026 | Creación | Versión inicial del documento de arquitectura de software de FlowRide | Sebastián Zapata, Jhonny Benitez |
 | 2.0 | 07/10/2026 | Revisión | Actualización con el contexto maestro v10, los drivers arquitectónicos vigentes, los ADR-0001 a ADR-0017 y la línea base del repositorio (alcance RF-10) | Sebastián Zapata, Jhonny Benitez |
 | 3.0 | 22/10/2026 | Revisión | Conversión a Markdown para la entrega. Alineación con los ADR revisados (ADR-0003, ADR-0004, ADR-0008, ADR-0010) y los nuevos ADR-0018, ADR-0019 y ADR-0020 (fechas con zona horaria); disponibilidad del canal WhatsApp en 99,5 %; telemetría GPS y ETA (RF-55, RF-56, ADR-0005) fuera del alcance de V1; línea base actualizada con lo implementado (Fases 0 a 11b-1); diagramas de componentes, paquetes, secuencia y despliegue en Mermaid. Las secciones marcadas «(NO)» en la plantilla del curso se dejan indicadas como no aplicables. | Jhonny Benitez |
-| 3.1 | 28/10/2026 | Revisión | Diseño de alto nivel con el modelo C4: diagrama de contexto (nivel 1, sección 4.1) y de contenedores (nivel 2, sección 6.1); diagrama de despliegue en notación C4 (sección 9.5.1); figuras renumeradas. | Jhonny Benitez |
+| 3.1 | 28/10/2026 | Revisión | Diseño de alto nivel con el modelo C4: diagrama de contexto (nivel 1, sección 4.1) y de contenedores (nivel 2, sección 6.1); diagrama de despliegue en notación C4 (sección 9.5.1); diagrama de paquetes del espacio de nombres en notación UML (sección 9.3.2.2); figuras renumeradas; todos los diagramas también en formato draw.io (`diagramas/drawio`). | Jhonny Benitez |
 
 # 1. Propósito del proyecto
 
@@ -1665,6 +1665,35 @@ Figura 4. Paquetes de la solución FlowRide y sus dependencias. Las flechas apun
 | FlowRide.IntegrationTests | xUnit + Testcontainers | FlowRide.API, FlowRide.Aprovisionamiento, FlowRide.Borde | Flujos completos con PostgreSQL, Keycloak, Mailpit y Azurite reales. |
 | web/ | Vite + React + TypeScript | Contrato OpenAPI de FlowRide.API | Panel Web; pruebas con Vitest, Testing Library y axe. |
 
+#### 9.3.2.2 Espacio de nombres FlowRide (notación UML)
+
+Detalla el diagrama anterior en notación UML de paquetes. Cada paquete es un espacio de nombres del código y se anida dentro de su padre (FlowRide › Application › Solicitudes › Entrada › Puertos); las flechas punteadas «import» indican qué espacio de nombres usa a cuál, según las directivas `using` del código. Se detalla el módulo Solicitudes; los demás módulos repiten la misma estructura.
+
+##### 9.3.2.2.1 Diagrama
+
+![Paquetes del espacio de nombres FlowRide en notación UML](diagramas/imagenes/04b-paquetes-uml.png)
+
+Figura 5. Paquetes del espacio de nombres FlowRide en notación UML, con el módulo Solicitudes como ejemplo. Las flechas «import» apuntan hacia el paquete que se usa.
+
+##### 9.3.2.2.2 Documentación
+
+| Paquete | Contenido | Importa |
+| --- | --- | --- |
+| API.Solicitudes | Endpoints HTTP del módulo (`SolicitudesEndpoints`). | Entrada.Puertos, Entrada.Dto |
+| Application.Solicitudes.Entrada.Puertos | Puerto de entrada `ISolicitudesPuertoEntrada`. | Entrada.Dto |
+| Application.Solicitudes.Entrada.Dto | Peticiones y respuestas del contrato HTTP. | — |
+| Application.Solicitudes.Entrada.Adaptadores | Implementa el puerto de entrada: valida, convierte los DTO y llama a los casos de uso. | Entrada.Puertos, Entrada.Dto, Comun.CasosUso, Domain |
+| Application.Solicitudes.CasosUso | Casos de uso del módulo (registrar, modificar, cancelar, consultar y buscar solicitudes). | Comun.CasosUso, Salida.Puertos, Domain |
+| Application.Solicitudes.Salida.Puertos | Consultas de lectura que implementa la infraestructura (`IConsultasSolicitudes`). | Domain |
+| Application.Comun.CasosUso | Interfaces `ICasoUsoConRetorno` e `ICasoUsoSinRetorno`, comunes a todos los módulos. | — |
+| Domain.Solicitudes | Datos de las operaciones (GestionSolicitudes) y contratos de repositorio (Repositorios). | Entidades, ValoresObjeto, Transversal |
+| Domain.Entidades, ValoresObjeto y Enumeraciones | Modelo de dominio compartido por los módulos. | — |
+| Domain.Transversal | `FlowRideExcepcion`, usada por todas las capas. | — |
+| Infrastructure.Solicitudes | Repositorios y consultas con EF Core (`SolicitudRepositorioAdaptador`, `ConsultasSolicitudesEf`). | Salida.Puertos, Domain.Solicitudes.Repositorios, Persistencia |
+| Infrastructure.Persistencia | `FlowRideDbContext`, configuraciones, migraciones, unidad de trabajo y Outbox. | Domain |
+
+El archivo editable del diagrama está en `diagramas/drawio/04b-paquetes-uml.drawio`; la carpeta `diagramas/drawio` tiene todos los diagramas de este documento y del modelo entidad-relación en formato draw.io.
+
 ## 9.4 Vista de Procesos
 
 La vista de procesos describe el comportamiento del sistema en ejecución: los flujos entre componentes, la concurrencia y la sincronización. Su motivación es verificar atributos como rendimiento, disponibilidad y consistencia en los flujos críticos.
@@ -1938,7 +1967,7 @@ flowchart TB
     style stack fill:#f4f7fb,stroke:#5a5a5a
 ```
 
-Figura 5. Despliegue de FlowRide en notación C4 (cajas blancas: nodos de infraestructura; azul claro: contenedores): un stack aislado por operador detrás de los componentes de plataforma compartidos (ADR-0002, ADR-0010, ADR-0012, ADR-0013, ADR-0014). Se dibuja un solo stack porque todos son idénticos; cada operador tiene el suyo, con su base, sus secretos y su almacenamiento, y solo comparten el borde, el catálogo, Keycloak (un realm por operador), el registro de imágenes y la observabilidad.
+Figura 6. Despliegue de FlowRide en notación C4 (cajas blancas: nodos de infraestructura; azul claro: contenedores): un stack aislado por operador detrás de los componentes de plataforma compartidos (ADR-0002, ADR-0010, ADR-0012, ADR-0013, ADR-0014). Se dibuja un solo stack porque todos son idénticos; cada operador tiene el suyo, con su base, sus secretos y su almacenamiento, y solo comparten el borde, el catálogo, Keycloak (un realm por operador), el registro de imágenes y la observabilidad.
 
 #### 9.5.1.2 Documentación
 
