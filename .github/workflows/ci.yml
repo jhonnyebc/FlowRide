@@ -102,3 +102,44 @@ jobs:
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  vulnerabilidades:
+    name: Escaneo de vulnerabilidades (Trivy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # Trivy lee las dependencias NuGet (también las transitivas) de los *.deps.json que deja la compilación.
+      - name: Compilar para listar las dependencias NuGet
+        run: dotnet build FlowRide.slnx -c Release
+
+      # trivy-action v0.35.0 fijada por SHA: publicación inmutable, posterior al incidente de marzo de 2026
+      # (CVE-2026-33634); instala Trivy v0.69.3.
+      - name: Dependencias de producción y configuración (bloquea HIGH y CRITICAL con corrección disponible)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig
+          skip-dirs: tests,web/node_modules
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Informe con las dependencias de desarrollo (no bloquea)
+        if: always()
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        env:
+          TRIVY_INCLUDE_DEV_DEPS: 'true'
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          skip-dirs: tests,web/node_modules
+          exit-code: '0'
+          skip-setup-trivy: true
