@@ -2,7 +2,7 @@
 
 FlowRide es una plataforma SaaS de gestión de transporte corporativo interno con modelo B2B2B: se vende al operador de transporte (un tenant = un operador), que presta el servicio a un cliente empresarial. Pasajeros y conductores usan WhatsApp; el Administrador del operador y el Operador logístico usan el Panel Web.
 
-Esta carpeta es la entrega de la documentación del proyecto (28-10-2026), toda en Markdown. Todos los diagramas están escritos en Mermaid dentro de los propios documentos: GitHub los dibuja al abrir el archivo.
+Esta carpeta es la entrega de la documentación del proyecto (28-10-2026), toda en Markdown. Los diagramas están escritos en Mermaid dentro de los propios documentos: GitHub los dibuja al abrir el archivo. Además, cada diagrama está como imagen en [diagramas/imagenes](diagramas/imagenes) y como archivo editable de draw.io en [diagramas/drawio](diagramas/drawio), y el DAS completo está en Word (`FlowRide - Documento de Arquitectura de Software (DAS) v3.1.docx`).
 
 **Curso:** ISS0666 — Ingeniería del Software 2, Universidad Católica de Oriente, semestre 2-2026. **Profesor:** Wider Farid Sánchez Garzón.
 
@@ -10,7 +10,9 @@ Esta carpeta es la entrega de la documentación del proyecto (28-10-2026), toda 
 
 | Documento | Contenido |
 |---|---|
-| [DAS.md](DAS.md) | Documento de Arquitectura de Software, versión 3.1: motivadores (restricciones, atributos de calidad con sus 33 escenarios, funcionalidades críticas), tácticas, modelo de contexto, arquetipo y arquitectura de solución, línea base implementada, estilos y patrones, justificación y vistas (componentes, paquetes, secuencias y despliegue). |
+| [DAS.md](DAS.md) | Documento de Arquitectura de Software, versión 3.1: motivadores (restricciones, atributos de calidad con sus 33 escenarios, funcionalidades críticas), tácticas, modelo de contexto, arquetipo y arquitectura de solución, línea base implementada, estilos y patrones, justificación y vistas (componentes, paquetes, también en notación UML por espacio de nombres, secuencias y despliegue). |
+| Diagramas por tema | Los diagramas del DAS separados en un Markdown por tema, con su texto y su documentación: [diseño de alto nivel C4](diagramas/01-diseno-alto-nivel-c4.md), [componentes](diagramas/02-diagrama-de-componentes.md), [paquetes](diagramas/03-diagrama-de-paquetes.md), [secuencias](diagramas/04-diagramas-de-secuencia.md) y [despliegue C4](diagramas/05-diagrama-de-despliegue-c4.md). Son extractos del DAS, que es la fuente: si cambia el DAS, se regeneran. |
+| [diagramas/drawio](diagramas/drawio) | Los 17 diagramas en formato draw.io, editables: contexto y contenedores C4, componentes, paquetes (dos versiones), las cinco secuencias, despliegue C4 y los seis del modelo entidad-relación. |
 | [drivers-arquitectonicos.md](drivers-arquitectonicos.md) | Drivers arquitectónicos: atributos de calidad priorizados, priorización por stakeholder, trade-offs, escenarios generales QA-01 a QA-11 y especificación de los requisitos funcionales RF-01 a RF-56 con su filtro de significancia. |
 | [restricciones-tecnicas.md](restricciones-tecnicas.md) | Las 19 restricciones técnicas con su tipo, categoría y justificación. |
 | [restricciones-negocio.md](restricciones-negocio.md) | Las 15 restricciones de negocio con su justificación y plan de acción. |
