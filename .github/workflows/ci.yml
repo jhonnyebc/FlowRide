@@ -143,3 +143,96 @@ jobs:
           skip-dirs: tests,web/node_modules
           exit-code: '0'
           skip-setup-trivy: true
+
+  # ADR-0010: imagen inmutable etiquetada <versión>-<sha>. Se construye y escanea en cada PR; al mergear a main, el job
+  # "publicar" sube exactamente las imágenes escaneadas (no las reconstruye).
+  imagenes:
+    name: Imágenes de contenedor (build y Trivy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      etiqueta: ${{ steps.version.outputs.etiqueta }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Etiqueta de la imagen (<versión de Directory.Build.props>-<sha corto>)
+        id: version
+        run: |
+          version=$(grep -oP '(?<=<Version>)[^<]+' Directory.Build.props)
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "etiqueta=${version}-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Construir API, borde y aprovisionamiento
+        run: |
+          for destino in api borde aprovisionamiento; do
+            docker build --target "$destino" \
+              --build-arg VERSION="${{ steps.version.outputs.version }}" --build-arg REVISION="$GITHUB_SHA" \
+              -t "flowride-$destino:${{ steps.version.outputs.etiqueta }}" .
+          done
+
+      - name: Trivy — imagen de la API (bloquea HIGH y CRITICAL con corrección disponible)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          image-ref: flowride-api:${{ steps.version.outputs.etiqueta }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Trivy — imagen del borde
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          image-ref: flowride-borde:${{ steps.version.outputs.etiqueta }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          skip-setup-trivy: true
+
+      - name: Trivy — imagen de aprovisionamiento
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          image-ref: flowride-aprovisionamiento:${{ steps.version.outputs.etiqueta }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          skip-setup-trivy: true
+
+      - name: Guardar las imágenes escaneadas para publicarlas
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          etiqueta="${{ steps.version.outputs.etiqueta }}"
+          docker save "flowride-api:$etiqueta" "flowride-borde:$etiqueta" "flowride-aprovisionamiento:$etiqueta" | gzip > imagenes.tar.gz
+
+      - name: Subir las imágenes como artefacto
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: imagenes
+          path: imagenes.tar.gz
+          retention-days: 1
+
+  publicar:
+    name: Publicar imágenes en GitHub Container Registry
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [backend, frontend, secretos, vulnerabilidades, imagenes]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: imagenes
+
+      - name: Publicar <versión>-<sha> (nunca latest)
+        env:
+          ETIQUETA: ${{ needs.imagenes.outputs.etiqueta }}
+          REGISTRO: ghcr.io/${{ github.repository_owner }}
+        run: |
+          gunzip -c imagenes.tar.gz | docker load
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          registro=$(echo "$REGISTRO" | tr '[:upper:]' '[:lower:]')
+          for destino in api borde aprovisionamiento; do
+            docker tag "flowride-$destino:$ETIQUETA" "$registro/flowride-$destino:$ETIQUETA"
+            docker push "$registro/flowride-$destino:$ETIQUETA"
+          done
