@@ -4,6 +4,7 @@
 #   flowride_<tenant>     → un Silo por operador, con su propio rol, creado por la herramienta de aprovisionamiento
 # Keycloak (un realm por operador) y Mailpit (correos de Keycloak en local). Azurite (documentos, ADR-0013).
 # Panel de observabilidad (Aspire Dashboard) con los logs, trazas y métricas de la API y del borde (ADR-0011).
+# WAF (ModSecurity + OWASP CRS) delante del borde común (ADR-0012).
 # Las contraseñas se leen de .env, que no se versiona (ADR-0014).
 services:
   postgres:
@@ -80,6 +81,33 @@ services:
       - "127.0.0.1:${OBSERVABILIDAD_UI_PORT:-18888}:18888"
       # OTLP por gRPC: es el destino de OTEL_EXPORTER_OTLP_ENDPOINT de la API y del borde al correr en local.
       - "127.0.0.1:${OTLP_PORT:-4317}:18889"
+
+  # WAF (ADR-0012): ModSecurity + OWASP Core Rule Set delante del borde común, en https://<operador>.dev.localhost:9443.
+  # En la nube es el WAF gestionado de Azure con el mismo conjunto de reglas (OWASP CRS); en local, su motor de
+  # referencia. Bloquea por puntaje de anomalía (paranoia 1, umbral 5) y deja el registro de cada bloqueo en sus logs
+  # (docker logs flowride-waf). WAF_MODO=DetectionOnly solo registra, para revisar falsos positivos.
+  waf:
+    image: owasp/modsecurity-crs:4.25.2-nginx-202610180210-lts
+    container_name: flowride-waf
+    restart: unless-stopped
+    environment:
+      # El borde corre en el equipo (dotnet run, https://localhost:8443); el WAF le reenvía conservando el Host, que
+      # es lo que el borde usa para elegir el operador.
+      BACKEND: ${WAF_BACKEND:-https://host.docker.internal:8443}
+      PROXY_SSL_VERIFY: "off"
+      MODSEC_RULE_ENGINE: ${WAF_MODO:-On}
+      BLOCKING_PARANOIA: "1"
+      ANOMALY_INBOUND: "5"
+      # El Panel Web y la API usan también PUT, PATCH y DELETE (el CRS por defecto solo permite GET, HEAD, POST y OPTIONS).
+      ALLOWED_METHODS: "GET HEAD POST PUT PATCH DELETE OPTIONS"
+      # Sin inspección del cuerpo de las respuestas: obligaría a retenerlas completas y cortaría las alertas en vivo (SSE).
+      MODSEC_RESP_BODY_ACCESS: "Off"
+      # Las alertas en vivo mantienen la conexión abierta; el navegador se reconecta solo si se corta.
+      PROXY_TIMEOUT: "3600"
+    ports:
+      - "127.0.0.1:${WAF_PORT:-9443}:8443"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   flowride-pgdata:
