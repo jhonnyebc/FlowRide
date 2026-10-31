@@ -78,6 +78,11 @@ public class KeycloakTests(PostgresFixture postgres, KeycloakFixture keycloak) :
         var panel = (await keycloak.Administrador.ListarAsync($"admin/realms/{realm}/clients?clientId={ConstantesKeycloak.ClientePanel}", CancellationToken.None)).Single()!;
         Assert.True(panel["publicClient"]!.GetValue<bool>());
         Assert.Equal("S256", panel["attributes"]!["pkce.code.challenge.method"]!.GetValue<string>());
+        // El Panel Web de Vite y el que sirve el borde, sin duplicarse al reaprovisionar.
+        var panelDelBorde = $"https://{tenant}.dev.localhost:9443";
+        Assert.Equal(["http://localhost:5173/*", $"{panelDelBorde}/*"], panel["redirectUris"]!.AsArray().Select(u => u!.GetValue<string>()).Order());
+        Assert.Contains(panelDelBorde, panel["webOrigins"]!.AsArray().Select(o => o!.GetValue<string>()));
+        Assert.Contains($"{panelDelBorde}/*", panel["attributes"]!["post.logout.redirect.uris"]!.GetValue<string>(), StringComparison.Ordinal);
         var mappers = panel["protocolMappers"]!.AsArray();
         Assert.Equal(3, mappers.Count);
         Assert.Equal(tenant, mappers.Single(m => m!["name"]!.GetValue<string>() == "tenant_id")!["config"]!["claim.value"]!.GetValue<string>());

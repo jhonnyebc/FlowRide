@@ -109,8 +109,51 @@ public class BordeApiTests(PostgresFixture postgres) : PruebasAsignacionBase(pos
             Assert.Equal("Bearer", r.Headers.WwwAuthenticate.ToString());
         });
         Assert.Equal(HttpStatusCode.OK, valido.StatusCode);
+        // Del stack solo se exponen /api y /health: lo demás ni siquiera le llega.
         Assert.Equal(HttpStatusCode.NotFound, fueraDeLaApi.StatusCode);
-        Assert.Equal(2, borde.Reenvios);
+        Assert.Equal(1, borde.Reenvios);
+    }
+
+    [Fact]
+    public async Task ElBorde_SirveElPanelWeb_YDejaSoloLaApiYLaSaludAlStack()
+    {
+        await RegistrarRutaAsync();
+        var carpeta = Directory.CreateTempSubdirectory("panel-web-").FullName;
+        try
+        {
+            await File.WriteAllTextAsync(Path.Combine(carpeta, "index.html"), "<!doctype html><title>Panel FlowRide</title>");
+            Directory.CreateDirectory(Path.Combine(carpeta, "assets"));
+            await File.WriteAllTextAsync(Path.Combine(carpeta, "assets", "app-3f9c2ab.js"), "console.log('panel');");
+            await using var borde = new BordeFactory(Entorno.CadenaCatalogo, () => Api.Server.CreateHandler()) { PanelWeb = carpeta };
+            await RecargarAsync(borde);
+
+            var inicio = await Cliente(borde).GetAsync("/");
+            var rutaDelPanel = await Cliente(borde).GetAsync("/operacion/solicitudes");
+            var recurso = await Cliente(borde).GetAsync("/assets/app-3f9c2ab.js");
+            var apiSinToken = await Cliente(borde).GetAsync("/api/viajes");
+            var apiDeHostDesconocido = await Cliente(borde, $"desconocido.{BordeFactory.DominioBase}").GetAsync("/api/viajes");
+            var postAlPanel = await Cliente(borde).PostAsync("/operacion/solicitudes", new StringContent(""));
+            Assert.Equal(0, borde.Reenvios);
+            var saludDelStack = await Cliente(borde).GetAsync("/health/live");
+
+            foreach (var pagina in new[] { inicio, rutaDelPanel })
+            {
+                Assert.Equal(HttpStatusCode.OK, pagina.StatusCode);
+                Assert.Equal("text/html", pagina.Content.Headers.ContentType?.MediaType);
+                Assert.Contains("<title>Panel FlowRide</title>", await pagina.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+                Assert.Contains("frame-ancestors 'none'", pagina.Headers.GetValues("Content-Security-Policy").Single(), StringComparison.Ordinal);
+            }
+            Assert.Equal(HttpStatusCode.OK, recurso.StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized, apiSinToken.StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, apiDeHostDesconocido.StatusCode);
+            Assert.NotEqual(HttpStatusCode.OK, postAlPanel.StatusCode);
+            Assert.Equal(HttpStatusCode.OK, saludDelStack.StatusCode);
+            Assert.Equal(1, borde.Reenvios);
+        }
+        finally
+        {
+            Directory.Delete(carpeta, recursive: true);
+        }
     }
 
     [Fact]

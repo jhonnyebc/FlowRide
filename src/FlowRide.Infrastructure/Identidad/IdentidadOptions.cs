@@ -17,6 +17,16 @@ public sealed class IdentidadOptions
     [Url(ErrorMessage = "'FlowRide:Identidad:UrlPanel' debe ser una URL absoluta.")]
     public string UrlPanel { get; set; } = "http://localhost:5173";
 
+    /// <summary>
+    /// Origen del Panel Web que sirve el borde para cada operador, con <c>{operador}</c> en lugar de su id (en local,
+    /// <c>https://{operador}.dev.localhost:9443</c>). Si está definido, el realm también lo acepta como destino de regreso.
+    /// </summary>
+    public string? UrlPanelOperador { get; set; }
+
+    /// <summary>Origen del Panel Web servido por el borde para un operador, o null si no está configurado.</summary>
+    public string? UrlPanelDe(string tenantId) =>
+        string.IsNullOrWhiteSpace(UrlPanelOperador) ? null : UrlPanelOperador.Replace("{operador}", tenantId, StringComparison.Ordinal).TrimEnd('/');
+
     /// <summary>Exige HTTPS para leer los metadatos OIDC. Solo se apaga en desarrollo local.</summary>
     public bool RequiereHttps { get; set; } = true;
 
