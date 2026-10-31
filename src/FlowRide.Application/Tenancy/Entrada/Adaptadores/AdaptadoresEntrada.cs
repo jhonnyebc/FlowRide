@@ -6,6 +6,7 @@ using FlowRide.Domain.Plataforma;
 using FlowRide.Domain.Plataforma.AprovisionarOperador;
 using FlowRide.Domain.Plataforma.Borde;
 using FlowRide.Domain.Plataforma.MigrarSilos;
+using FlowRide.Domain.Plataforma.Respaldos;
 using FlowRide.Domain.Transversal;
 
 namespace FlowRide.Application.Tenancy.Entrada.Adaptadores;
@@ -91,4 +92,39 @@ public sealed class RutasOperadorAdaptadorEntrada(
         (await consultar.EjecutarAsync(CargarTablaRutasDominio.Instancia, ct)).Select(Respuesta).ToList();
 
     private static RutaOperadorRespuesta Respuesta(RutaOperador ruta) => new(ruta.OperadorId, ruta.Subdominio, ruta.UrlStack, ruta.PhoneNumberId);
+}
+
+public sealed class RespaldosOperadorAdaptadorEntrada(
+    ICasoUsoConRetorno<GuardarRespaldoDominio, ResultadoRespaldo> guardar,
+    ICasoUsoConRetorno<ConsultarRespaldosDominio, IReadOnlyList<Respaldo>> consultar,
+    ICasoUsoConRetorno<DescargarRespaldoDominio, Respaldo> descargar) : IRespaldosOperadorPuertoEntrada
+{
+    public async Task<RespaldoGuardadoRespuesta> GuardarAsync(GuardarRespaldoPeticion peticion, CancellationToken ct)
+    {
+        if (peticion?.Contenido is not { } contenido || string.IsNullOrWhiteSpace(peticion.TenantId))
+            throw new FlowRideExcepcion("tenantId y el contenido del respaldo son obligatorios.");
+
+        var resultado = await guardar.EjecutarAsync(new GuardarRespaldoDominio(peticion.TenantId.Trim(), contenido), ct);
+        return new RespaldoGuardadoRespuesta(
+            Respuesta(resultado.Guardado), resultado.Eliminados.Select(Respuesta).ToList(), PoliticaRetencionRespaldos.DiasRetencion);
+    }
+
+    public async Task<IReadOnlyList<RespaldoRespuesta>> ConsultarAsync(string tenantId, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(tenantId))
+            throw new FlowRideExcepcion("tenantId es obligatorio.");
+
+        return (await consultar.EjecutarAsync(new ConsultarRespaldosDominio(tenantId.Trim()), ct)).Select(Respuesta).ToList();
+    }
+
+    public async Task<RespaldoRespuesta> DescargarAsync(DescargarRespaldoPeticion peticion, CancellationToken ct)
+    {
+        if (peticion?.Destino is not { } destino || string.IsNullOrWhiteSpace(peticion.TenantId))
+            throw new FlowRideExcepcion("tenantId y el destino del respaldo son obligatorios.");
+
+        var nombre = string.IsNullOrWhiteSpace(peticion.Nombre) ? null : peticion.Nombre.Trim();
+        return Respuesta(await descargar.EjecutarAsync(new DescargarRespaldoDominio(peticion.TenantId.Trim(), nombre, destino), ct));
+    }
+
+    private static RespaldoRespuesta Respuesta(Respaldo respaldo) => new(respaldo.Nombre, respaldo.TomadoEn, respaldo.TamanoBytes);
 }

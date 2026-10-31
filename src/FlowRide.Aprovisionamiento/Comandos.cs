@@ -72,6 +72,40 @@ public static class Comandos
                     await salida.WriteLineAsync($"{operador.TenantId,-20} {operador.Estado,-15} {operador.RazonSocial} (NIT {operador.Nit})");
                 return 0;
 
+            case Comando.Respaldar:
+                await using (var archivo = File.OpenRead(comando.Opcion("archivo")))
+                {
+                    var respaldo = await servicios.GetRequiredService<IRespaldosOperadorPuertoEntrada>().GuardarAsync(
+                        new GuardarRespaldoPeticion { TenantId = comando.Opcion("id"), Contenido = archivo }, ct);
+                    await salida.WriteLineAsync($"Respaldo guardado: {respaldo.Guardado.Nombre} ({Tamano(respaldo.Guardado.TamanoBytes)}).");
+                    await salida.WriteLineAsync(respaldo.EliminadosPorRetencion.Count == 0
+                        ? $"  Retención ({respaldo.DiasRetencion} días): no había respaldos vencidos."
+                        : $"  Retención ({respaldo.DiasRetencion} días): {respaldo.EliminadosPorRetencion.Count} respaldo(s) vencido(s) eliminado(s).");
+                }
+                return 0;
+
+            case Comando.ListarRespaldos:
+                var respaldos = await servicios.GetRequiredService<IRespaldosOperadorPuertoEntrada>().ConsultarAsync(comando.Opcion("id"), ct);
+                if (respaldos.Count == 0) await salida.WriteLineAsync("El operador no tiene respaldos.");
+                foreach (var r in respaldos)
+                    await salida.WriteLineAsync($"{r.Nombre,-45} {r.TomadoEn.UtcDateTime:yyyy-MM-dd HH:mm:ss}Z  {Tamano(r.TamanoBytes)}");
+                return 0;
+
+            case Comando.DescargarRespaldo:
+                await using (var destino = File.Create(comando.Opcion("archivo")))
+                {
+                    var descargado = await servicios.GetRequiredService<IRespaldosOperadorPuertoEntrada>().DescargarAsync(
+                        new DescargarRespaldoPeticion
+                        {
+                            TenantId = comando.Opcion("id"),
+                            Nombre = comando.Tiene("nombre") ? comando.Opcion("nombre") : null,
+                            Destino = destino
+                        }, ct);
+                    await salida.WriteLineAsync($"Respaldo descargado: {descargado.Nombre} ({Tamano(descargado.TamanoBytes)}), tomado el " +
+                                                $"{descargado.TomadoEn.UtcDateTime:yyyy-MM-dd HH:mm:ss}Z.");
+                }
+                return 0;
+
             default:
                 throw new InvalidOperationException($"Comando no soportado: '{comando.Nombre}'.");
         }
@@ -122,6 +156,9 @@ public static class Comandos
         await salida.WriteLineAsync($"  Documentos: bucket privado '{respuesta.NombreBucket}'.");
         await salida.WriteLineAsync($"  Estado: {respuesta.Estado}. {respuesta.Mensaje}");
     }
+
+    private static string Tamano(long bytes) =>
+        bytes >= 1024 * 1024 ? $"{bytes / 1024d / 1024d:0.0} MB" : $"{bytes / 1024d:0.0} KB";
 
     private static Task EscribirMigracionAsync(MigracionSiloRespuesta silo, TextWriter salida)
     {

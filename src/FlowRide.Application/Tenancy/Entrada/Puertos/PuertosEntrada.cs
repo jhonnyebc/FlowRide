@@ -27,3 +27,13 @@ public interface IRutasOperadorPuertoEntrada
 
     Task<IReadOnlyList<RutaOperadorRespuesta>> ConsultarAsync(CancellationToken ct);
 }
+
+/// <summary>Respaldos del Silo de cada operador en su bucket (ADR-0013), con retención de 35 días.</summary>
+public interface IRespaldosOperadorPuertoEntrada
+{
+    Task<RespaldoGuardadoRespuesta> GuardarAsync(GuardarRespaldoPeticion peticion, CancellationToken ct);
+
+    Task<IReadOnlyList<RespaldoRespuesta>> ConsultarAsync(string tenantId, CancellationToken ct);
+
+    Task<RespaldoRespuesta> DescargarAsync(DescargarRespaldoPeticion peticion, CancellationToken ct);
+}

@@ -25,3 +25,7 @@ public sealed record MigrarSilosRespuesta(IReadOnlyList<MigracionSiloRespuesta> 
 public sealed record OperadorRespuesta(string TenantId, string RazonSocial, string Nit, string CorreoContacto, string Estado);
 
 public sealed record RutaOperadorRespuesta(string TenantId, string Subdominio, string UrlStack, string? PhoneNumberId);
+
+public sealed record RespaldoRespuesta(string Nombre, DateTimeOffset TomadoEn, long TamanoBytes);
+
+public sealed record RespaldoGuardadoRespuesta(RespaldoRespuesta Guardado, IReadOnlyList<RespaldoRespuesta> EliminadosPorRetencion, int DiasRetencion);

@@ -59,7 +59,7 @@ catch (OperationCanceledException)
 }
 catch (Exception ex) when (ex is FlowRide.Domain.Transversal.FlowRideExcepcion or InvalidOperationException
                                or ArgumentException or DbUpdateException or Npgsql.NpgsqlException
-                               or HttpRequestException)
+                               or HttpRequestException or IOException or Azure.RequestFailedException)
 {
     // Sin trazas ni cadenas de conexión en la salida: solo el motivo (ADR-0011).
     Console.Error.WriteLine($"Error: {ex.Message}");
