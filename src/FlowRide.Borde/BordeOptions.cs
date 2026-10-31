@@ -23,6 +23,15 @@ public sealed class BordeOptions
     /// <summary>Límite por IP para los webhooks (Meta envía desde pocas IP).</summary>
     public int PeticionesPorMinutoWebhook { get; set; } = 1200;
 
-    /// <summary>Content-Security-Policy de las respuestas; el Panel Web (Fase 11) la ajustará a sus orígenes.</summary>
+    /// <summary>
+    /// Content-Security-Policy de las respuestas. Con el Panel Web servido por el borde debe permitir su Keycloak
+    /// (connect-src y form-action) y los estilos en línea de Mantine; en local lo ajusta appsettings.Development.json.
+    /// </summary>
     public string PoliticaContenido { get; set; } = "default-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'";
+
+    /// <summary>
+    /// Carpeta del Panel Web compilado (<c>web/dist</c>), relativa a la del borde. Si está definida, el borde lo sirve en
+    /// el subdominio de cada operador (ADR-0019); si no, solo expone la API y la salud de los stacks.
+    /// </summary>
+    public string? PanelWeb { get; set; }
 }

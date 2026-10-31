@@ -24,6 +24,9 @@ public sealed class BordeFactory(string cadenaCatalogo, Func<HttpMessageHandler>
 
     public int PeticionesPorMinutoPanel { get; init; } = 1000;
 
+    /// <summary>Carpeta con un Panel Web compilado de prueba; sin ella el borde no sirve el panel.</summary>
+    public string? PanelWeb { get; init; }
+
     private int _reenvios;
 
     /// <summary>Peticiones que el borde dejó pasar hacia algún stack (proxy o webhook).</summary>
@@ -38,6 +41,7 @@ public sealed class BordeFactory(string cadenaCatalogo, Func<HttpMessageHandler>
         builder.UseSetting("Borde:DominioBase", DominioBase);
         builder.UseSetting("Borde:RecargaRutasSegundos", "3600");
         builder.UseSetting("Borde:PeticionesPorMinutoPanel", PeticionesPorMinutoPanel.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (PanelWeb is not null) builder.UseSetting("Borde:PanelWeb", PanelWeb);
 
         builder.ConfigureTestServices(servicios =>
         {

@@ -57,6 +57,7 @@ public sealed class EntornoAprovisionamiento : IAsyncDisposable
                 ["ConnectionStrings:Catalogo"] = cadenaCatalogo,
                 ["ConnectionStrings:AdministracionServidor"] = administracion,
                 ["FlowRide:Identidad:UrlKeycloak"] = keycloak?.UrlBase ?? "http://keycloak.pruebas.invalid",
+                ["FlowRide:Identidad:UrlPanelOperador"] = "https://{operador}.dev.localhost:9443",
                 ["FlowRide:Keycloak:Administrador:Usuario"] = keycloak is null ? "admin" : KeycloakFixture.Usuario,
                 ["FlowRide:Keycloak:Administrador:Contrasena"] = keycloak is null ? "admin" : KeycloakFixture.Contrasena,
                 ["FlowRide:Keycloak:Smtp:Host"] = KeycloakFixture.HostMailpit,

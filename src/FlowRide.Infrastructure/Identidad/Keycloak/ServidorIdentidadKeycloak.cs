@@ -48,11 +48,23 @@ public sealed class ServidorIdentidadKeycloak(
             var esServicio = cliente["clientId"]!.GetValue<string>() == ConstantesKeycloak.ClienteServicio;
             if (esServicio)
                 cliente["secret"] = secretoClienteServicio;
+            else if (identidad.UrlPanelDe(tenantId) is { } panelDelBorde)
+                AgregarOrigenDelPanel(cliente, panelDelBorde);
 
             var clienteId = await AsegurarClienteAsync(realm, cliente, ct);
             if (esServicio)
                 await AsegurarRolesCuentaServicioAsync(realm, clienteId, ct);
         }
+    }
+
+    /// <summary>El Panel Web servido por el borde es otro origen del mismo cliente: destino de regreso, CORS y cierre de sesión.</summary>
+    private static void AgregarOrigenDelPanel(JsonObject cliente, string origen)
+    {
+        cliente["redirectUris"]!.AsArray().Add($"{origen}/*");
+        cliente["webOrigins"]!.AsArray().Add(origen);
+        var atributos = cliente["attributes"]!.AsObject();
+        // Keycloak separa con "##" los destinos de regreso tras cerrar sesión.
+        atributos["post.logout.redirect.uris"] = $"{atributos["post.logout.redirect.uris"]!.GetValue<string>()}##{origen}/*";
     }
 
     private async Task<string> AsegurarClienteAsync(string realm, JsonObject cliente, CancellationToken ct)

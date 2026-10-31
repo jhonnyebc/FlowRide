@@ -48,6 +48,7 @@ internal static class ProgramaBorde
         if (!app.Environment.IsEnvironment("Testing"))
             app.UseHttpsRedirection();
         app.UseRateLimiter();
+        app.UsePanelWeb(opciones);
 
         app.MapHealthChecks("/salud");
         app.MapWebhooksWhatsApp(opciones);

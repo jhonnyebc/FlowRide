@@ -38,6 +38,10 @@ packages/
 .env
 appsettings.*.local.json
 secrets.json
+# Certificado de desarrollo exportado para el WAF local (incluye la clave privada).
+docker/waf/certificados/
+*.pem
+*.key
 
 # SO
 .DS_Store

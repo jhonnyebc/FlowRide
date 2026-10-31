@@ -6,8 +6,8 @@ using Yarp.ReverseProxy.Configuration;
 namespace FlowRide.Borde.Rutas;
 
 /// <summary>
-/// Tabla de ruteo vigente del borde como configuración de YARP: una ruta por operador activo, que solo acepta su host
-/// (<c>{subdominio}.{dominio}</c>) y lleva a un único destino, su stack (OPLOG-SEG-02, ADM-SEG-02). Un host sin ruta
+/// Tabla de ruteo vigente del borde como configuración de YARP: por cada operador activo, rutas que solo aceptan su host
+/// (<c>{subdominio}.{dominio}</c>) y llevan a un único destino, su stack (OPLOG-SEG-02, ADM-SEG-02). Un host sin ruta
 /// no llega a ningún stack (404). Se reemplaza entera al recargar.
 /// </summary>
 public sealed class ProveedorRutasBorde : IProxyConfigProvider
@@ -16,6 +16,12 @@ public sealed class ProveedorRutasBorde : IProxyConfigProvider
     public const int OrdenRutasStacks = 100;
 
     public const string PoliticaLimite = "panel";
+
+    /// <summary>
+    /// Lo único del stack que el borde expone: su API y su salud. El resto del subdominio es el Panel Web, que sirve el
+    /// propio borde (<see cref="PanelWebBorde"/>); así nada más del stack queda alcanzable desde afuera.
+    /// </summary>
+    private static readonly (string Nombre, string Patron)[] RutasDelStack = [("api", "/api/{**resto}"), ("salud", "/health/{**resto}")];
 
     private volatile ConfiguracionProxy _actual;
 
@@ -44,15 +50,15 @@ public sealed class ProveedorRutasBorde : IProxyConfigProvider
         public ConfiguracionProxy(RutasVigentes rutas)
         {
             Rutas = rutas;
-            Routes = rutas.Rutas.Select(r => new RouteConfig
+            Routes = rutas.Rutas.SelectMany(r => RutasDelStack.Select(ruta => new RouteConfig
             {
-                RouteId = $"operador-{r.TenantId}",
+                RouteId = $"operador-{r.TenantId}-{ruta.Nombre}",
                 ClusterId = $"stack-{r.TenantId}",
                 Order = OrdenRutasStacks,
                 RateLimiterPolicy = PoliticaLimite,
                 Metadata = new Dictionary<string, string>(StringComparer.Ordinal) { [Seguridad.TokensBorde.MetadatoOperador] = r.TenantId },
-                Match = new RouteMatch { Hosts = [r.Host], Path = "/{**resto}" }
-            }).ToList();
+                Match = new RouteMatch { Hosts = [r.Host], Path = ruta.Patron }
+            })).ToList();
             Clusters = rutas.Rutas.Select(r => new ClusterConfig
             {
                 ClusterId = $"stack-{r.TenantId}",
