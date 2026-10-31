@@ -86,6 +86,7 @@ using FlowRide.Domain.Plataforma.AprovisionarOperador;
 using FlowRide.Domain.Plataforma.Borde;
 using FlowRide.Domain.Plataforma.MigrarSilos;
 using FlowRide.Domain.Plataforma.Repositorios;
+using FlowRide.Domain.Plataforma.Respaldos;
 using FlowRide.Domain.Reportes.GestionReportes;
 using FlowRide.Domain.Solicitudes;
 using FlowRide.Domain.Solicitudes.GestionSolicitudes;
@@ -206,8 +207,10 @@ public static class DependencyInjection
         services.AddSingleton<IAlmacenSecretos>(_ => new AlmacenSecretosLocal(raizSecretos));
         services.AddSingleton<IGeneradorSecretos, GeneradorSecretosCriptografico>();
         services.TryAddSingleton(TimeProvider.System);
-        services.AddSingleton<IServidorObjetos>(new ServidorObjetosAzureBlob(SecretoRequerido(configuration,
-            CadenaConexionServidorObjetos, "Es la cuenta de almacenamiento de objetos de la plataforma (Azurite en local).")));
+        var servidorObjetos = SecretoRequerido(configuration, CadenaConexionServidorObjetos,
+            "Es la cuenta de almacenamiento de objetos de la plataforma (Azurite en local).");
+        services.AddSingleton<IServidorObjetos>(new ServidorObjetosAzureBlob(servidorObjetos));
+        services.AddSingleton<IAlmacenRespaldos>(new AlmacenRespaldosAzureBlob(servidorObjetos));
 
         // Keycloak con la cuenta de administración de la plataforma: solo para crear y actualizar realms.
         var identidad = OpcionesIdentidad(configuration);
@@ -233,6 +236,10 @@ public static class DependencyInjection
         services.AddScoped<ICasoUsoConRetorno<CargarTablaRutasDominio, IReadOnlyList<RutaOperador>>, ConsultarRutasOperadorCasoUso>();
         services.AddScoped<IConsultarOperadoresPuertoEntrada, ConsultarOperadoresAdaptadorEntrada>();
         services.AddScoped<IRutasOperadorPuertoEntrada, RutasOperadorAdaptadorEntrada>();
+        services.AddScoped<ICasoUsoConRetorno<GuardarRespaldoDominio, ResultadoRespaldo>, GuardarRespaldoCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<ConsultarRespaldosDominio, IReadOnlyList<Respaldo>>, ConsultarRespaldosCasoUso>();
+        services.AddScoped<ICasoUsoConRetorno<DescargarRespaldoDominio, Respaldo>, DescargarRespaldoCasoUso>();
+        services.AddScoped<IRespaldosOperadorPuertoEntrada, RespaldosOperadorAdaptadorEntrada>();
 
         return services;
     }

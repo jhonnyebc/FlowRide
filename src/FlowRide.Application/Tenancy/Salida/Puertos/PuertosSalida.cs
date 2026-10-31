@@ -1,3 +1,5 @@
+using FlowRide.Domain.Plataforma.Respaldos;
+
 namespace FlowRide.Application.Tenancy.Salida.Puertos;
 
 // Puertos de salida del aprovisionamiento que no son repositorios: los implementa Infrastructure.
@@ -78,4 +80,17 @@ public interface IServidorObjetos
 
     /// <summary>Cadena de conexión con la que el stack del operador accede a su bucket.</summary>
     string CadenaConexion(string nombreBucket);
+}
+
+/// <summary>Respaldos de la base de cada operador, guardados en su propio bucket (ADR-0013).</summary>
+public interface IAlmacenRespaldos
+{
+    Task GuardarAsync(string nombreBucket, string nombre, Stream contenido, CancellationToken ct);
+
+    /// <summary>Los respaldos del bucket, del más reciente al más antiguo.</summary>
+    Task<IReadOnlyList<Respaldo>> ListarAsync(string nombreBucket, CancellationToken ct);
+
+    Task DescargarAsync(string nombreBucket, string nombre, Stream destino, CancellationToken ct);
+
+    Task EliminarAsync(string nombreBucket, string nombre, CancellationToken ct);
 }

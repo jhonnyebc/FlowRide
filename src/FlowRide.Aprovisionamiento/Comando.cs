@@ -10,6 +10,9 @@ public sealed record Comando(string Nombre, IReadOnlyDictionary<string, string> 
     public const string Listar = "listar";
     public const string RegistrarRuta = "registrar-ruta";
     public const string ListarRutas = "listar-rutas";
+    public const string Respaldar = "respaldar";
+    public const string ListarRespaldos = "listar-respaldos";
+    public const string DescargarRespaldo = "descargar-respaldo";
 
     public static readonly string Ayuda = """
         Uso: flowride-aprovisionamiento <comando> [opciones]
@@ -27,6 +30,12 @@ public sealed record Comando(string Nombre, IReadOnlyDictionary<string, string> 
               Registra o actualiza cómo llega el borde común al stack del operador (ADR-0012): su subdominio
               (por defecto, el Id), la URL de su API y el phone_number_id de su número de WhatsApp en Meta.
           listar-rutas              Muestra las rutas del borde.
+          respaldar --id <tenant> --archivo <ruta>
+              Guarda en el bucket del operador un respaldo de su Silo ya generado con pg_dump (ADR-0013) y borra
+              los de más de 35 días, salvo el más reciente. Lo usa scripts/respaldar.ps1.
+          listar-respaldos --id <tenant>    Muestra los respaldos del operador, del más reciente al más antiguo.
+          descargar-respaldo --id <tenant> --archivo <ruta> [--nombre <respaldo>]
+              Descarga un respaldo del operador (por defecto, el más reciente) para restaurarlo.
           ayuda                     Muestra esta ayuda.
         """;
 
@@ -38,6 +47,9 @@ public sealed record Comando(string Nombre, IReadOnlyDictionary<string, string> 
         [Listar] = [],
         [RegistrarRuta] = ["id", "url"],
         [ListarRutas] = [],
+        [Respaldar] = ["id", "archivo"],
+        [ListarRespaldos] = ["id"],
+        [DescargarRespaldo] = ["id", "archivo"],
         [AyudaNombre] = []
     };
 
@@ -50,7 +62,8 @@ public sealed record Comando(string Nombre, IReadOnlyDictionary<string, string> 
     /// <summary>Opciones opcionales que van cada una por su lado.</summary>
     private static readonly Dictionary<string, string[]> OpcionesIndependientes = new(StringComparer.Ordinal)
     {
-        [RegistrarRuta] = ["subdominio", "phone-number-id"]
+        [RegistrarRuta] = ["subdominio", "phone-number-id"],
+        [DescargarRespaldo] = ["nombre"]
     };
 
     public string Opcion(string nombre) => Opciones[nombre];

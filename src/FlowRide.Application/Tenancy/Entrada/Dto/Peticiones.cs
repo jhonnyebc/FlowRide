@@ -23,3 +23,18 @@ public sealed class RegistrarRutaOperadorPeticion
     public string? UrlStack { get; init; }
     public string? PhoneNumberId { get; init; }
 }
+
+/// <summary>Respaldo ya generado (pg_dump en formato custom) del Silo de un operador, para guardarlo en su bucket.</summary>
+public sealed class GuardarRespaldoPeticion
+{
+    public string? TenantId { get; init; }
+    public Stream? Contenido { get; init; }
+}
+
+/// <summary>Respaldo a descargar; sin <see cref="Nombre"/>, el más reciente.</summary>
+public sealed class DescargarRespaldoPeticion
+{
+    public string? TenantId { get; init; }
+    public string? Nombre { get; init; }
+    public Stream? Destino { get; init; }
+}
