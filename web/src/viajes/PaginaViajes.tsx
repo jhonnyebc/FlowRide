@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { monitoreo } from '../api/consultas';
 import { Consulta, Encabezado, InsigniaViaje } from '../comun/Componentes';
-import { hora } from '../comun/fechas';
+import { duracion, hora } from '../comun/fechas';
 import { textos } from '../textos';
 
 /** Monitoreo de la operación (RF-37): viajes en curso y los que empiezan en las próximas horas; sin GPS (ADR-0005). */
@@ -39,7 +39,7 @@ export function PaginaViajes() {
                         </Anchor>
                         {retrasado && (
                           <Badge color="red" variant="filled" size="sm" ml={6} leftSection={<IconClockExclamation size={12} aria-hidden />}>
-                            Retrasado {minutosRetraso} min
+                            Retrasado {duracion(minutosRetraso)}
                           </Badge>
                         )}
                       </Table.Td>

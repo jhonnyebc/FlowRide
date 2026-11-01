@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" fill="none">
+  <!-- Calles a pantalla completa: una cuadrícula irregular con dos avenidas en diagonal. -->
+  <g stroke="#22304a" stroke-width="1.5">
+    <path d="M0 110h1600M0 290h1600M0 470h1600M0 640h1600M0 830h1600"/>
+    <path d="M120 0v1000M330 0v1000M560 0v1000M760 0v1000M1010 0v1000M1240 0v1000M1470 0v1000"/>
+  </g>
+  <g stroke="#1c2940" stroke-width="2.5">
+    <path d="M0 210L1600 680"/>
+    <path d="M0 900L1600 360"/>
+  </g>
+  <!-- La ruta de FlowRide cruza toda la ciudad: de la recogida (círculo) al destino (cuadro), con tres paradas. -->
+  <g stroke-linecap="round">
+    <path d="M120 900C120 760 300 740 330 640S520 470 760 470 1010 380 1010 290 1240 110 1470 110" stroke="#ffc21a" stroke-width="6"/>
+    <path d="M120 900C120 760 300 740 330 640S520 470 760 470 1010 380 1010 290 1240 110 1470 110" stroke="#0f1b2d" stroke-width="1.6" stroke-dasharray="8 10"/>
+  </g>
+  <circle cx="120" cy="900" r="16" fill="#ffffff"/>
+  <circle cx="330" cy="640" r="9" fill="#0f1b2d" stroke="#ffffff" stroke-width="4"/>
+  <circle cx="760" cy="470" r="9" fill="#0f1b2d" stroke="#ffffff" stroke-width="4"/>
+  <circle cx="1010" cy="290" r="9" fill="#0f1b2d" stroke="#ffffff" stroke-width="4"/>
+  <rect x="1454" y="94" width="32" height="32" rx="5" fill="#ffc21a"/>
+</svg>

@@ -25,41 +25,63 @@
   }
 }
 
-/* Superficies del estilo "quiosco": página blanca, tarjetas gris niebla, bandas negras. Sin sombras. */
+/* Superficies del estilo "vía": fondo niebla, tarjetas blancas con borde fino y sombra suave, cabecera de asfalto. */
 :root {
-  --fr-superficie: #f6f6f6;
-  --fr-borde: #767676;
-  --fr-hairline: #e2e2e2;
-  --fr-banda: #000000;
-  --fr-texto-suave: #5e5e5e;
+  --fr-asfalto: #0f1b2d;
+  --fr-asfalto-2: #1d2638;
+  --fr-via: #2453ff;
+  --fr-senal: #ffc21a;
+  --fr-fondo: #f4f6fa;
+  --fr-superficie: #ffffff;
+  --fr-superficie-2: #f7f9fc;
+  --fr-borde: #8792a8;
+  --fr-hairline: #e4e8f0;
+  --fr-texto-suave: #5a657a;
+  --fr-sombra: 0 1px 2px rgba(15, 27, 45, 0.05), 0 2px 8px rgba(15, 27, 45, 0.05);
+  --fr-sombra-alta: 0 2px 4px rgba(15, 27, 45, 0.05), 0 12px 32px rgba(15, 27, 45, 0.1);
 }
 
 :root[data-mantine-color-scheme='dark'] {
-  --fr-superficie: #1c1c1c;
-  --fr-borde: #8a8a8a;
-  --fr-hairline: #2e2e2e;
-  --fr-texto-suave: #afafaf;
+  --fr-fondo: #121a2a;
+  --fr-superficie: #1a2334;
+  --fr-superficie-2: #202a3d;
+  --fr-borde: #6b7891;
+  --fr-hairline: #2a3449;
+  --fr-texto-suave: #a7b2c8;
+  --fr-sombra: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --fr-sombra-alta: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 body {
   font-feature-settings: 'cv11', 'ss01';
+  background: var(--fr-fondo);
 }
 
 .superficie {
   background: var(--fr-superficie);
-  border-radius: var(--mantine-radius-md);
+  border: 1px solid var(--fr-hairline);
+  border-radius: var(--mantine-radius-lg);
+  box-shadow: var(--fr-sombra);
 }
 
-/* Campos: borde fino gris hierro de 1 px y radio de 8 px. */
 .mantine-Input-input {
   --input-bd: var(--fr-borde);
 }
 
-/* Cabecera: la banda negra que enmarca el contenido, en ambos temas. */
+/* Cabecera de asfalto con la línea de carril amarilla discontinua debajo: la firma visual de FlowRide. */
 .marco-cabecera {
-  background: var(--fr-banda);
+  background: var(--fr-asfalto);
   border-bottom: none;
   color: #ffffff;
+}
+
+.marco-cabecera::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 3px;
+  background: repeating-linear-gradient(90deg, var(--fr-senal) 0 28px, transparent 28px 44px);
 }
 
 .marco-accion {
@@ -67,7 +89,7 @@ body {
 }
 
 .marco-accion:hover {
-  background: #222222;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .marco-usuario {
@@ -77,33 +99,60 @@ body {
 }
 
 .marco-usuario:hover {
-  background: #222222;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .marco-contenido {
   min-height: 100dvh;
+  background: var(--fr-fondo);
 }
 
-/* Contenido alineado a la izquierda dentro de un ancho máximo de 1200 px. */
+/* Contenido dentro de un ancho máximo de 1440 px: aprovecha los monitores anchos sin estirar las líneas de texto. */
 .marco-pagina {
-  max-width: 1200px;
+  max-width: 1440px;
   margin-inline: auto;
   padding-block: 8px 48px;
 }
 
 .marco-navbar {
+  background: var(--fr-superficie);
   border-right: 1px solid var(--fr-hairline);
 }
 
 .marco-enlace {
+  position: relative;
   border-radius: var(--mantine-radius-md);
   margin-bottom: 2px;
+  color: var(--mantine-color-text);
 }
 
-.marco-enlace[data-active] {
-  background: var(--fr-superficie);
-  color: var(--mantine-color-text);
+.marco-enlace:hover {
+  background: var(--fr-superficie-2);
+}
+
+/* Sección activa: fondo azul vía tenue, texto azul y una barra amarilla a la izquierda, como un carril marcado. */
+.marco-enlace[data-active],
+.marco-enlace[data-active]:hover {
+  background: var(--mantine-color-via-0);
+  color: var(--mantine-color-via-7);
   font-weight: 600;
+}
+
+.marco-enlace[data-active]::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 8px;
+  bottom: 8px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--fr-senal);
+}
+
+:root[data-mantine-color-scheme='dark'] .marco-enlace[data-active],
+:root[data-mantine-color-scheme='dark'] .marco-enlace[data-active]:hover {
+  background: rgba(76, 114, 255, 0.16);
+  color: var(--mantine-color-via-2);
 }
 
 @media (max-width: 36em) {
@@ -112,13 +161,177 @@ body {
   }
 }
 
-/* Cifras grandes con números tabulares para que no "bailen" al refrescar. */
+/* Cifras con la letra de señalética y números tabulares, para que no "bailen" al refrescar. */
 .cifra {
+  font-family: "Overpass Variable", Overpass, "Inter Variable", system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 /* Filas de las listas del tablero: separador fino entre elementos. */
 .fila-lista + .fila-lista {
   border-top: 1px solid var(--fr-hairline);
+}
+
+/* Hora acordada con su zona debajo, más pequeña (tablas). */
+.hora-local {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.hora-local > span:first-child {
+  white-space: nowrap;
+}
+
+.hora-local-zona {
+  font-size: var(--mantine-font-size-xs);
+  color: var(--fr-texto-suave);
+}
+
+/* Recorrido en una celda: origen arriba y destino abajo, unidos por la marca de ruta del logo. */
+.recorrido-compacto {
+  display: grid;
+  grid-template-columns: 10px 1fr;
+  column-gap: 10px;
+  row-gap: 6px;
+  line-height: 1.3;
+}
+
+.recorrido-compacto-marca {
+  grid-row: 1 / span 2;
+  position: relative;
+  margin-block: 5px;
+  border-left: 2px solid var(--mantine-color-text);
+  margin-left: 4px;
+  width: 0;
+}
+
+.recorrido-compacto-marca::before,
+.recorrido-compacto-marca::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  width: 10px;
+  height: 10px;
+  background: var(--mantine-color-text);
+}
+
+.recorrido-compacto-marca::before {
+  top: -4px;
+  border-radius: 50%;
+}
+
+.recorrido-compacto-marca::after {
+  bottom: -4px;
+}
+
+/* Franja de indicadores secundarios: una sola superficie dividida en celdas por líneas finas. */
+.franja {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.franja-celda + .franja-celda {
+  border-left: 1px solid var(--fr-hairline);
+}
+
+@media (max-width: 62em) {
+  .franja-celda:nth-child(3) {
+    border-left: none;
+  }
+
+  .franja-celda:nth-child(n + 3) {
+    border-top: 1px solid var(--fr-hairline);
+  }
+}
+
+/* Selector de modo: el texto de la opción activa contrasta con su píldora (negra en claro, blanca en oscuro). */
+.mantine-SegmentedControl-label[data-active],
+.mantine-SegmentedControl-label[data-active]:hover {
+  color: var(--mantine-color-body);
+}
+
+/* Portada del tablero: asfalto con la ruta amarilla, el saludo y el periodo. */
+.portada {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: var(--mantine-spacing-lg);
+  padding: 28px 32px;
+  overflow: hidden;
+  border-radius: var(--mantine-radius-lg);
+  background: var(--fr-asfalto);
+  color: #ffffff;
+  box-shadow: var(--fr-sombra-alta);
+}
+
+.portada::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 4px;
+  background: repeating-linear-gradient(90deg, var(--fr-senal) 0 28px, transparent 28px 44px);
+}
+
+.portada-titulo {
+  color: #ffffff;
+}
+
+.portada-fecha {
+  margin-top: 4px;
+  color: #a7b2c8;
+}
+
+.portada-ruta {
+  flex: 0 1 360px;
+  min-width: 0;
+  height: auto;
+}
+
+/* El selector de periodo sobre el asfalto: carril translúcido y la opción activa en amarillo señal. */
+.portada-periodo {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.portada-periodo .mantine-SegmentedControl-indicator {
+  background: var(--fr-senal);
+}
+
+.portada-periodo .mantine-SegmentedControl-label {
+  color: #d5dbe7;
+}
+
+.portada-periodo .mantine-SegmentedControl-label[data-active],
+.portada-periodo .mantine-SegmentedControl-label[data-active]:hover {
+  color: var(--fr-asfalto);
+}
+
+@media (max-width: 48em) {
+  .portada {
+    padding: 22px 20px;
+  }
+
+  .portada-ruta {
+    display: none;
+  }
+}
+
+/* Indicadores: una línea de color arriba al pasar el cursor, sin mover la tarjeta. */
+.indicador {
+  transition: box-shadow 150ms ease;
+}
+
+.indicador:hover {
+  box-shadow: var(--fr-sombra-alta);
+}
+
+:root[data-mantine-color-scheme="dark"] .portada {
+  background: #1f2c48;
+  border: 1px solid #2f3d5c;
 }

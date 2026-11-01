@@ -148,6 +148,10 @@ public sealed class ServidorIdentidadKeycloak(
         foreach (var (clave, valor) in valores)
             texto = texto.Replace("${" + clave + "}", JsonEncodedText.Encode(valor).Value, StringComparison.Ordinal);
 
-        return JsonNode.Parse(texto)!.AsObject();
+        var plantilla = JsonNode.Parse(texto)!.AsObject();
+        // El tema solo se asigna si está configurado: debe existir en el servidor Keycloak (docker/keycloak/temas).
+        if (!string.IsNullOrWhiteSpace(identidad.TemaInicioSesion))
+            plantilla["loginTheme"] = identidad.TemaInicioSesion;
+        return plantilla;
     }
 }

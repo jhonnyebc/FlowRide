@@ -130,7 +130,7 @@ export function Marco() {
   const rol = texto(textos.roles, usuario.rol);
 
   return (
-    <AppShell header={{ height: 60 }} navbar={{ width: 260, breakpoint: 'sm', collapsed: { mobile: !abierto } }} padding="lg">
+    <AppShell header={{ height: 64 }} navbar={{ width: 280, breakpoint: 'sm', collapsed: { mobile: !abierto } }} padding="lg">
       <Anchor href="#contenido" className="saltar-al-contenido">
         {textos.app.saltarAlContenido}
       </Anchor>

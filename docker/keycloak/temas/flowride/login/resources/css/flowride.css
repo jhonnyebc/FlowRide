@@ -1,0 +1,306 @@
+/*
+ * FlowRide sobre keycloak.v2 (PatternFly 5): la misma identidad "vía" del Panel Web. Toda la página es asfalto, con la
+ * ruta amarilla de fondo y la línea de carril abajo; la marca y el operador van arriba y debajo el formulario, en una
+ * tarjeta oscura translúcida que deja ver la ruta. Siempre oscuro, igual que la cabecera del panel. Solo cambia la
+ * apariencia: la estructura y los textos son los de Keycloak.
+ */
+
+@font-face {
+  font-family: "Overpass FlowRide";
+  src: url("../fonts/overpass-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root,
+:root.pf-v5-theme-dark {
+  --fr-asfalto: #0f1b2d;
+  --fr-tarjeta: rgba(22, 32, 51, 0.82);
+  --fr-campo: #0f1b2d;
+  --fr-via: #2453ff;
+  --fr-via-hover: #3d66ff;
+  --fr-via-claro: #8ca5ff;
+  --fr-senal: #ffc21a;
+  --fr-tinta: #f2f5fa;
+  --fr-suave: #a7b2c8;
+  --fr-borde: #3b4660;
+  --fr-borde-claro: #58657f;
+  --fr-letra-senal: "Overpass FlowRide", "Segoe UI", system-ui, sans-serif;
+  --fr-texto: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --pf-v5-global--FontFamily--text: var(--fr-texto);
+  --pf-v5-global--FontFamily--heading: var(--fr-letra-senal);
+  --pf-v5-global--primary-color--100: var(--fr-via);
+  --pf-v5-global--primary-color--200: var(--fr-via-hover);
+  --pf-v5-global--link--Color: var(--fr-via-claro);
+  --pf-v5-global--link--Color--hover: #b6c6ff;
+  --pf-v5-global--Color--100: var(--fr-tinta);
+  --pf-v5-global--Color--200: var(--fr-suave);
+  color-scheme: dark;
+}
+
+/* ---------- Página: asfalto con la ruta de fondo y la línea de carril abajo ---------- */
+
+.login-pf body {
+  min-height: 100vh;
+  background: url("../img/fondo.svg") no-repeat center / cover fixed, var(--fr-asfalto);
+  font-family: var(--fr-texto);
+  color: var(--fr-tinta);
+}
+
+.login-pf body::after {
+  content: "";
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  height: 5px;
+  background: repeating-linear-gradient(90deg, var(--fr-senal) 0 32px, transparent 32px 52px);
+  pointer-events: none;
+}
+
+.pf-v5-c-login {
+  min-height: 100vh;
+  padding: 48px 16px 64px;
+  background: transparent;
+}
+
+.pf-v5-c-login__container {
+  display: grid;
+  grid-template-columns: minmax(0, 440px);
+  grid-template-areas: "header" "main";
+  justify-content: center;
+  align-content: center;
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* ---------- Marca y operador, encima del formulario ---------- */
+
+.pf-v5-c-login__header {
+  grid-area: header;
+  margin: 0 0 28px;
+  padding: 0;
+  background: transparent;
+}
+
+#kc-header-wrapper {
+  font-family: var(--fr-letra-senal);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0;
+  word-spacing: 0.08em;
+  text-transform: none;
+  text-align: left;
+  color: #ffffff !important;
+}
+
+#kc-header-wrapper::before {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 20px;
+  background: url("../img/marca.svg") no-repeat center / contain;
+}
+
+#kc-header-wrapper::after {
+  content: "Panel de operación de transporte empresarial";
+  display: block;
+  margin-top: 8px;
+  font-family: var(--fr-texto);
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--fr-suave);
+}
+
+/* ---------- Tarjeta del formulario: oscura y translúcida sobre la ruta ---------- */
+
+.pf-v5-c-login__main {
+  grid-area: main;
+  width: 100%;
+  margin: 0;
+  padding: 32px 32px 28px;
+  background: var(--fr-tarjeta);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--fr-borde);
+  border-radius: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), 0 24px 64px rgba(0, 0, 0, 0.35);
+}
+
+.pf-v5-c-login__main-header,
+div.pf-v5-c-login__main-header {
+  grid-template-columns: 1fr auto;
+  border-top: none;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+.pf-v5-c-login__main-body,
+.pf-v5-c-login__main-footer {
+  padding-inline: 0;
+}
+
+#kc-page-title {
+  font-family: var(--fr-letra-senal);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #ffffff;
+}
+
+.pf-v5-c-form__label-text,
+.pf-v5-c-check__label {
+  color: #d5dbe7;
+  font-weight: 500;
+}
+
+/* Campos oscuros con borde fino; el foco se marca en azul vía. */
+.pf-v5-c-form-control {
+  --pf-v5-c-form-control--Color: var(--fr-tinta);
+  --pf-v5-c-form-control--BackgroundColor: var(--fr-campo);
+  border-radius: 10px;
+  background: var(--fr-campo);
+  color: var(--fr-tinta);
+}
+
+.pf-v5-c-form-control > input {
+  color: var(--fr-tinta);
+}
+
+.pf-v5-c-form-control::before {
+  border: 1px solid var(--fr-borde-claro);
+  border-radius: 10px;
+}
+
+.pf-v5-c-form-control::after {
+  display: none;
+}
+
+.pf-v5-c-form-control:focus-within::before {
+  border: 2px solid var(--fr-via-claro);
+}
+
+/* Solo lectura (el correo ya elegido) y autocompletado del navegador: sin el azul claro por defecto. */
+.pf-v5-c-form-control.pf-m-readonly,
+.pf-v5-c-form-control:has(input[readonly]) {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.pf-v5-c-form-control input:-webkit-autofill {
+  -webkit-text-fill-color: var(--fr-tinta);
+  -webkit-box-shadow: 0 0 0 1000px var(--fr-campo) inset;
+  caret-color: var(--fr-tinta);
+}
+
+.pf-v5-c-input-group__item:first-child .pf-v5-c-form-control,
+.pf-v5-c-input-group__item:first-child .pf-v5-c-form-control::before {
+  border-radius: 10px 0 0 10px;
+}
+
+.pf-v5-c-input-group .pf-v5-c-button.pf-m-control {
+  --pf-v5-c-button--m-control--BackgroundColor: var(--fr-campo);
+  --pf-v5-c-button--m-control--Color: var(--fr-suave);
+  --pf-v5-c-button--m-control--hover--Color: #ffffff;
+  border-radius: 0 10px 10px 0;
+}
+
+.pf-v5-c-input-group .pf-v5-c-button.pf-m-control::after {
+  border-color: var(--fr-borde-claro);
+  border-radius: 0 10px 10px 0;
+}
+
+/* Botón principal: azul vía con texto blanco. */
+.pf-v5-c-button.pf-m-primary {
+  --pf-v5-c-button--m-primary--BackgroundColor: var(--fr-via);
+  --pf-v5-c-button--m-primary--hover--BackgroundColor: var(--fr-via-hover);
+  --pf-v5-c-button--m-primary--focus--BackgroundColor: var(--fr-via-hover);
+  --pf-v5-c-button--m-primary--active--BackgroundColor: var(--fr-via-hover);
+  --pf-v5-c-button--m-primary--Color: #ffffff;
+  --pf-v5-c-button--m-primary--hover--Color: #ffffff;
+  --pf-v5-c-button--BorderRadius: 10px;
+  margin-top: 8px;
+  padding-block: 12px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(36, 83, 255, 0.35);
+}
+
+.pf-v5-c-button.pf-m-secondary {
+  --pf-v5-c-button--BorderRadius: 10px;
+  --pf-v5-c-button--m-secondary--Color: var(--fr-tinta);
+  --pf-v5-c-button--m-secondary--after--BorderColor: var(--fr-borde-claro);
+}
+
+.pf-v5-c-login__main a,
+.pf-v5-c-login .pf-v5-c-button.pf-m-link {
+  color: var(--fr-via-claro);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Foco siempre visible con teclado (WCAG 2.4.7). */
+.pf-v5-c-login a:focus-visible,
+.pf-v5-c-button:focus-visible {
+  outline: 2px solid var(--fr-senal);
+  outline-offset: 2px;
+}
+
+/* Avisos: superficie un poco más clara con un filete de color a la izquierda. */
+.pf-v5-c-alert {
+  --pf-v5-c-alert--BoxShadow: none;
+  --pf-v5-c-alert--BorderTopWidth: 0;
+  border-radius: 10px;
+  border-left: 4px solid var(--fr-via-claro);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pf-v5-c-alert .pf-v5-c-alert__title,
+.pf-v5-c-alert .pf-v5-c-alert__icon {
+  color: var(--fr-tinta);
+}
+
+.pf-v5-c-alert.pf-m-danger {
+  border-left-color: #ff6b6b;
+}
+
+.pf-v5-c-alert.pf-m-warning {
+  border-left-color: var(--fr-senal);
+}
+
+/* El aviso del botón "reiniciar inicio de sesión" se abre debajo del botón: a la derecha se salía de la página. */
+.kc-login-tooltip .kc-tooltip-text {
+  top: calc(100% + 6px);
+  left: auto;
+  right: 0;
+  border-radius: 6px;
+  background-color: #000000;
+}
+
+.kc-login-tooltip .kc-tooltip-text::after {
+  display: none;
+}
+
+/* ---------- Celular: la tarjeta a todo el ancho ---------- */
+
+@media (max-width: 600px) {
+  .pf-v5-c-login {
+    padding-top: 32px;
+  }
+
+  #kc-header-wrapper {
+    font-size: 24px;
+  }
+
+  #kc-header-wrapper::before {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 14px;
+  }
+
+  .pf-v5-c-login__main {
+    padding: 24px 20px;
+  }
+}

@@ -5,8 +5,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { api, datos } from '../api/cliente';
-import { Consulta, Encabezado, InsigniaSolicitud } from '../comun/Componentes';
-import { horaLocal } from '../comun/fechas';
+import { Consulta, Encabezado, HoraLocal, InsigniaSolicitud, RecorridoCompacto } from '../comun/Componentes';
 import { texto, textos } from '../textos';
 import { NuevaSolicitud } from './NuevaSolicitud';
 
@@ -84,7 +83,7 @@ export function PaginaSolicitudes() {
                       <Table.Tr key={s.id}>
                         <Table.Td>
                           <Anchor component={Link} to={`/solicitudes/${s.id}`}>
-                            {horaLocal(s.horaLocalServicio, s.zonaHoraria)}
+                            <HoraLocal local={s.horaLocalServicio} zona={s.zonaHoraria} />
                           </Anchor>
                           {s.urgente && (
                             <Badge color="red" variant="filled" size="xs" ml={6}>
@@ -94,7 +93,7 @@ export function PaginaSolicitudes() {
                         </Table.Td>
                         <Table.Td>{s.pasajeroNombre}</Table.Td>
                         <Table.Td>{s.empresaClienteNombre ?? '—'}</Table.Td>
-                        <Table.Td>{s.detalleRestringido ? <Text c="dimmed" size="sm">Personal (restringida)</Text> : `${s.direccionOrigen} → ${s.direccionDestino}`}</Table.Td>
+                        <Table.Td>{s.detalleRestringido ? <Text c="dimmed" size="sm">Personal (restringida)</Text> : <RecorridoCompacto origen={s.direccionOrigen ?? '—'} destino={s.direccionDestino ?? '—'} />}</Table.Td>
                         <Table.Td>
                           <InsigniaSolicitud estado={s.estado} />
                         </Table.Td>

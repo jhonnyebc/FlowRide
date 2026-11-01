@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { diasHasta, fechaCorta, horaLocal, hoyIso, instante } from './fechas';
+import { diasHasta, duracion, fechaCorta, horaLocal, hoyIso, instante } from './fechas';
 
 describe('fechas', () => {
   it('muestra la hora local de un evento futuro sin convertirla, con el nombre de su zona', () => {
@@ -28,5 +28,14 @@ describe('fechas', () => {
     expect(diasHasta('2026-10-24', ahora)).toBe(0);
     expect(diasHasta('2026-11-23', ahora)).toBe(30);
     expect(diasHasta('2026-10-23', ahora)).toBe(-1);
+  });
+
+  it('una duración en minutos se lee en la unidad que corresponde', () => {
+    expect(duracion(45)).toBe('45 min');
+    expect(duracion(60)).toBe('1 h');
+    expect(duracion(200)).toBe('3 h 20 min');
+    expect(duracion(7671)).toBe('5 d 7 h');
+    expect(duracion(2880)).toBe('2 d');
+    expect(duracion(-3)).toBe('0 min');
   });
 });
