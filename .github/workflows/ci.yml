@@ -144,6 +144,61 @@ jobs:
           exit-code: '0'
           skip-setup-trivy: true
 
+  # Análisis estático continuo en SonarCloud (organización jhonnyebc, proyecto jhonnyebc_FlowRide): backend y Panel Web
+  # con su cobertura. El proyecto usa análisis por CI; el análisis automático de SonarCloud debe quedar desactivado.
+  calidad:
+    name: Análisis estático (SonarCloud)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Historial completo: SonarCloud lo usa para saber qué código es nuevo y a quién atribuirlo.
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # Los PR de Dependabot no reciben secretos: sin token se omite el análisis en lugar de fallar.
+      - name: Comprobar el token
+        id: token
+        run: echo "disponible=$([ -n "$SONAR_TOKEN" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Cobertura del Panel Web (lcov)
+        if: steps.token.outputs.disponible == 'true'
+        working-directory: web
+        run: npm ci && npm run test:cobertura
+
+      - name: Analizar
+        if: steps.token.outputs.disponible == 'true'
+        # La cobertura medida es la del gate de ADR-0018 (Domain y Application con pruebas unitarias); el resto del
+        # backend lo prueban las pruebas de integración, que no la miden.
+        run: |
+          dotnet tool restore
+          dotnet sonarscanner begin /k:"jhonnyebc_FlowRide" /o:"jhonnyebc" /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.token="$SONAR_TOKEN" \
+            /d:sonar.cs.opencover.reportsPaths="tests/FlowRide.UnitTests/TestResults/coverage/coverage.opencover.xml" \
+            /d:sonar.javascript.lcov.reportPaths="web/coverage/lcov.info" \
+            /d:sonar.exclusions="**/Migraciones/**,web/src/api/esquema.d.ts,web/dist/**,web/coverage/**,web/src/**/*.test.ts,web/src/**/*.test.tsx,web/src/pruebas/**" \
+            /d:sonar.coverage.exclusions="src/FlowRide.Infrastructure/**,src/FlowRide.API/**,src/FlowRide.Borde/**,src/FlowRide.Aprovisionamiento/**,scripts/**,docker/**,web/*.config.*,web/eslint.config.js"
+          dotnet build FlowRide.slnx -c Release
+          dotnet test tests/FlowRide.UnitTests --no-build -c Release -p:CollectCoverage=true -p:CoverletOutputFormat=opencover -p:Threshold=0
+          dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+
   # ADR-0010: imagen inmutable etiquetada <versión>-<sha>. Se construye y escanea en cada PR; al mergear a main, el job
   # "publicar" sube exactamente las imágenes escaneadas (no las reconstruye).
   imagenes:
@@ -213,7 +268,7 @@ jobs:
   publicar:
     name: Publicar imágenes en GitHub Container Registry
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [backend, frontend, secretos, vulnerabilidades, imagenes]
+    needs: [backend, frontend, secretos, vulnerabilidades, calidad, imagenes]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
