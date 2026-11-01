@@ -25,7 +25,9 @@ public sealed class ViajeRepositorioAdaptador(FlowRideDbContext contexto) : IVia
     public Task<Viaje?> ConsultarPorAsignacionAsync(Guid asignacionId, CancellationToken ct) =>
         Completos().SingleOrDefaultAsync(viaje => viaje.AsignacionId == asignacionId, ct);
 
-    private IQueryable<Viaje> Completos() => contexto.Viajes.Include(viaje => viaje.Paradas).Include(viaje => viaje.Incidentes);
+    // Consultas separadas para las paradas y los incidentes: en un solo JOIN cada parada se repetiría por cada incidente.
+    private IQueryable<Viaje> Completos() =>
+        contexto.Viajes.Include(viaje => viaje.Paradas).Include(viaje => viaje.Incidentes).AsSplitQuery();
 }
 
 public sealed class CalificacionRepositorioAdaptador(FlowRideDbContext contexto) : ICalificacionRepositorio
@@ -142,7 +144,7 @@ public sealed class ConsultasViajesEf(FlowRideDbContext contexto) : IConsultasVi
             "asignacion", $"Asignación automática: {a.Conductor} con el vehículo {a.Placa}.", null, null, a.Id)));
 
         var asignacionIds = asignaciones.Select(a => a.Id).ToList();
-        var viajes = await contexto.Viajes.AsNoTracking().Include(v => v.Paradas).Include(v => v.Incidentes)
+        var viajes = await contexto.Viajes.AsNoTracking().Include(v => v.Paradas).Include(v => v.Incidentes).AsSplitQuery()
             .Where(v => asignacionIds.Contains(v.AsignacionId)).ToListAsync(ct);
         foreach (var viaje in viajes)
         {

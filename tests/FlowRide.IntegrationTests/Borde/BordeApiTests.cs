@@ -217,8 +217,14 @@ public class BordeApiTests(PostgresFixture postgres) : PruebasAsignacionBase(pos
         await RecargarAsync(borde);
         var despues = await Cliente(borde).GetAsync("/api/viajes");
 
+        // Cada recarga libera la configuración anterior: el proxy sigue tomando la vigente.
+        await RecargarAsync(borde);
+        await RecargarAsync(borde);
+        var trasVariasRecargas = await Cliente(borde).GetAsync("/api/viajes");
+
         Assert.Equal(HttpStatusCode.NotFound, antes.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, despues.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, trasVariasRecargas.StatusCode);
     }
 
     [Fact]
