@@ -72,8 +72,9 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      # Sin scripts de instalación de las dependencias (riesgo de cadena de suministro); ninguna los necesita.
       - name: Instalar (versiones exactas del lockfile)
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Los tipos de la API están al día con el contrato OpenAPI (ADR-0019)
         run: npm run api:tipos && git diff --exit-code src/api/esquema.d.ts
@@ -181,7 +182,7 @@ jobs:
       - name: Cobertura del Panel Web (lcov)
         if: steps.token.outputs.disponible == 'true'
         working-directory: web
-        run: npm ci && npm run test:cobertura
+        run: npm ci --ignore-scripts && npm run test:cobertura
 
       - name: Analizar
         if: steps.token.outputs.disponible == 'true'
