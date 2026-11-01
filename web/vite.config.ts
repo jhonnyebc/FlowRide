@@ -32,5 +32,12 @@ export default defineConfig({
     setupFiles: ['./src/pruebas/preparacion.ts'],
     css: false,
     restoreMocks: true,
+    // Solo con npm run test:cobertura (job de SonarCloud): lcov es el formato que lee SonarCloud.
+    coverage: {
+      provider: 'v8',
+      reporter: ['lcovonly', 'text-summary'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/pruebas/**', 'src/api/esquema.d.ts'],
+    },
   },
 });
