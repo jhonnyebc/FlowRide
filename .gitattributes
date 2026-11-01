@@ -3,6 +3,8 @@
 
 # Los scripts que se ejecutan dentro de contenedores Linux deben conservar LF.
 *.sh text eol=lf
+# Configuración que montan los contenedores (nginx y ModSecurity del WAF): siempre con LF.
+docker/** text eol=lf
 
 # Binarios
 *.png binary
