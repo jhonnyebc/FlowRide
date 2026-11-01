@@ -1,0 +1,14 @@
+# Destino del WAF: el borde común, con conexiones reutilizadas (keepalive). Sin esto nginx abre una conexión TLS nueva
+# hacia el borde en cada petición; con carga (prueba de 200 usuarios) el puente de red de Docker hacia el equipo
+# empieza a descartar conexiones y aparecen 504. ${BORDE_DESTINO} lo define docker-compose.yml (WAF_BORDE en .env).
+upstream flowride_borde {
+    server ${BORDE_DESTINO};
+    keepalive 64;
+}
+
+# Igual que $connection_upgrade de la imagen, pero sin "close": las peticiones normales dejan la conexión abierta para
+# reutilizarla y las que piden Upgrade (WebSocket) se siguen pasando como antes.
+map $http_upgrade $flowride_connection {
+    default upgrade;
+    ''      '';
+}

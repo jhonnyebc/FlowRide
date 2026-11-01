@@ -92,9 +92,12 @@ services:
     restart: unless-stopped
     environment:
       # El borde corre en el equipo (dotnet run, https://localhost:8443); el WAF le reenvía conservando el Host, que
-      # es lo que el borde usa para elegir el operador.
-      BACKEND: ${WAF_BACKEND:-https://host.docker.internal:8443}
+      # es lo que el borde usa para elegir el operador, y reutiliza las conexiones (upstream de docker/waf/nginx).
+      BACKEND: https://flowride_borde
+      BORDE_DESTINO: ${WAF_BORDE:-host.docker.internal:8443}
       PROXY_SSL_VERIFY: "off"
+      # Auditoría de los 5xx y de los 4xx salvo 401 y 404: una API sin token responde 401 y no es un incidente.
+      MODSEC_AUDIT_LOG_RELEVANT_STATUS: "^(?:5|4(?!0[14]))"
       MODSEC_RULE_ENGINE: ${WAF_MODO:-On}
       BLOCKING_PARANOIA: "1"
       ANOMALY_INBOUND: "5"
@@ -114,6 +117,9 @@ services:
       - ./docker/waf/certificados:/etc/nginx/certificados:ro
       # Exclusiones puntuales de FlowRide (falsos positivos conocidos), versionadas.
       - ./docker/waf/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:ro
+      # Conexiones reutilizadas hacia el borde (keepalive).
+      - ./docker/waf/nginx/borde.conf.template:/etc/nginx/templates/conf.d/borde.conf.template:ro
+      - ./docker/waf/nginx/proxy_backend.conf.template:/etc/nginx/templates/includes/proxy_backend.conf.template:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

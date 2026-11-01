@@ -46,3 +46,6 @@ docker/waf/certificados/
 # SO
 .DS_Store
 Thumbs.db
+
+# Resultados locales de la prueba de carga (k6).
+scripts/carga/resultado*.json
