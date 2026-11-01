@@ -10,7 +10,7 @@ namespace FlowRide.Borde.Rutas;
 /// (<c>{subdominio}.{dominio}</c>) y llevan a un único destino, su stack (OPLOG-SEG-02, ADM-SEG-02). Un host sin ruta
 /// no llega a ningún stack (404). Se reemplaza entera al recargar.
 /// </summary>
-public sealed class ProveedorRutasBorde : IProxyConfigProvider
+public sealed class ProveedorRutasBorde : IProxyConfigProvider, IDisposable
 {
     /// <summary>Las rutas de los stacks van detrás de los endpoints propios del borde (webhooks, salud).</summary>
     public const int OrdenRutasStacks = 100;
@@ -41,9 +41,16 @@ public sealed class ProveedorRutasBorde : IProxyConfigProvider
         var anterior = _actual;
         _actual = new ConfiguracionProxy(rutas);
         anterior.AvisarCambio();
+        anterior.Dispose();
     }
 
-    private sealed class ConfiguracionProxy : IProxyConfig
+    public void Dispose() => _actual.Dispose();
+
+    /// <remarks>
+    /// Al reemplazarla se cancela su token (YARP relee la configuración) y se libera. Un token ya cancelado sigue
+    /// respondiendo como cambiado aunque su origen esté liberado.
+    /// </remarks>
+    private sealed class ConfiguracionProxy : IProxyConfig, IDisposable
     {
         private readonly CancellationTokenSource _cambio = new();
 
@@ -76,6 +83,8 @@ public sealed class ProveedorRutasBorde : IProxyConfigProvider
         public IChangeToken ChangeToken { get; }
 
         public void AvisarCambio() => _cambio.Cancel();
+
+        public void Dispose() => _cambio.Dispose();
     }
 }
 

@@ -43,6 +43,12 @@ export function serviciosPorHora(servicios: Esquemas['ServicioVistaLectura'][]):
   return [...conteo.values()];
 }
 
+/** La hora con más servicios (la primera, si empatan); null sin servicios. */
+export function horaPico(filas: FilaPorHora[]): FilaPorHora | null {
+  const total = (f: FilaPorHora) => f.Critico + f.Atencion + f.Normal;
+  return filas.reduce<FilaPorHora | null>((pico, f) => (pico === null || total(f) > total(pico) ? f : pico), null);
+}
+
 /** Saludo según la hora local. */
 export function saludo(ahora: Date = new Date()): string {
   const h = ahora.getHours();

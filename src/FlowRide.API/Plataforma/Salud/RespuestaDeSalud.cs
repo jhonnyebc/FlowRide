@@ -27,6 +27,6 @@ public static class RespuestaDeSalud
                 })
         };
 
-        return context.Response.WriteAsync(JsonSerializer.Serialize(cuerpo, Opciones));
+        return context.Response.WriteAsync(JsonSerializer.Serialize(cuerpo, Opciones), context.RequestAborted);
     }
 }

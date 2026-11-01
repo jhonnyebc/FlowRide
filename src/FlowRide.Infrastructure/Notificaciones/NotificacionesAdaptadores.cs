@@ -81,7 +81,10 @@ public sealed class CorreoOptions
     public string Host { get; set; } = "localhost";
 
     public int Puerto { get; set; } = 1025;
-    public bool UsarSsl { get; set; }
+
+    /// <summary>TLS hacia el servidor SMTP. Activo por defecto; solo se apaga para Mailpit en desarrollo y pruebas.</summary>
+    public bool UsarSsl { get; set; } = true;
+
     public string Remitente { get; set; } = "no-responder@flowride.local";
     public string? Usuario { get; set; }
     public string? Contrasena { get; set; }

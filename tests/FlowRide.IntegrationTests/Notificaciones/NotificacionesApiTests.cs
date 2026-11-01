@@ -182,7 +182,7 @@ public class EnviadorCorreoSmtpTests : IAsyncLifetime
     [Fact]
     public async Task EnviaElCorreoAlServidorSmtp()
     {
-        var enviador = new EnviadorCorreoSmtp(new CorreoOptions { Host = _mailpit.Hostname, Puerto = _mailpit.GetMappedPublicPort(1025) });
+        var enviador = new EnviadorCorreoSmtp(new CorreoOptions { Host = _mailpit.Hostname, Puerto = _mailpit.GetMappedPublicPort(1025), UsarSsl = false });
 
         await enviador.EnviarAsync("admin@operador.co", "[FlowRide] Turno abandonado", "Detalle de la alerta", CancellationToken.None);
 

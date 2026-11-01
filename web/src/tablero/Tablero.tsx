@@ -55,7 +55,7 @@ import {
 } from '../comun/Componentes';
 import { hora, hoyIso, instante } from '../comun/fechas';
 import { texto, textos } from '../textos';
-import { type ClavePeriodo, porcentaje, rangoDelPeriodo, saludo, serviciosPorHora } from './calculos';
+import { type ClavePeriodo, horaPico, porcentaje, rangoDelPeriodo, saludo, serviciosPorHora } from './calculos';
 
 const periodos: { value: ClavePeriodo; label: string; frase: string }[] = [
   { value: 'hoy', label: 'Hoy', frase: 'hoy' },
@@ -320,8 +320,7 @@ function GraficaPorHora({ servicios }: { servicios: Esquemas['ServicioVistaLectu
   const filas = serviciosPorHora(servicios);
   if (filas.length === 0)
     return <EstadoVacio icono={IconCalendarStats} titulo="Sin servicios hoy" descripcion="Cuando haya servicios programados verás aquí cómo se reparten en el día." />;
-  const pico = filas.reduce((max, f) => (f.Critico + f.Atencion + f.Normal > max.Critico + max.Atencion + max.Normal ? f : max));
-  const resumen = `${servicios.length} servicios hoy entre las ${filas[0]!.hora} y las ${filas.at(-1)!.hora}; la hora con más servicios es las ${pico.hora}.`;
+  const resumen = `${servicios.length} servicios hoy entre las ${filas[0]!.hora} y las ${filas.at(-1)!.hora}; la hora con más servicios es las ${horaPico(filas)!.hora}.`;
   return (
     <div role="img" aria-label={resumen}>
       <BarChart
