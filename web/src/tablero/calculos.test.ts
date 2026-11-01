@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { servicioVista } from '../pruebas/datos';
-import { porcentaje, rangoDelPeriodo, saludo, serviciosPorHora } from './calculos';
+import { horaPico, porcentaje, rangoDelPeriodo, saludo, serviciosPorHora } from './calculos';
 
 describe('cálculos del tablero', () => {
   it('el periodo son días completos de la zona del navegador, terminando al final de hoy', () => {
@@ -34,6 +34,14 @@ describe('cálculos del tablero', () => {
       { hora: '08:00', Critico: 0, Atencion: 0, Normal: 1 },
     ]);
     expect(serviciosPorHora([])).toEqual([]);
+  });
+
+  it('la hora pico es la de más servicios; si empatan, la primera', () => {
+    const fila = (hora: string, Critico: number, Atencion: number, Normal: number) => ({ hora, Critico, Atencion, Normal });
+
+    expect(horaPico([fila('06:00', 1, 0, 0), fila('07:00', 0, 2, 1), fila('08:00', 1, 1, 1)])?.hora).toBe('07:00');
+    expect(horaPico([fila('06:00', 1, 1, 0), fila('07:00', 0, 0, 2)])?.hora).toBe('06:00');
+    expect(horaPico([])).toBeNull();
   });
 
   it('saluda según la hora', () => {
