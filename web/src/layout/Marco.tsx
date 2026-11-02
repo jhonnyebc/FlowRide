@@ -130,21 +130,21 @@ export function Marco() {
   const rol = texto(textos.roles, usuario.rol);
 
   return (
-    <AppShell header={{ height: 64 }} navbar={{ width: 280, breakpoint: 'sm', collapsed: { mobile: !abierto } }} padding="lg">
+    <AppShell header={{ height: 72 }} navbar={{ width: 320, breakpoint: 'sm', collapsed: { mobile: !abierto } }} padding="lg">
       <Anchor href="#contenido" className="saltar-al-contenido">
         {textos.app.saltarAlContenido}
       </Anchor>
       <AppShell.Header className="marco-cabecera">
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap">
-            <Burger opened={abierto} onClick={toggle} hiddenFrom="sm" size="sm" color="white" aria-label={textos.menu.abrirMenu} />
+            <Burger opened={abierto} onClick={toggle} hiddenFrom="sm" size="md" color="white" aria-label={textos.menu.abrirMenu} />
             <Logo />
           </Group>
           <Group gap={6} wrap="nowrap">
             <Tooltip label={etiquetaAlertas}>
               <Indicator label={noLeidas > 99 ? '99+' : noLeidas} size={16} color="red" disabled={noLeidas === 0} offset={4}>
-                <ActionIcon component={EnlaceRuta} to="/alertas" variant="subtle" size="lg" radius="xl" className="marco-accion" aria-label={etiquetaAlertas}>
-                  <IconBell size={18} aria-hidden />
+                <ActionIcon component={EnlaceRuta} to="/alertas" variant="subtle" size="xl" radius="xl" className="marco-accion" aria-label={etiquetaAlertas}>
+                  <IconBell size={22} aria-hidden />
                 </ActionIcon>
               </Indicator>
             </Tooltip>
@@ -157,14 +157,14 @@ export function Marco() {
                 onClick={() => setColorScheme(esquema === 'dark' ? 'light' : 'dark')}
                 aria-label={etiquetaTema}
               >
-                {esquema === 'dark' ? <IconSun size={18} aria-hidden /> : <IconMoon size={18} aria-hidden />}
+                {esquema === 'dark' ? <IconSun size={22} aria-hidden /> : <IconMoon size={22} aria-hidden />}
               </ActionIcon>
             </Tooltip>
             <Menu position="bottom-end" width={240}>
               <Menu.Target>
                 <UnstyledButton aria-label={`${usuario.nombre}, ${rol}`} className="marco-usuario">
                   <Group gap={8} wrap="nowrap">
-                    <Avatar name={usuario.nombre} size={32} color="blanco" aria-hidden />
+                    <Avatar name={usuario.nombre} size={38} color="blanco" aria-hidden />
                     <div className="marco-usuario-texto">
                       <Text size="sm" fw={500} lh={1.15}>
                         {usuario.nombre}
@@ -191,7 +191,7 @@ export function Marco() {
         <AppShell.Section grow style={{ overflowY: 'auto' }}>
           {grupos.map(({ titulo, secciones }) => (
             <div key={titulo} role="group" aria-label={titulo}>
-              <Text size="xs" fw={500} c="var(--fr-texto-suave)" px="sm" pt={titulo === textos.menu.operacion ? 4 : 16} pb={8}>
+              <Text size="sm" fw={600} c="var(--fr-texto-suave)" px="sm" pt={titulo === textos.menu.operacion ? 8 : 20} pb={8}>
                 {titulo}
               </Text>
               {secciones.filter((s) => !s.soloAdministrador || esAdministrador(usuario)).map(({ ruta, etiqueta, icono: Icono, exacta }) => {
@@ -207,7 +207,7 @@ export function Marco() {
                     onClick={close}
                     aria-current={activa ? 'page' : undefined}
                     aria-description={contador ? `${contador.valor} ${contador.descripcion}` : undefined}
-                    leftSection={<Icono size={19} stroke={1.7} aria-hidden />}
+                    leftSection={<Icono size={22} stroke={1.8} aria-hidden />}
                     rightSection={
                       contador && (
                         <Badge size="sm" radius="xl" circle={contador.valor < 10} color={contador.color} variant="filled" aria-hidden>

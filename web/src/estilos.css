@@ -107,10 +107,10 @@ body {
   background: var(--fr-fondo);
 }
 
-/* Contenido dentro de un ancho máximo de 1440 px: aprovecha los monitores anchos sin estirar las líneas de texto. */
+/* El contenido arranca junto al menú (sin un hueco a la izquierda) y llega hasta 1600 px en monitores anchos. */
 .marco-pagina {
-  max-width: 1440px;
-  margin-inline: auto;
+  max-width: 1600px;
+  margin-inline: 0;
   padding-block: 8px 48px;
 }
 
@@ -121,9 +121,15 @@ body {
 
 .marco-enlace {
   position: relative;
+  padding-block: 10px;
   border-radius: var(--mantine-radius-md);
-  margin-bottom: 2px;
+  margin-bottom: 4px;
   color: var(--mantine-color-text);
+}
+
+/* Texto del menú a tamaño de lectura (17 px): se usa de pie, a distancia, y por personas con baja visión. */
+.marco-enlace .mantine-NavLink-label {
+  font-size: var(--mantine-font-size-md);
 }
 
 .marco-enlace:hover {

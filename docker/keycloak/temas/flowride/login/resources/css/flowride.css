@@ -66,7 +66,7 @@
 
 .pf-v5-c-login__container {
   display: grid;
-  grid-template-columns: minmax(0, 440px);
+  grid-template-columns: minmax(0, 560px);
   grid-template-areas: "header" "main";
   justify-content: center;
   align-content: center;
@@ -80,16 +80,16 @@
 
 .pf-v5-c-login__header {
   grid-area: header;
-  margin: 0 0 28px;
+  margin: 0 0 36px;
   padding: 0;
   background: transparent;
 }
 
 #kc-header-wrapper {
   font-family: var(--fr-letra-senal);
-  font-size: 30px;
-  font-weight: 700;
-  line-height: 1.2;
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1.1;
   letter-spacing: 0;
   word-spacing: 0.08em;
   text-transform: none;
@@ -100,18 +100,18 @@
 #kc-header-wrapper::before {
   content: "";
   display: block;
-  width: 48px;
-  height: 48px;
-  margin-bottom: 20px;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 24px;
   background: url("../img/marca.svg") no-repeat center / contain;
 }
 
 #kc-header-wrapper::after {
   content: "Panel de operación de transporte empresarial";
   display: block;
-  margin-top: 8px;
+  margin-top: 12px;
   font-family: var(--fr-texto);
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 400;
   color: var(--fr-suave);
 }
@@ -122,12 +122,12 @@
   grid-area: main;
   width: 100%;
   margin: 0;
-  padding: 32px 32px 28px;
+  padding: 44px 44px 40px;
   background: var(--fr-tarjeta);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border: 1px solid var(--fr-borde);
-  border-radius: 16px;
+  border-radius: 20px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), 0 24px 64px rgba(0, 0, 0, 0.35);
 }
 
@@ -136,7 +136,7 @@ div.pf-v5-c-login__main-header {
   grid-template-columns: 1fr auto;
   border-top: none;
   padding: 0;
-  margin-bottom: 20px;
+  margin-bottom: 28px;
 }
 
 .pf-v5-c-login__main-body,
@@ -146,28 +146,45 @@ div.pf-v5-c-login__main-header {
 
 #kc-page-title {
   font-family: var(--fr-letra-senal);
-  font-size: 26px;
+  font-size: 34px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
   color: #ffffff;
 }
 
 .pf-v5-c-form__label-text,
 .pf-v5-c-check__label {
   color: #d5dbe7;
+  font-size: 17px;
   font-weight: 500;
+}
+
+/* Más aire entre campos y textos de ayuda legibles. */
+.pf-v5-c-form {
+  --pf-v5-c-form--GridGap: 24px;
+}
+
+.pf-v5-c-login__main a,
+.pf-v5-c-helper-text,
+.pf-v5-c-alert__title {
+  font-size: 16px;
 }
 
 /* Campos oscuros con borde fino; el foco se marca en azul vía. */
 .pf-v5-c-form-control {
   --pf-v5-c-form-control--Color: var(--fr-tinta);
   --pf-v5-c-form-control--BackgroundColor: var(--fr-campo);
+  --pf-v5-c-form-control--FontSize: 18px;
+  min-height: 54px;
   border-radius: 10px;
   background: var(--fr-campo);
   color: var(--fr-tinta);
 }
 
 .pf-v5-c-form-control > input {
+  padding-block: 14px;
+  padding-inline: 16px;
+  font-size: 18px;
   color: var(--fr-tinta);
 }
 
@@ -222,8 +239,9 @@ div.pf-v5-c-login__main-header {
   --pf-v5-c-button--m-primary--Color: #ffffff;
   --pf-v5-c-button--m-primary--hover--Color: #ffffff;
   --pf-v5-c-button--BorderRadius: 10px;
-  margin-top: 8px;
-  padding-block: 12px;
+  margin-top: 12px;
+  padding-block: 16px;
+  font-size: 18px;
   font-weight: 600;
   box-shadow: 0 8px 24px rgba(36, 83, 255, 0.35);
 }
@@ -283,6 +301,36 @@ div.pf-v5-c-login__main-header {
   display: none;
 }
 
+/* ---------- Pantallas bajas (laptops): el mismo diseño, más compacto en alto para no desplazarse ---------- */
+
+@media (max-height: 860px) and (min-width: 601px) {
+  .pf-v5-c-login {
+    padding-block: 24px 40px;
+  }
+
+  .pf-v5-c-login__header {
+    margin-bottom: 24px;
+  }
+
+  #kc-header-wrapper {
+    font-size: 36px;
+  }
+
+  #kc-header-wrapper::before {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 16px;
+  }
+
+  #kc-header-wrapper::after {
+    font-size: 18px;
+  }
+
+  .pf-v5-c-login__main {
+    padding: 32px 40px;
+  }
+}
+
 /* ---------- Celular: la tarjeta a todo el ancho ---------- */
 
 @media (max-width: 600px) {
@@ -291,16 +339,24 @@ div.pf-v5-c-login__main-header {
   }
 
   #kc-header-wrapper {
-    font-size: 24px;
+    font-size: 30px;
   }
 
   #kc-header-wrapper::before {
-    width: 40px;
-    height: 40px;
-    margin-bottom: 14px;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 16px;
+  }
+
+  #kc-header-wrapper::after {
+    font-size: 16px;
+  }
+
+  #kc-page-title {
+    font-size: 26px;
   }
 
   .pf-v5-c-login__main {
-    padding: 24px 20px;
+    padding: 28px 22px;
   }
 }
