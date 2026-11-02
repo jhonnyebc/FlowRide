@@ -20,7 +20,7 @@ import { Link, useParams } from 'react-router';
 import { api, datos, type Esquemas } from '../api/cliente';
 import { esOperador, useUsuario } from '../auth/usuario';
 import { Consulta, Dato, Encabezado, EstadoVacio, InsigniaViaje, LineaDeVida, Persona, Placa, Recorrido, Tarjeta } from '../comun/Componentes';
-import { instante } from '../comun/fechas';
+import { duracion, instante } from '../comun/fechas';
 import { texto, textos } from '../textos';
 
 const tiposIncidente = Object.entries(textos.tipoIncidente).map(([value, label]) => ({ value, label }));
@@ -214,7 +214,7 @@ function Puntualidad({ minutos }: { minutos: number | null }) {
     );
   return (
     <Badge color={minutos > 15 ? 'red' : 'yellow'} variant="light" size="lg">
-      Inició {minutos} min tarde
+      Inició {duracion(minutos)} tarde
     </Badge>
   );
 }
@@ -245,7 +245,7 @@ function Paradas({ paradas }: { paradas: Esquemas['ParadaLectura'][] }) {
               Estimada: {instante(p.horaEstimada)}
             </Text>
             <Text size="xs">
-              {p.horaReal ? `Llegó: ${instante(p.horaReal)}${diferencia && diferencia > 0 ? ` (${diferencia} min tarde)` : ''}` : 'Aún no llega'}
+              {p.horaReal ? `Llegó: ${instante(p.horaReal)}${diferencia && diferencia > 0 ? ` (${duracion(diferencia)} tarde)` : ''}` : 'Aún no llega'}
             </Text>
           </Timeline.Item>
         );

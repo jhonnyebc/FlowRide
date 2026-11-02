@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { type FormEvent, useState } from 'react';
 import { api, datos, type Esquemas } from '../api/cliente';
 import { esAdministrador, esOperador, useUsuario } from '../auth/usuario';
-import { Consulta, Persona } from '../comun/Componentes';
+import { Consulta, HoraLocal, Persona } from '../comun/Componentes';
 import { horaLocal } from '../comun/fechas';
 import { texto, textos } from '../textos';
 import { Confirmacion, InsigniaConductor, InsigniaVencimiento } from './comun';
@@ -202,7 +202,9 @@ function TablaTurnos({ turnos, puedeAbandonar = false, alAbandonar }: { turnos: 
       <Table.Tbody>
         {turnos.map((t) => (
           <Table.Tr key={t.id}>
-            <Table.Td>{horaLocal(t.inicioLocal, t.zonaHoraria)}</Table.Td>
+            <Table.Td>
+              <HoraLocal local={t.inicioLocal} zona={t.zonaHoraria} />
+            </Table.Td>
             <Table.Td>{horaLocal(t.finLocal, null)}</Table.Td>
             <Table.Td>{texto(textos.estadoTurno, t.estado)}</Table.Td>
             {puedeAbandonar && (

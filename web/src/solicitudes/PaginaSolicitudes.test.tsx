@@ -15,10 +15,11 @@ describe('Solicitudes', () => {
 
     renderizar(<PaginaSolicitudes />);
 
-    expect(await screen.findAllByText(/\(America\/Bogota\)/)).toHaveLength(2);
+    expect(await screen.findAllByText('America/Bogota')).toHaveLength(2);
     expect(screen.getByText('Urgente')).toBeInTheDocument();
     expect(screen.getByText('Personal (restringida)')).toBeInTheDocument();
-    expect(screen.getByText('Hotel Central → Aeropuerto')).toBeInTheDocument();
+    expect(screen.getByText('Hotel Central')).toBeInTheDocument();
+    expect(screen.getByText('Aeropuerto')).toBeInTheDocument();
     await sinViolacionesDeAccesibilidad();
 
     await usuario.click(screen.getByRole('textbox', { name: 'Estado' }));

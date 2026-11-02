@@ -100,7 +100,8 @@ describe('Conductores (RF-07, RF-12, RF-26)', () => {
 
     expect(screen.queryByRole('button', { name: 'Nuevo conductor' })).not.toBeInTheDocument();
     const panel = await abrirDetalle(usuario);
-    expect(await within(panel).findByText(horaLocal('2026-10-27T06:00:00', 'America/Bogota'))).toBeInTheDocument();
+    expect(await within(panel).findByText(horaLocal('2026-10-27T06:00:00', null))).toBeInTheDocument();
+    expect(within(panel).getAllByText('America/Bogota').length).toBeGreaterThan(0);
     expect(within(panel).getByText('Últimos turnos terminados')).toBeInTheDocument();
     expect(within(panel).queryByRole('form', { name: 'Cargar documento' })).not.toBeInTheDocument();
     expect(within(panel).queryByRole('button', { name: /Eliminar/ })).not.toBeInTheDocument();

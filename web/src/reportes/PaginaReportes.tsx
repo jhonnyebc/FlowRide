@@ -6,7 +6,7 @@ import { type ReactNode, useState } from 'react';
 import { PiePagina, TamanoPagina } from '../administracion/comun';
 import { api, datos } from '../api/cliente';
 import { Consulta, Dato, Encabezado, EstadoVacio, InsigniaSolicitud, InsigniaViaje } from '../comun/Componentes';
-import { hoyIso, instante } from '../comun/fechas';
+import { duracion, hoyIso, instante } from '../comun/fechas';
 import { texto, textos } from '../textos';
 
 type Tipo = 'Viajes' | 'Solicitudes' | 'Conductores' | 'Empresas';
@@ -195,7 +195,7 @@ function ReporteViajes({ filtros }: { filtros: Filtros }) {
                         <Table.Td>
                           <InsigniaViaje estado={v.estado} />
                         </Table.Td>
-                        <Table.Td>{v.fechaHoraInicio ? (puntual ? 'Puntual' : `${minutosRetraso} min tarde`) : '—'}</Table.Td>
+                        <Table.Td>{v.fechaHoraInicio ? (puntual ? 'Puntual' : `${duracion(minutosRetraso)} tarde`) : '—'}</Table.Td>
                         <Table.Td>{cifra(v.puntaje)}</Table.Td>
                       </Table.Tr>
                     ))}

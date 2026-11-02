@@ -27,6 +27,11 @@ public sealed class IdentidadOptions
     public string? UrlPanelDe(string tenantId) =>
         string.IsNullOrWhiteSpace(UrlPanelOperador) ? null : UrlPanelOperador.Replace("{operador}", tenantId, StringComparison.Ordinal).TrimEnd('/');
 
+    /// <summary>
+    /// Tema de las pantallas de Keycloak del operador (inicio de sesión, TOTP, contraseña). Si falta, Keycloak usa el suyo.
+    /// </summary>
+    public string? TemaInicioSesion { get; set; }
+
     /// <summary>Exige HTTPS para leer los metadatos OIDC. Solo se apaga en desarrollo local.</summary>
     public bool RequiereHttps { get; set; } = true;
 

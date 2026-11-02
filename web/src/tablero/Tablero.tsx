@@ -14,6 +14,7 @@ import {
   Stack,
   Text,
   ThemeIcon,
+  Title,
 } from '@mantine/core';
 import {
   IconAlertTriangle,
@@ -45,7 +46,6 @@ import { useUsuario } from '../auth/usuario';
 import {
   Consulta,
   coloresSolicitud,
-  Encabezado,
   EstadoVacio,
   InsigniaNivel,
   InsigniaSolicitud,
@@ -53,7 +53,7 @@ import {
   Persona,
   Tarjeta,
 } from '../comun/Componentes';
-import { hora, hoyIso, instante } from '../comun/fechas';
+import { duracion, hora, hoyIso, instante } from '../comun/fechas';
 import { texto, textos } from '../textos';
 import { type ClavePeriodo, horaPico, porcentaje, rangoDelPeriodo, saludo, serviciosPorHora } from './calculos';
 
@@ -89,17 +89,26 @@ export function Tablero() {
 
   return (
     <>
-      <Encabezado
-        titulo={`${saludo()}, ${primerNombre}`}
-        descripcion={`${hoyTexto.charAt(0).toUpperCase()}${hoyTexto.slice(1)} · así va la operación ${frase}.`}
-      >
-        <SegmentedControl
-          aria-label="Periodo de los indicadores"
-          value={periodo}
-          onChange={(v) => setPeriodo(v as ClavePeriodo)}
-          data={periodos.map(({ value, label }) => ({ value, label }))}
-        />
-      </Encabezado>
+      <section className="portada" aria-labelledby="portada-titulo">
+        <div className="portada-texto">
+          <Title order={1} id="portada-titulo" className="portada-titulo">
+            {saludo()}, {primerNombre}
+          </Title>
+          <Text className="portada-fecha">
+            {hoyTexto.charAt(0).toUpperCase()}
+            {hoyTexto.slice(1)} · así va la operación {frase}.
+          </Text>
+          <SegmentedControl
+            aria-label="Periodo de los indicadores"
+            value={periodo}
+            onChange={(v) => setPeriodo(v as ClavePeriodo)}
+            data={periodos.map(({ value, label }) => ({ value, label }))}
+            className="portada-periodo"
+            mt="lg"
+          />
+        </div>
+        <RutaPortada />
+      </section>
 
       <Consulta consulta={resumen} esqueleto={<EsqueletoIndicadores />}>
         {(i) => <Indicadores datos={i} />}
@@ -176,6 +185,23 @@ export function Tablero() {
   );
 }
 
+/** La ruta de FlowRide sobre el asfalto de la portada: recogida, dos paradas y destino. Decorativa. */
+function RutaPortada() {
+  return (
+    <svg className="portada-ruta" viewBox="0 0 360 150" fill="none" aria-hidden focusable="false">
+      <g stroke="rgba(255,255,255,0.07)" strokeWidth="1.5">
+        <path d="M0 38h360M0 112h360M70 0v150M190 0v150M300 0v150" />
+      </g>
+      <path d="M24 124C70 124 80 76 130 76S200 112 250 92 300 30 336 26" stroke="#ffc21a" strokeWidth="4" strokeLinecap="round" />
+      <path d="M24 124C70 124 80 76 130 76S200 112 250 92 300 30 336 26" stroke="#0f1b2d" strokeWidth="1.2" strokeDasharray="6 8" strokeLinecap="round" />
+      <circle cx="24" cy="124" r="9" fill="#ffffff" />
+      <circle cx="130" cy="76" r="6" fill="#0f1b2d" stroke="#ffffff" strokeWidth="3" />
+      <circle cx="250" cy="92" r="6" fill="#0f1b2d" stroke="#ffffff" strokeWidth="3" />
+      <rect x="324" y="14" width="24" height="24" rx="3" fill="#ffc21a" />
+    </svg>
+  );
+}
+
 // ---------- Indicadores ----------
 
 function Indicadores({ datos: i }: { datos: Esquemas['IndicadoresLectura'] }) {
@@ -184,32 +210,34 @@ function Indicadores({ datos: i }: { datos: Esquemas['IndicadoresLectura'] }) {
   return (
     <Stack gap="md">
       <SimpleGrid cols={{ base: 1, xs: 2, lg: 4 }} spacing="md">
-        <Indicador etiqueta="Solicitudes" valor={numero.format(v.solicitudes)} icono={IconListDetails} color="primario">
+        <Indicador etiqueta="Solicitudes" valor={numero.format(v.solicitudes)} icono={IconListDetails} tonoIcono="via">
           {v.urgentes} urgentes · {v.pendientes} pendientes
         </Indicador>
-        <Indicador etiqueta="Atendidas" valor={formatoPorcentaje(porcentaje(v.atendidas, base))} anillo={porcentaje(v.atendidas, base)} icono={IconCircleCheck}>
+        <Indicador etiqueta="Atendidas" valor={formatoPorcentaje(porcentaje(v.atendidas, base))} anillo={porcentaje(v.atendidas, base)} icono={IconCircleCheck} tonoIcono="teal">
           {v.atendidas} de {base} (sin contar canceladas)
         </Indicador>
-        <Indicador etiqueta="Puntualidad" valor={formatoPorcentaje(c.porcentajePuntualidad)} anillo={c.porcentajePuntualidad} icono={IconClockCheck}>
+        <Indicador etiqueta="Puntualidad" valor={formatoPorcentaje(c.porcentajePuntualidad)} anillo={c.porcentajePuntualidad} icono={IconClockCheck} tonoIcono="grape">
           {c.puntuales} de {c.viajesIniciados} viajes · tolerancia {c.toleranciaMinutos} min
         </Indicador>
         <Indicador
-          etiqueta="Aceptación de conductores"
+          etiqueta="Aceptación"
           valor={formatoPorcentaje(k.porcentajeAceptacion)}
           anillo={k.porcentajeAceptacion}
           icono={IconThumbUp}
+          tonoIcono="orange"
         >
           {k.asignaciones} asignaciones · {formatoPorcentaje(k.porcentajeVencidas)} sin respuesta a tiempo
         </Indicador>
       </SimpleGrid>
-      <SimpleGrid cols={{ base: 2, md: 4 }} spacing="md">
-        <Mini etiqueta="Viajes realizados" valor={numero.format(v.viajesRealizados)} icono={IconCar} />
-        <Mini etiqueta="Viajes cancelados" valor={numero.format(v.viajesCancelados)} icono={IconX} />
-        <Mini etiqueta="Incidentes" valor={numero.format(c.incidentes)} icono={IconAlertTriangle} />
+      <SimpleGrid component="ul" cols={{ base: 2, md: 4 }} spacing={0} className="franja superficie" aria-label="Otros indicadores">
+        <Mini etiqueta="Viajes realizados" valor={numero.format(v.viajesRealizados)} icono={IconCar} tono="via" />
+        <Mini etiqueta="Viajes cancelados" valor={numero.format(v.viajesCancelados)} icono={IconX} tono="gray" />
+        <Mini etiqueta="Incidentes" valor={numero.format(c.incidentes)} icono={IconAlertTriangle} tono="red" />
         <Mini
           etiqueta="Calificación promedio"
           valor={k.calificacionPromedio == null ? '—' : `${numero.format(k.calificacionPromedio)} / 5`}
           icono={IconStarFilled}
+          tono="senal"
         />
       </SimpleGrid>
     </Stack>
@@ -225,35 +253,35 @@ function Indicador({
   etiqueta,
   valor,
   icono: Icono,
-  color,
+  tonoIcono,
   anillo,
   children,
 }: {
   etiqueta: string;
   valor: string;
   icono: ComponentType<IconProps>;
-  color?: string;
+  tonoIcono: string;
   anillo?: number | null;
   children: React.ReactNode;
 }) {
-  const tono = color ?? colorDePorcentaje(anillo);
+  const tono = colorDePorcentaje(anillo);
   return (
-    <Paper p={24} className="superficie">
+    <Paper p={22} className="superficie indicador">
       <Group justify="space-between" wrap="nowrap" align="flex-start">
         <div>
-          <Group gap={6} mb={4} wrap="nowrap">
-            <ThemeIcon size="sm" variant="transparent" radius="sm">
-              <Icono size={14} aria-hidden />
+          <Group gap={10} wrap="nowrap">
+            <ThemeIcon size={36} variant="light" color={tonoIcono} radius="md">
+              <Icono size={20} stroke={1.8} aria-hidden />
             </ThemeIcon>
-            <Text size="sm" c="var(--fr-texto-suave)">
+            <Text size="sm" fw={500} c="var(--fr-texto-suave)">
               {etiqueta}
             </Text>
           </Group>
-          <Text fz={36} fw={400} lh={1.22} className="cifra">
+          <Text fz={42} fw={700} lh={1.05} mt={14} className="cifra">
             {valor}
           </Text>
         </div>
-        {anillo !== undefined && (
+        {anillo != null && (
           <RingProgress
             aria-hidden
             size={64}
@@ -271,23 +299,22 @@ function Indicador({
   );
 }
 
-function Mini({ etiqueta, valor, icono: Icono }: { etiqueta: string; valor: string; icono: ComponentType<IconProps> }) {
+/** Un indicador secundario: celda de la franja, separada de las demás por una línea fina. */
+function Mini({ etiqueta, valor, icono: Icono, tono }: { etiqueta: string; valor: string; icono: ComponentType<IconProps>; tono: string }) {
   return (
-    <Paper px="md" py="sm" className="superficie">
-      <Group gap="sm" wrap="nowrap">
-        <ThemeIcon variant="filled" size="lg" radius="md">
-          <Icono size={18} aria-hidden />
-        </ThemeIcon>
-        <div>
-          <Text fw={500} size="lg" lh={1.1} className="cifra">
-            {valor}
-          </Text>
-          <Text size="xs" c="dimmed">
-            {etiqueta}
-          </Text>
-        </div>
-      </Group>
-    </Paper>
+    <Group component="li" gap="sm" wrap="nowrap" px="md" py="sm" className="franja-celda">
+      <ThemeIcon size={34} variant="light" color={tono} radius="xl">
+        <Icono size={18} stroke={1.8} aria-hidden />
+      </ThemeIcon>
+      <div>
+        <Text fw={600} size="lg" lh={1.1} className="cifra">
+          {valor}
+        </Text>
+        <Text size="xs" c="var(--fr-texto-suave)">
+          {etiqueta}
+        </Text>
+      </div>
+    </Group>
   );
 }
 
@@ -299,9 +326,9 @@ function EsqueletoIndicadores() {
           <Skeleton key={n} h={118} radius="md" />
         ))}
       </SimpleGrid>
-      <SimpleGrid cols={{ base: 2, md: 4 }}>
+      <SimpleGrid cols={{ base: 2, md: 4 }} spacing={0}>
         {[1, 2, 3, 4].map((n) => (
-          <Skeleton key={n} h={62} radius="md" />
+          <Skeleton key={n} h={64} radius={0} />
         ))}
       </SimpleGrid>
     </Stack>
@@ -429,7 +456,7 @@ function ViajesActivos({ viajes }: { viajes: Esquemas['MonitoreoViajeLectura'][]
             <InsigniaViaje estado={v.estado} />
             {retrasado ? (
               <Badge color="red" variant="outline" size="xs">
-                {minutosRetraso} min tarde
+                {duracion(minutosRetraso)} tarde
               </Badge>
             ) : (
               <Text size="xs" c="dimmed">

@@ -39,6 +39,16 @@ export function fechaCorta(valor: string | null | undefined): string {
   return formatoFecha.format(new Date(Date.UTC(anio ?? 1970, (mes ?? 1) - 1, dia ?? 1)));
 }
 
+/** Una cantidad de minutos legible: `45 min`, `3 h 20 min`, `5 d 8 h` (un retraso de días no se lee en minutos). */
+export function duracion(minutos: number): string {
+  const total = Math.max(0, Math.round(minutos));
+  if (total < 60) return `${total} min`;
+  const horas = Math.floor(total / 60);
+  if (horas < 24) return total % 60 === 0 ? `${horas} h` : `${horas} h ${total % 60} min`;
+  const dias = Math.floor(horas / 24);
+  return horas % 24 === 0 ? `${dias} d` : `${dias} d ${horas % 24} h`;
+}
+
 /** Días que faltan desde hoy (zona del navegador) hasta una fecha `yyyy-MM-dd`; negativo si ya pasó. */
 export function diasHasta(fecha: string, ahora: Date = new Date()): number {
   const aUtc = (iso: string) => {

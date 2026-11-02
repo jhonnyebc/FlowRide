@@ -19,6 +19,7 @@ import type { UseQueryResult } from '@tanstack/react-query';
 import type { ComponentType, ReactNode } from 'react';
 import { Link } from 'react-router';
 import { texto, textos } from '../textos';
+import { horaLocal } from './fechas';
 
 type Icono = ComponentType<IconProps>;
 
@@ -133,12 +134,8 @@ export function Tarjeta({
     <Paper p={24} h="100%" component="section" aria-label={titulo} className="superficie">
       <Group justify="space-between" mb="md" wrap="nowrap" gap="xs">
         <Group gap="xs" wrap="nowrap">
-          {Icono && (
-            <ThemeIcon variant="filled" size="md" radius="md">
-              <Icono size={16} aria-hidden />
-            </ThemeIcon>
-          )}
-          <Title order={2} size="h5" fw={500}>
+          {Icono && <Icono size={20} stroke={1.6} aria-hidden />}
+          <Title order={2} size="h5">
             {titulo}
           </Title>
         </Group>
@@ -256,6 +253,36 @@ export function Recorrido({ origen, destino }: { origen: string | null | undefin
         </div>
       </Group>
     </Stack>
+  );
+}
+
+/**
+ * La hora acordada de un evento futuro con su zona horaria (requisito de fechas): la zona va debajo, discreta, para que
+ * la tabla se lea por la hora y no por el nombre técnico de la zona.
+ */
+export function HoraLocal({ local, zona }: { local: string | null | undefined; zona: string | null | undefined }) {
+  return (
+    <span className="hora-local">
+      <span>{horaLocal(local, null)}</span>
+      {zona && <span className="hora-local-zona">{zona}</span>}
+    </span>
+  );
+}
+
+/** Origen y destino en una celda: la misma marca de ruta del logo (círculo, línea, cuadro), en pequeño. */
+export function RecorridoCompacto({ origen, destino }: { origen: string; destino: string }) {
+  return (
+    <span className="recorrido-compacto">
+      <span className="recorrido-compacto-marca" aria-hidden />
+      <span>
+        <VisuallyHidden>De </VisuallyHidden>
+        {origen}
+      </span>
+      <span>
+        <VisuallyHidden>a </VisuallyHidden>
+        {destino}
+      </span>
+    </span>
   );
 }
 
