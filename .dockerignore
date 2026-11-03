@@ -9,7 +9,6 @@
 .idea/
 .vs/
 .vscode/
-.claude/
 docs/
 docker/
 web/
