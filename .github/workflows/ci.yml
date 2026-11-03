@@ -1,0 +1,294 @@
+# Quality gates de ADR-0018: corren en cada PR hacia develop o main y en cada push a esas ramas.
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  backend:
+    name: Backend (build, formato, pruebas y cobertura)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restaurar
+        run: dotnet restore FlowRide.slnx
+
+      - name: Compilar sin advertencias (TreatWarningsAsErrors)
+        run: dotnet build FlowRide.slnx --no-restore -c Release
+
+      - name: Formato
+        run: dotnet format FlowRide.slnx --verify-no-changes --no-restore
+
+      - name: Pruebas unitarias + gate de cobertura (Domain + Application ≥ 80 % líneas, ≥ 70 % ramas)
+        run: dotnet test tests/FlowRide.UnitTests --no-build -c Release -p:CollectCoverage=true
+
+      - name: Pruebas de arquitectura (ArchUnitNET)
+        run: dotnet test tests/FlowRide.ArchitectureTests --no-build -c Release
+
+      - name: Pruebas de integración (Testcontainers)
+        run: dotnet test tests/FlowRide.IntegrationTests --no-build -c Release --filter "Category=Integration"
+
+      - name: Publicar reporte de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura
+          path: tests/FlowRide.UnitTests/TestResults/coverage/
+          if-no-files-found: ignore
+
+  frontend:
+    name: Frontend (tipos, lint, pruebas y build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # Sin scripts de instalación de las dependencias (riesgo de cadena de suministro); ninguna los necesita.
+      - name: Instalar (versiones exactas del lockfile)
+        run: npm ci --ignore-scripts
+
+      - name: Los tipos de la API están al día con el contrato OpenAPI (ADR-0019)
+        run: npm run api:tipos && git diff --exit-code src/api/esquema.d.ts
+
+      - name: Lint (incluye la regla de no poner secretos en VITE_*)
+        run: npm run lint
+
+      - name: Tipos
+        run: npm run typecheck
+
+      - name: Pruebas (Vitest + Testing Library + axe para WCAG 2.1 AA)
+        run: npm test
+
+      - name: Build de producción
+        run: npm run build
+
+  secretos:
+    name: Escaneo de secretos (ADR-0014)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  vulnerabilidades:
+    name: Escaneo de vulnerabilidades (Trivy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # Trivy lee las dependencias NuGet (también las transitivas) de los *.deps.json que deja la compilación.
+      - name: Compilar para listar las dependencias NuGet
+        run: dotnet build FlowRide.slnx -c Release
+
+      # trivy-action v0.35.0 fijada por SHA: publicación inmutable, posterior al incidente de marzo de 2026
+      # (CVE-2026-33634); instala Trivy v0.69.3.
+      - name: Dependencias de producción y configuración (bloquea HIGH y CRITICAL con corrección disponible)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig
+          skip-dirs: tests,web/node_modules
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Informe con las dependencias de desarrollo (no bloquea)
+        if: always()
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        env:
+          TRIVY_INCLUDE_DEV_DEPS: 'true'
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          skip-dirs: tests,web/node_modules
+          exit-code: '0'
+          skip-setup-trivy: true
+
+  # Análisis estático continuo en SonarCloud (organización jhonnyebc, proyecto jhonnyebc_FlowRide): backend y Panel Web
+  # con su cobertura. El proyecto usa análisis por CI; el análisis automático de SonarCloud debe quedar desactivado.
+  calidad:
+    name: Análisis estático (SonarCloud)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Historial completo: SonarCloud lo usa para saber qué código es nuevo y a quién atribuirlo.
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # Los PR de Dependabot no reciben secretos: sin token se omite el análisis en lugar de fallar.
+      - name: Comprobar el token
+        id: token
+        run: echo "disponible=$([ -n "$SONAR_TOKEN" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Cobertura del Panel Web (lcov)
+        if: steps.token.outputs.disponible == 'true'
+        working-directory: web
+        run: npm ci --ignore-scripts && npm run test:cobertura
+
+      - name: Analizar
+        if: steps.token.outputs.disponible == 'true'
+        # La cobertura medida es la del gate de ADR-0018 (Domain y Application con pruebas unitarias); el resto del
+        # backend lo prueban las pruebas de integración, que no la miden.
+        run: |
+          dotnet tool restore
+          dotnet sonarscanner begin /k:"jhonnyebc_FlowRide" /o:"jhonnyebc" /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.token="$SONAR_TOKEN" \
+            /d:sonar.cs.opencover.reportsPaths="tests/FlowRide.UnitTests/TestResults/coverage/coverage.opencover.xml" \
+            /d:sonar.javascript.lcov.reportPaths="web/coverage/lcov.info" \
+            /d:sonar.exclusions="**/Migraciones/**,web/src/api/esquema.d.ts,web/dist/**,web/coverage/**,web/src/**/*.test.ts,web/src/**/*.test.tsx,web/src/pruebas/**" \
+            /d:sonar.coverage.exclusions="src/FlowRide.Infrastructure/**,src/FlowRide.API/**,src/FlowRide.Borde/**,src/FlowRide.Aprovisionamiento/**,scripts/**,docker/**,web/*.config.*,web/eslint.config.js"
+          dotnet build FlowRide.slnx -c Release
+          dotnet test tests/FlowRide.UnitTests --no-build -c Release -p:CollectCoverage=true -p:CoverletOutputFormat=opencover -p:Threshold=0
+          dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+
+  # ADR-0010: imagen inmutable etiquetada <versión>-<sha>. Se construye y escanea en cada PR; al mergear a main, el job
+  # "publicar" sube exactamente las imágenes escaneadas (no las reconstruye).
+  imagenes:
+    name: Imágenes de contenedor (build y Trivy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      etiqueta: ${{ steps.version.outputs.etiqueta }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Etiqueta de la imagen (<versión de Directory.Build.props>-<sha corto>)
+        id: version
+        run: |
+          version=$(grep -oP '(?<=<Version>)[^<]+' Directory.Build.props)
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "etiqueta=${version}-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Construir API, borde y aprovisionamiento
+        run: |
+          for destino in api borde aprovisionamiento; do
+            docker build --target "$destino" \
+              --build-arg VERSION="${{ steps.version.outputs.version }}" --build-arg REVISION="$GITHUB_SHA" \
+              -t "flowride-$destino:${{ steps.version.outputs.etiqueta }}" .
+          done
+
+      - name: Trivy — imagen de la API (bloquea HIGH y CRITICAL con corrección disponible)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          image-ref: flowride-api:${{ steps.version.outputs.etiqueta }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Trivy — imagen del borde
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          image-ref: flowride-borde:${{ steps.version.outputs.etiqueta }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          skip-setup-trivy: true
+
+      - name: Trivy — imagen de aprovisionamiento
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          image-ref: flowride-aprovisionamiento:${{ steps.version.outputs.etiqueta }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          skip-setup-trivy: true
+
+      - name: Guardar las imágenes escaneadas para publicarlas
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          etiqueta="${{ steps.version.outputs.etiqueta }}"
+          docker save "flowride-api:$etiqueta" "flowride-borde:$etiqueta" "flowride-aprovisionamiento:$etiqueta" | gzip > imagenes.tar.gz
+
+      - name: Subir las imágenes como artefacto
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: imagenes
+          path: imagenes.tar.gz
+          retention-days: 1
+
+  publicar:
+    name: Publicar imágenes en GitHub Container Registry
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [backend, frontend, secretos, vulnerabilidades, calidad, imagenes]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: imagenes
+
+      - name: Publicar <versión>-<sha> (nunca latest)
+        env:
+          ETIQUETA: ${{ needs.imagenes.outputs.etiqueta }}
+          REGISTRO: ghcr.io/${{ github.repository_owner }}
+        run: |
+          gunzip -c imagenes.tar.gz | docker load
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          registro=$(echo "$REGISTRO" | tr '[:upper:]' '[:lower:]')
+          for destino in api borde aprovisionamiento; do
+            docker tag "flowride-$destino:$ETIQUETA" "$registro/flowride-$destino:$ETIQUETA"
+            docker push "$registro/flowride-$destino:$ETIQUETA"
+          done

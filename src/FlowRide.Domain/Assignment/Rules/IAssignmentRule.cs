@@ -7,4 +7,13 @@ public interface IAssignmentRule
     string Name { get; }
 
     RuleKind Kind { get; }
+
+    /// <summary>Versión de la lógica de la regla: sube cuando cambia su comportamiento y queda en el decision log.</summary>
+    int Version => 1;
+
+    /// <summary>Regla obligatoria (ADR-0009): toda configuración debe tenerla habilitada.</summary>
+    bool Obligatoria => false;
+
+    /// <summary>Reglas que deben estar habilitadas para que esta tenga sentido. Sin ciclos.</summary>
+    IReadOnlyCollection<string> Dependencias => [];
 }

@@ -1,0 +1,18 @@
+# Normaliza finales de línea en el repositorio.
+* text=auto
+
+# Los scripts que se ejecutan dentro de contenedores Linux deben conservar LF.
+*.sh text eol=lf
+# Configuración que montan los contenedores (nginx y ModSecurity del WAF): siempre con LF.
+docker/** text eol=lf
+
+# Binarios
+*.png binary
+*.pdf binary
+*.docx binary
+*.xlsx binary
+# Fuentes (tema de Keycloak en docker/): van después de docker/** para que no se traten como texto.
+*.woff2 binary
+
+# Los hooks de Git son scripts de shell: siempre con finales de línea LF.
+.githooks/* text eol=lf

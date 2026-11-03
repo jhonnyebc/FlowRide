@@ -1,0 +1,70 @@
+{
+  "asignacion.conductor.nueva": {
+    "texto": "Tienes un servicio nuevo el {fecha}: {origen} → {destino}, {pasajeros} pasajero(s). Escribe *menu* y elige 1 para aceptarlo o rechazarlo.",
+    "variables": [ "fecha", "origen", "destino", "pasajeros" ]
+  },
+  "asignacion.conductor.retirada": {
+    "texto": "El servicio del {fecha} ({origen} → {destino}) se asignó a otro conductor. Motivo: {motivo}.",
+    "variables": [ "fecha", "origen", "destino", "motivo" ]
+  },
+  "asignacion.conductor.cancelada": {
+    "texto": "Se canceló el servicio del {fecha} ({origen} → {destino}). Motivo: {motivo}.",
+    "variables": [ "fecha", "origen", "destino", "motivo" ]
+  },
+  "solicitud.pasajero.conductor_asignado": {
+    "texto": "Tu servicio del {fecha} ya tiene conductor: {conductor}, vehículo de placa {placa}.",
+    "variables": [ "fecha", "conductor", "placa" ]
+  },
+  "solicitud.pasajero.cambio_conductor": {
+    "texto": "Cambiamos el conductor de tu servicio del {fecha}. Te avisaremos cuando el nuevo conductor confirme.",
+    "variables": [ "fecha" ]
+  },
+  "solicitud.pasajero.cancelada": {
+    "texto": "El operador canceló tu servicio del {fecha} ({origen} → {destino}). Motivo: {motivo}.",
+    "variables": [ "fecha", "origen", "destino", "motivo" ]
+  },
+  "viaje.pasajero.iniciado": {
+    "texto": "Tu conductor {conductor} inició el viaje. ¡Buen viaje!",
+    "variables": [ "conductor" ]
+  },
+  "viaje.pasajero.finalizado": {
+    "texto": "Tu viaje terminó. ¿Cómo te fue? Escribe *menu* y elige 4 para calificar el servicio.",
+    "variables": [ ]
+  },
+  "viaje.pasajero.retraso": {
+    "texto": "Tu servicio del {fecha} tiene un retraso: {descripcion}.",
+    "variables": [ "fecha", "descripcion" ]
+  },
+  "recordatorio.pasajero": {
+    "texto": "Recordatorio: tu servicio es el {fecha}, desde {origen} hacia {destino}. Conductor: {conductor}, placa {placa}.",
+    "variables": [ "fecha", "origen", "destino", "conductor", "placa" ]
+  },
+  "recordatorio.conductor": {
+    "texto": "Recordatorio: tienes un servicio el {fecha}, recogida en {origen} hacia {destino}, {pasajeros} pasajero(s).",
+    "variables": [ "fecha", "origen", "destino", "pasajeros" ]
+  },
+  "alerta.solicitud.sin_candidatos": {
+    "texto": "Solicitud sin conductor disponible|La solicitud del {fecha} ({origen} → {destino}) no tiene candidatos: {motivo}",
+    "variables": [ "fecha", "origen", "destino", "motivo" ]
+  },
+  "alerta.solicitud.urgente_sin_candidatos": {
+    "texto": "Solicitud URGENTE sin conductor|La solicitud urgente del {fecha} ({origen} → {destino}) no tiene candidatos: {motivo}",
+    "variables": [ "fecha", "origen", "destino", "motivo" ]
+  },
+  "alerta.viaje.incidente": {
+    "texto": "Incidente en un viaje: {tipo}|El conductor {conductor} reportó en el servicio del {fecha}: {descripcion}",
+    "variables": [ "tipo", "conductor", "fecha", "descripcion" ]
+  },
+  "alerta.turno.abandonado": {
+    "texto": "Turno abandonado|El conductor {conductor} abandonó su turno ({motivo}). Volvieron a la cola {solicitudes} solicitud(es).",
+    "variables": [ "conductor", "motivo", "solicitudes" ]
+  },
+  "alerta.asignacion.vencida": {
+    "texto": "Asignación sin respuesta|El conductor {conductor} no respondió el servicio del {fecha}; la solicitud volvió a la cola.",
+    "variables": [ "conductor", "fecha" ]
+  },
+  "alerta.whatsapp.fallido": {
+    "texto": "No se pudo entregar un mensaje de WhatsApp|No se pudo enviar a {destinatario} el mensaje «{clave}»: {error}",
+    "variables": [ "destinatario", "clave", "error" ]
+  }
+}

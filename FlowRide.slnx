@@ -2,10 +2,14 @@
   <Folder Name="/src/">
     <Project Path="src/FlowRide.API/FlowRide.API.csproj" />
     <Project Path="src/FlowRide.Application/FlowRide.Application.csproj" />
+    <Project Path="src/FlowRide.Aprovisionamiento/FlowRide.Aprovisionamiento.csproj" />
+    <Project Path="src/FlowRide.Borde/FlowRide.Borde.csproj" />
     <Project Path="src/FlowRide.Domain/FlowRide.Domain.csproj" />
     <Project Path="src/FlowRide.Infrastructure/FlowRide.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/FlowRide.Tests/FlowRide.Tests.csproj" />
+    <Project Path="tests/FlowRide.ArchitectureTests/FlowRide.ArchitectureTests.csproj" />
+    <Project Path="tests/FlowRide.IntegrationTests/FlowRide.IntegrationTests.csproj" />
+    <Project Path="tests/FlowRide.UnitTests/FlowRide.UnitTests.csproj" />
   </Folder>
 </Solution>

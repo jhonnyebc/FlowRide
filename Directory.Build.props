@@ -5,5 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Versión semántica del producto: va en los ensamblados y en la etiqueta de las imágenes (<versión>-<sha>, ADR-0010).
+         Se sube a mano en cada release hacia main. -->
+    <Version>1.0.0</Version>
   </PropertyGroup>
 </Project>

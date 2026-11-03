@@ -1,22 +1,131 @@
+# Entorno local de FlowRide.
+# Un servidor PostgreSQL compartido (ADR-0010 §5) con:
+#   flowride_catalogo     → catálogo de plataforma (operadores; sin datos operacionales), creado al iniciar el volumen
+#   flowride_<tenant>     → un Silo por operador, con su propio rol, creado por la herramienta de aprovisionamiento
+# Keycloak (un realm por operador) y Mailpit (correos de Keycloak en local). Azurite (documentos, ADR-0013).
+# Panel de observabilidad (Aspire Dashboard) con los logs, trazas y métricas de la API y del borde (ADR-0011).
+# WAF (ModSecurity + OWASP CRS) delante del borde común (ADR-0012).
+# Las contraseñas se leen de .env, que no se versiona (ADR-0014).
 services:
   postgres:
     image: postgres:17
     container_name: flowride-postgres
     restart: unless-stopped
-    env_file: .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?Define POSTGRES_USER en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: postgres
+      CATALOGO_DB_PASSWORD: ${CATALOGO_DB_PASSWORD:?Define CATALOGO_DB_PASSWORD en .env}
     ports:
-      - "5432:5432"
+      # 5433 en el host para no chocar con un PostgreSQL instalado localmente en 5432.
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - flowride-pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # Identidad (ADR-0003): un realm por operador, que crea la herramienta de aprovisionamiento.
+  # Modo desarrollo con su propio almacenamiento en un volumen; en la nube usa su propia base (Fase 12).
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3.3
+    container_name: flowride-keycloak
+    restart: unless-stopped
+    command: start-dev
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER:?Define KEYCLOAK_ADMIN_USER en .env}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Define KEYCLOAK_ADMIN_PASSWORD en .env}
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "${KEYCLOAK_PORT:-8080}:8080"
+    volumes:
+      - flowride-keycloak-data:/opt/keycloak/data
+      # Tema de FlowRide para las pantallas de inicio de sesión (en start-dev no se cachea: los cambios se ven al recargar).
+      - ./docker/keycloak/temas/flowride:/opt/keycloak/themes/flowride:ro
+    depends_on:
+      - mailpit
+
+  # Almacenamiento de objetos (ADR-0013): emulador de Azure Blob Storage, un bucket por operador.
+  # La cuenta de desarrollo es la pública de Azurite ("UseDevelopmentStorage=true"); no es un secreto.
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.35.0
+    container_name: flowride-azurite
+    restart: unless-stopped
+    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --location /data --loose --skipApiVersionCheck
+    ports:
+      - "10000:10000"
+    volumes:
+      - flowride-azurite-data:/data
+
+  # Correos de Keycloak y de la API atrapados en local: http://localhost:8025 (SMTP en el puerto 1025)
+  mailpit:
+    image: axllent/mailpit:v1.27.7
+    container_name: flowride-mailpit
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+      # SMTP para los correos de la API (alertas críticas, Fase 8); Keycloak lo usa por la red interna.
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+
+  # Observabilidad local (ADR-0011, RF-50, RF-51, RF-53): recibe por OTLP los logs, trazas y métricas de la API y del
+  # borde y los muestra en http://localhost:18888. Solo escucha en el equipo local y no guarda nada (al reiniciarlo se
+  # vacía); por eso no pide inicio de sesión. En la nube, el backend OTLP lo da la plataforma (Fase 12).
+  observabilidad:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:13.6.1
+    container_name: flowride-observabilidad
+    restart: unless-stopped
+    environment:
+      DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+    ports:
+      - "127.0.0.1:${OBSERVABILIDAD_UI_PORT:-18888}:18888"
+      # OTLP por gRPC: es el destino de OTEL_EXPORTER_OTLP_ENDPOINT de la API y del borde al correr en local.
+      - "127.0.0.1:${OTLP_PORT:-4317}:18889"
+
+  # WAF (ADR-0012): ModSecurity + OWASP Core Rule Set delante del borde común, en https://<operador>.dev.localhost:9443.
+  # En la nube es el WAF gestionado de Azure con el mismo conjunto de reglas (OWASP CRS); en local, su motor de
+  # referencia. Bloquea por puntaje de anomalía (paranoia 1, umbral 5) y deja el registro de cada bloqueo en sus logs
+  # (docker logs flowride-waf). WAF_MODO=DetectionOnly solo registra, para revisar falsos positivos.
+  waf:
+    image: owasp/modsecurity-crs:4.25.2-nginx-202610180210-lts
+    container_name: flowride-waf
+    restart: unless-stopped
+    environment:
+      # El borde corre en el equipo (dotnet run, https://localhost:8443); el WAF le reenvía conservando el Host, que
+      # es lo que el borde usa para elegir el operador, y reutiliza las conexiones (upstream de docker/waf/nginx).
+      BACKEND: https://flowride_borde
+      BORDE_DESTINO: ${WAF_BORDE:-host.docker.internal:8443}
+      PROXY_SSL_VERIFY: "off"
+      # Auditoría de los 5xx y de los 4xx salvo 401 y 404: una API sin token responde 401 y no es un incidente.
+      MODSEC_AUDIT_LOG_RELEVANT_STATUS: "^(?:5|4(?!0[14]))"
+      MODSEC_RULE_ENGINE: ${WAF_MODO:-On}
+      BLOCKING_PARANOIA: "1"
+      ANOMALY_INBOUND: "5"
+      # El Panel Web y la API usan también PUT, PATCH y DELETE (el CRS por defecto solo permite GET, HEAD, POST y OPTIONS).
+      ALLOWED_METHODS: "GET HEAD POST PUT PATCH DELETE OPTIONS"
+      # Sin inspección del cuerpo de las respuestas: obligaría a retenerlas completas y cortaría las alertas en vivo (SSE).
+      MODSEC_RESP_BODY_ACCESS: "Off"
+      # Las alertas en vivo mantienen la conexión abierta; el navegador se reconecta solo si se corta.
+      PROXY_TIMEOUT: "3600"
+      # Certificado TLS: por defecto el autofirmado de la imagen. Para que el navegador confíe, el de desarrollo de .NET
+      # (cubre *.dev.localhost) exportado en docker/waf/certificados, que no se versiona; ver WAF_CERTIFICADO en .env.example.
+      SSL_CERT_FILE: ${WAF_CERTIFICADO:-/etc/nginx/conf/server.crt}
+      SSL_CERT_KEY_FILE: ${WAF_CLAVE_CERTIFICADO:-/etc/nginx/conf/server.key}
+    ports:
+      - "127.0.0.1:${WAF_PORT:-9443}:8443"
+    volumes:
+      - ./docker/waf/certificados:/etc/nginx/certificados:ro
+      # Exclusiones puntuales de FlowRide (falsos positivos conocidos), versionadas.
+      - ./docker/waf/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:ro
+      # Conexiones reutilizadas hacia el borde (keepalive).
+      - ./docker/waf/nginx/borde.conf.template:/etc/nginx/templates/conf.d/borde.conf.template:ro
+      - ./docker/waf/nginx/proxy_backend.conf.template:/etc/nginx/templates/includes/proxy_backend.conf.template:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 volumes:
   flowride-pgdata:
+  flowride-keycloak-data:
+  flowride-azurite-data:

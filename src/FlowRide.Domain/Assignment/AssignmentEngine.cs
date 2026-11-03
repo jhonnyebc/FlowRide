@@ -98,7 +98,7 @@ public sealed class AssignmentEngine
         foreach (var (setting, rule) in filters)
         {
             var result = rule.Evaluate(context, candidato);
-            outcomes.Add(new RuleOutcome(rule.Name, rule.Kind, setting.Order, result.Passed, null, null, null, result.Reason));
+            outcomes.Add(new RuleOutcome(rule.Name, rule.Kind, setting.Order, result.Passed, null, null, null, result.Reason, rule.Version));
             if (!result.Passed)
                 discardReason ??= $"{rule.Name}: {result.Reason}";
         }
@@ -128,7 +128,7 @@ public sealed class AssignmentEngine
     private static decimal Weigh(List<RuleOutcome> outcomes, RuleSetting setting, IAssignmentRule rule, RuleScore raw)
     {
         var weighted = Math.Round(raw.Value * setting.Weight, 4, MidpointRounding.ToEven);
-        outcomes.Add(new RuleOutcome(rule.Name, rule.Kind, setting.Order, null, raw.Value, setting.Weight, weighted, raw.Reason));
+        outcomes.Add(new RuleOutcome(rule.Name, rule.Kind, setting.Order, null, raw.Value, setting.Weight, weighted, raw.Reason, rule.Version));
         return weighted;
     }
 
@@ -218,7 +218,8 @@ public sealed class AssignmentEngine
             evaluations,
             discarded,
             scores,
-            tieBreak);
+            tieBreak,
+            context.EvaluadaEn);
     }
 
     private static IReadOnlyList<ActiveRule<TRule>> Of<TRule>(IEnumerable<ActiveRule> active)

@@ -7,6 +7,9 @@ public sealed class RegulatoryRestrictionRule : IFilteringRule
 
     public string Name => RuleName;
 
+    /// <summary>Obligatoria (ADR-0009): ninguna configuración puede deshabilitarla.</summary>
+    public bool Obligatoria => true;
+
     public FilterResult Evaluate(AssignmentContext context, Candidato candidato)
     {
         var fecha = context.Solicitud.FechaServicio;

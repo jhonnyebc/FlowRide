@@ -1,0 +1,32 @@
+namespace FlowRide.Application.Identidad.Salida.Puertos;
+
+/// <summary>
+/// Proveedor OIDC del operador (Keycloak, un realm por operador, ADR-0003) visto desde su stack. Solo gestiona las
+/// cuentas del Panel Web: el rol, el estado y el tenant los decide FlowRide, no el proveedor.
+/// </summary>
+public interface IProveedorIdentidad
+{
+    /// <summary>
+    /// Crea la cuenta con ese correo, o devuelve la que ya existe (reintento tras un fallo), y retorna su identificador
+    /// externo (claim <c>sub</c>). La cuenta queda sin contraseña hasta que el usuario la defina. Con
+    /// <paramref name="exigirDobleFactor"/>, además debe configurar su TOTP en el primer inicio de sesión.
+    /// </summary>
+    Task<string> AsegurarUsuarioAsync(string correo, string nombre, bool exigirDobleFactor, CancellationToken ct);
+
+    /// <summary>
+    /// Actualiza el nombre y el correo de la cuenta (el correo es su usuario de inicio de sesión). Si el correo cambia,
+    /// queda sin verificar y se le envía a la nueva dirección el correo para confirmarla junto con lo que tenga pendiente.
+    /// </summary>
+    Task ActualizarCuentaAsync(string identidadExternaId, string correo, string nombre, CancellationToken ct);
+
+    /// <summary>La cuenta debe configurar su TOTP (si aún no lo tiene) en su próximo inicio de sesión.</summary>
+    Task ExigirDobleFactorAsync(string identidadExternaId, CancellationToken ct);
+
+    /// <summary>Envía al usuario el correo para definir su contraseña (también sirve para recuperarla, RF-23).</summary>
+    Task EnviarConfiguracionContrasenaAsync(string identidadExternaId, CancellationToken ct);
+
+    Task HabilitarAsync(string identidadExternaId, CancellationToken ct);
+
+    /// <summary>Deshabilita la cuenta y cierra sus sesiones: no puede iniciar sesión ni renovar tokens.</summary>
+    Task DeshabilitarAsync(string identidadExternaId, CancellationToken ct);
+}

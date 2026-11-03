@@ -1,0 +1,130 @@
+using FlowRide.Application.Comun.CasosUso;
+using FlowRide.Application.Tenancy.CasosUso;
+using FlowRide.Application.Tenancy.Entrada.Dto;
+using FlowRide.Application.Tenancy.Entrada.Puertos;
+using FlowRide.Domain.Plataforma;
+using FlowRide.Domain.Plataforma.AprovisionarOperador;
+using FlowRide.Domain.Plataforma.Borde;
+using FlowRide.Domain.Plataforma.MigrarSilos;
+using FlowRide.Domain.Plataforma.Respaldos;
+using FlowRide.Domain.Transversal;
+
+namespace FlowRide.Application.Tenancy.Entrada.Adaptadores;
+
+/// <summary>Valida la petición, la convierte en datos del dominio, ejecuta el caso de uso y arma la respuesta.</summary>
+public sealed class AprovisionarOperadorAdaptadorEntrada(
+    ICasoUsoConRetorno<AprovisionarOperadorDominio, ResultadoAprovisionamiento> casoUso) : IAprovisionarOperadorPuertoEntrada
+{
+    public async Task<AprovisionarOperadorRespuesta> AprovisionarAsync(AprovisionarOperadorPeticion peticion, CancellationToken ct)
+    {
+        if (peticion is null
+            || string.IsNullOrWhiteSpace(peticion.TenantId)
+            || string.IsNullOrWhiteSpace(peticion.RazonSocial)
+            || string.IsNullOrWhiteSpace(peticion.Nit)
+            || string.IsNullOrWhiteSpace(peticion.CorreoContacto))
+        {
+            throw new FlowRideExcepcion("tenantId, razonSocial, nit y correoContacto son obligatorios.");
+        }
+
+        var resultado = await casoUso.EjecutarAsync(new AprovisionarOperadorDominio(
+            peticion.TenantId.Trim(), peticion.RazonSocial.Trim(), peticion.Nit.Trim(), peticion.CorreoContacto.Trim()), ct);
+
+        var operador = resultado.Operador;
+        return new AprovisionarOperadorRespuesta(
+            operador.Id,
+            operador.Estado.ToString(),
+            operador.NombreSilo,
+            operador.AmbitoSecretos,
+            operador.NombreRealm,
+            operador.NombreBucket,
+            resultado.OperadorNuevo,
+            resultado.ContrasenaNueva,
+            resultado.MigracionesAplicadas,
+            resultado.OperadorNuevo ? "Operador aprovisionado correctamente." : "Operador actualizado; su Silo ya estaba aprovisionado.");
+    }
+}
+
+public sealed class MigrarSilosAdaptadorEntrada(
+    ICasoUsoConRetorno<MigrarSilosDominio, IReadOnlyList<ResultadoMigracion>> casoUso) : IMigrarSilosPuertoEntrada
+{
+    public async Task<MigrarSilosRespuesta> MigrarAsync(MigrarSilosPeticion peticion, CancellationToken ct)
+    {
+        if (peticion is null)
+            throw new FlowRideExcepcion("La petición de migración es obligatoria.");
+
+        var datos = string.IsNullOrWhiteSpace(peticion.TenantId)
+            ? MigrarSilosDominio.Todos
+            : new MigrarSilosDominio(peticion.TenantId.Trim());
+
+        var resultados = await casoUso.EjecutarAsync(datos, ct);
+        return new MigrarSilosRespuesta(resultados
+            .Select(resultado => new MigracionSiloRespuesta(resultado.TenantId, resultado.MigracionesAplicadas, resultado.Error))
+            .ToList());
+    }
+}
+
+public sealed class ConsultarOperadoresAdaptadorEntrada(
+    ICasoUsoConRetorno<EstadoOperador?, IReadOnlyList<Operador>> casoUso) : IConsultarOperadoresPuertoEntrada
+{
+    public async Task<IReadOnlyList<OperadorRespuesta>> ConsultarAsync(CancellationToken ct) =>
+        (await casoUso.EjecutarAsync(null, ct))
+        .Select(operador => new OperadorRespuesta(
+            operador.Id, operador.RazonSocial, operador.Nit, operador.CorreoContacto, operador.Estado.ToString()))
+        .ToList();
+}
+
+public sealed class RutasOperadorAdaptadorEntrada(
+    ICasoUsoConRetorno<RegistrarRutaOperadorDominio, RutaOperador> registrar,
+    ICasoUsoConRetorno<CargarTablaRutasDominio, IReadOnlyList<RutaOperador>> consultar) : IRutasOperadorPuertoEntrada
+{
+    public async Task<RutaOperadorRespuesta> RegistrarAsync(RegistrarRutaOperadorPeticion peticion, CancellationToken ct)
+    {
+        if (peticion is null || string.IsNullOrWhiteSpace(peticion.TenantId) || string.IsNullOrWhiteSpace(peticion.UrlStack))
+            throw new FlowRideExcepcion("tenantId y urlStack son obligatorios.");
+
+        var tenantId = peticion.TenantId.Trim();
+        var subdominio = string.IsNullOrWhiteSpace(peticion.Subdominio) ? tenantId : peticion.Subdominio.Trim();
+        return Respuesta(await registrar.EjecutarAsync(
+            new RegistrarRutaOperadorDominio(tenantId, subdominio, peticion.UrlStack.Trim(), peticion.PhoneNumberId), ct));
+    }
+
+    public async Task<IReadOnlyList<RutaOperadorRespuesta>> ConsultarAsync(CancellationToken ct) =>
+        (await consultar.EjecutarAsync(CargarTablaRutasDominio.Instancia, ct)).Select(Respuesta).ToList();
+
+    private static RutaOperadorRespuesta Respuesta(RutaOperador ruta) => new(ruta.OperadorId, ruta.Subdominio, ruta.UrlStack, ruta.PhoneNumberId);
+}
+
+public sealed class RespaldosOperadorAdaptadorEntrada(
+    ICasoUsoConRetorno<GuardarRespaldoDominio, ResultadoRespaldo> guardar,
+    ICasoUsoConRetorno<ConsultarRespaldosDominio, IReadOnlyList<Respaldo>> consultar,
+    ICasoUsoConRetorno<DescargarRespaldoDominio, Respaldo> descargar) : IRespaldosOperadorPuertoEntrada
+{
+    public async Task<RespaldoGuardadoRespuesta> GuardarAsync(GuardarRespaldoPeticion peticion, CancellationToken ct)
+    {
+        if (peticion?.Contenido is not { } contenido || string.IsNullOrWhiteSpace(peticion.TenantId))
+            throw new FlowRideExcepcion("tenantId y el contenido del respaldo son obligatorios.");
+
+        var resultado = await guardar.EjecutarAsync(new GuardarRespaldoDominio(peticion.TenantId.Trim(), contenido), ct);
+        return new RespaldoGuardadoRespuesta(
+            Respuesta(resultado.Guardado), resultado.Eliminados.Select(Respuesta).ToList(), PoliticaRetencionRespaldos.DiasRetencion);
+    }
+
+    public async Task<IReadOnlyList<RespaldoRespuesta>> ConsultarAsync(string tenantId, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(tenantId))
+            throw new FlowRideExcepcion("tenantId es obligatorio.");
+
+        return (await consultar.EjecutarAsync(new ConsultarRespaldosDominio(tenantId.Trim()), ct)).Select(Respuesta).ToList();
+    }
+
+    public async Task<RespaldoRespuesta> DescargarAsync(DescargarRespaldoPeticion peticion, CancellationToken ct)
+    {
+        if (peticion?.Destino is not { } destino || string.IsNullOrWhiteSpace(peticion.TenantId))
+            throw new FlowRideExcepcion("tenantId y el destino del respaldo son obligatorios.");
+
+        var nombre = string.IsNullOrWhiteSpace(peticion.Nombre) ? null : peticion.Nombre.Trim();
+        return Respuesta(await descargar.EjecutarAsync(new DescargarRespaldoDominio(peticion.TenantId.Trim(), nombre, destino), ct));
+    }
+
+    private static RespaldoRespuesta Respuesta(Respaldo respaldo) => new(respaldo.Nombre, respaldo.TomadoEn, respaldo.TamanoBytes);
+}

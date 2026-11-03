@@ -5,7 +5,14 @@ namespace FlowRide.Domain.Assignment;
 /// <summary>Combinación conductor + vehículo + turno que el motor evalúa para una solicitud.</summary>
 public sealed class Candidato
 {
-    public Candidato(Conductor conductor, Vehiculo vehiculo, Turno turno, int asignacionesRecientes = 0)
+    public Candidato(
+        Conductor conductor,
+        Vehiculo vehiculo,
+        Turno turno,
+        int asignacionesRecientes = 0,
+        bool conductorOcupado = false,
+        bool vehiculoOcupado = false,
+        bool rechazoLaSolicitud = false)
     {
         ArgumentNullException.ThrowIfNull(conductor);
         ArgumentNullException.ThrowIfNull(vehiculo);
@@ -18,6 +25,9 @@ public sealed class Candidato
         Vehiculo = vehiculo;
         Turno = turno;
         AsignacionesRecientes = asignacionesRecientes;
+        ConductorOcupado = conductorOcupado;
+        VehiculoOcupado = vehiculoOcupado;
+        RechazoLaSolicitud = rechazoLaSolicitud;
         Reference = new CandidateReference(conductor.Id, vehiculo.Id, turno.Id);
     }
 
@@ -27,6 +37,15 @@ public sealed class Candidato
 
     /// <summary>Asignaciones del conductor en la ventana reciente definida por quien construye el candidato.</summary>
     public int AsignacionesRecientes { get; }
+
+    /// <summary>El conductor ya tiene una asignación vigente que se solapa con la franja de la solicitud.</summary>
+    public bool ConductorOcupado { get; }
+
+    /// <summary>El vehículo ya tiene una asignación vigente que se solapa con la franja de la solicitud.</summary>
+    public bool VehiculoOcupado { get; }
+
+    /// <summary>El conductor ya rechazó esta solicitud (o la dejó vencer): no se le vuelve a proponer (Fase 6).</summary>
+    public bool RechazoLaSolicitud { get; }
 
     public DateTimeOffset? UltimaAsignacion => Conductor.FechaUltimaAsignacion;
 

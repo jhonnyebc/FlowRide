@@ -9,7 +9,8 @@ public sealed class AssignmentContext
     public AssignmentContext(
         SolicitudViaje solicitud,
         IEnumerable<Candidato> candidatos,
-        AssignmentConfiguration configuration)
+        AssignmentConfiguration configuration,
+        DateTimeOffset? evaluadaEn = null)
     {
         ArgumentNullException.ThrowIfNull(solicitud);
         ArgumentNullException.ThrowIfNull(candidatos);
@@ -18,9 +19,13 @@ public sealed class AssignmentContext
         Solicitud = solicitud;
         Candidatos = candidatos.ToArray();
         Configuration = configuration;
+        EvaluadaEn = evaluadaEn ?? solicitud.RegistradaEn;
     }
 
     public SolicitudViaje Solicitud { get; }
     public IReadOnlyList<Candidato> Candidatos { get; }
     public AssignmentConfiguration Configuration { get; }
+
+    /// <summary>Momento de la decisión; lo da el caso de uso (reloj inyectado), así el motor sigue siendo puro.</summary>
+    public DateTimeOffset EvaluadaEn { get; }
 }

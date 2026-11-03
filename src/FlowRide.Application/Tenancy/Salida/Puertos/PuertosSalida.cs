@@ -1,0 +1,96 @@
+using FlowRide.Domain.Plataforma.Respaldos;
+
+namespace FlowRide.Application.Tenancy.Salida.Puertos;
+
+// Puertos de salida del aprovisionamiento que no son repositorios: los implementa Infrastructure.
+// El repositorio de operadores es un puerto del dominio (IOperadorRepositorio).
+
+/// <summary>Servidor PostgreSQL donde viven las bases de los Silos (ADR-0010 §5).</summary>
+public interface IServidorSilos
+{
+    /// <summary>
+    /// Crea el rol y la base del Silo si no existen y deja la contraseña del rol igual a la indicada.
+    /// Ningún otro rol puede conectarse a esa base. Es idempotente.
+    /// </summary>
+    Task AsegurarSiloAsync(string nombreSilo, string contrasena, CancellationToken ct);
+
+    /// <summary>Cadena de conexión del rol propio del Silo hacia su base.</summary>
+    string CadenaConexion(string nombreSilo, string contrasena);
+}
+
+/// <summary>Aplica las migraciones del esquema operativo a la base de un Silo.</summary>
+public interface IMigradorSilo
+{
+    /// <summary>Devuelve las migraciones aplicadas en esta ejecución (vacío si el esquema ya estaba al día).</summary>
+    Task<IReadOnlyList<string>> MigrarAsync(string cadenaConexion, CancellationToken ct);
+}
+
+/// <summary>Secretos con un ámbito por operador: ninguna credencial se comparte entre operadores (ADR-0014).</summary>
+public interface IAlmacenSecretos
+{
+    Task<string?> ObtenerAsync(string ambito, string clave, CancellationToken ct);
+
+    Task GuardarAsync(string ambito, string clave, string valor, CancellationToken ct);
+}
+
+/// <summary>Genera secretos aleatorios criptográficamente seguros.</summary>
+public interface IGeneradorSecretos
+{
+    string NuevaContrasena();
+}
+
+/// <summary>Claves de los secretos del stack de un operador.</summary>
+public static class ClavesSecretos
+{
+    /// <summary>Misma clave que lee la API: <c>ConnectionStrings:Silo</c>.</summary>
+    public const string CadenaConexionSilo = "ConnectionStrings:Silo";
+
+    public const string ContrasenaSilo = "FlowRide:Silo:Contrasena";
+
+    /// <summary>Secreto del cliente de servicio del realm con el que la API gestiona las cuentas del operador.</summary>
+    public const string SecretoClienteIdentidad = "FlowRide:Identidad:SecretoCliente";
+
+    /// <summary>Acceso del stack a su bucket de objetos (ADR-0013).</summary>
+    public const string CadenaConexionObjetos = "ConnectionStrings:Objetos";
+
+    /// <summary>Clave maestra v1 del cifrado de campos del operador (ADR-0014) y versión vigente.</summary>
+    public const string ClaveCifradoV1 = "FlowRide:Cifrado:Claves:v1";
+
+    public const string VersionCifradoVigente = "FlowRide:Cifrado:Vigente";
+}
+
+/// <summary>
+/// Servidor de identidad de la plataforma (Keycloak, ADR-0003) visto desde el aprovisionamiento: un realm por
+/// operador, creado a partir de la plantilla versionada.
+/// </summary>
+public interface IServidorIdentidad
+{
+    /// <summary>
+    /// Crea el realm si no existe y deja su configuración igual a la plantilla: clientes del Panel Web y de la API,
+    /// claim <c>tenant_id</c> con el Id del operador y el secreto indicado para el cliente de servicio. Es idempotente.
+    /// </summary>
+    Task AsegurarRealmAsync(string nombreRealm, string tenantId, string secretoClienteServicio, CancellationToken ct);
+}
+
+/// <summary>Almacenamiento de objetos de la plataforma (ADR-0013) visto desde el aprovisionamiento.</summary>
+public interface IServidorObjetos
+{
+    /// <summary>Crea el bucket privado del operador si no existe. Es idempotente.</summary>
+    Task AsegurarBucketAsync(string nombreBucket, CancellationToken ct);
+
+    /// <summary>Cadena de conexión con la que el stack del operador accede a su bucket.</summary>
+    string CadenaConexion(string nombreBucket);
+}
+
+/// <summary>Respaldos de la base de cada operador, guardados en su propio bucket (ADR-0013).</summary>
+public interface IAlmacenRespaldos
+{
+    Task GuardarAsync(string nombreBucket, string nombre, Stream contenido, CancellationToken ct);
+
+    /// <summary>Los respaldos del bucket, del más reciente al más antiguo.</summary>
+    Task<IReadOnlyList<Respaldo>> ListarAsync(string nombreBucket, CancellationToken ct);
+
+    Task DescargarAsync(string nombreBucket, string nombre, Stream destino, CancellationToken ct);
+
+    Task EliminarAsync(string nombreBucket, string nombre, CancellationToken ct);
+}

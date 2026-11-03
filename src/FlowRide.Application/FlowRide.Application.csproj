@@ -4,4 +4,9 @@
     <ProjectReference Include="..\FlowRide.Domain\FlowRide.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Catálogo de mensajes es-CO (ADR-0016): versionado junto al código. -->
+    <EmbeddedResource Include="Notificaciones/Catalogo/mensajes.*.json" LogicalName="FlowRide.Mensajes.%(Filename)%(Extension)" WithCulture="false" />
+  </ItemGroup>
+
 </Project>

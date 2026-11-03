@@ -1,0 +1,22 @@
+# Contexto de construcción de las imágenes (Dockerfile): solo el código de la solución .NET.
+**/bin/
+**/obj/
+**/TestResults/
+**/node_modules/
+.git/
+.github/
+.githooks/
+.idea/
+.vs/
+.vscode/
+.claude/
+docs/
+docker/
+web/
+tests/
+*.md
+*.user
+*.DotSettings.user
+.env
+.env.*
+docker-compose*.yml
